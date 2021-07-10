@@ -1,0 +1,76 @@
+[tool.black]
+target-version = ['py38']
+line-length = 79
+exclude = '''
+(
+  /(
+      \.eggs
+    | \.git
+    | \.mypy_cache
+    | \.tox
+    | \.venv
+    | _build
+    | buck-out
+    | build
+    | dist
+    | venv
+  )/
+)
+'''
+
+[tool.poetry]
+name = "ztrack"
+version = "0.1.0"
+description = ""
+authors = ["Ka Chung Lam <kclamar@connect.ust.hk>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/kclamar/stimpy"
+repository = "https://github.com/kclamar/stimpy"
+classifiers=[
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Intended Audience :: Science/Research"
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+opencv-python = "^4.5.2"
+matplotlib = "^3.4.2"
+PyQt5 = "^5.15.4"
+decord = "^0.6.0"
+click = "^8.0.1"
+
+black = { version = "*", optional = true }
+isort = { version = "*", optional = true }
+flake8 = { version = "*", optional = true }
+mypy = { version = "*", optional = true }
+pydata-sphinx-theme = { version = "*", optional = true }
+sphinx = { version = "*", optional = true }
+sphinx-autodoc-typehints = { version = "*", optional = true }
+
+[tool.poetry.extras]
+dev = [
+    "black",
+    "isort",
+    "flake8",
+    "mypy",
+    "pydata-sphinx-theme",
+    "sphinx",
+    "sphinx-autodoc-typehints",
+    "sphinx-panels"
+]
+
+[tool.poetry.scripts]
+ztrack = "ztrack.cli:main"
+
+[build-system]
+requires = [
+    "poetry-core>=1.0.0",
+    "setuptools>=57.0.0",
+]
+
+build-backend = "poetry.core.masonry.api"
