@@ -7,13 +7,20 @@ from ztrack.gui._control_widget import ControlWidget
 from ztrack.gui._tracking_display_widget import TrackingDisplayWidget
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.gui.utils.frame_bar import FrameBar
+from ztrack.utils.config import config_extension, video_extensions
 from ztrack.utils.file import extract_video_paths
-from ztrack.utils.config import video_extensions, config_extension
 
 
-class CreateConfigWidget(QtWidgets.QWidget):
+class CreateConfigWindow(QtWidgets.QMainWindow):
     def __init__(self, parent: QtWidgets.QWidget = None):
         super().__init__(parent)
+        self._useVideoFPS = True
+
+        self._videoPaths: List[str] = []
+        self._savePaths: List[List[str]] = []
+
+        self._currentVideoPath: Optional[str] = None
+        self._currentSavePaths: Optional[List[str]] = None
 
         self._frameBar = FrameBar(self)
         self._controlWidget = ControlWidget(self)
@@ -37,27 +44,9 @@ class CreateConfigWidget(QtWidgets.QWidget):
         layout.addLayout(hBoxLayout1)
         layout.addWidget(self._buttonBox)
 
-        self.setLayout(layout)
-
-    @property
-    def fps(self):
-        return self._frameBar.fps
-
-    @fps.setter
-    def fps(self, fps: int):
-        self._frameBar.fps = fps
-
-
-class CreateConfigWindow(QtWidgets.QMainWindow):
-    def __init__(self, parent: QtWidgets.QWidget = None):
-        super().__init__(parent)
-        self._useVideoFPS = True
-
-        self._videoPaths: List[str] = []
-        self._savePaths: List[List[str]] = []
-
-        self._currentVideoPath: Optional[str] = None
-        self._currentSavePaths: Optional[List[str]] = None
+        widget = QtWidgets.QWidget(self)
+        widget.setLayout(layout)
+        self.setCentralWidget(widget)
 
         menuBar = self.menuBar()
 
@@ -88,23 +77,12 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         helpMenu.addAction(actionHelp)
 
         self.setMenuBar(menuBar)
-
         self.setWindowTitle("ztrack")
-        self._centralWidget = CreateConfigWidget(self)
-        self.setCentralWidget(self._centralWidget)
         self.setWindowState(QtCore.Qt.WindowMaximized)
 
         actionOpenFiles.triggered.connect(self._openFiles)
         actionOpenFolders.triggered.connect(self._openFolders)
         actionSetFPS.triggered.connect(self._setFPS)
-
-    @property
-    def _fps(self):
-        return self._centralWidget.fps
-
-    @_fps.setter
-    def _fps(self, fps: int):
-        self._centralWidget.fps = fps
 
     def _setFPS(self):
         def onCheckBoxStateChange(state: int):
@@ -115,7 +93,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         def onAccepted():
             self._useVideoFPS = checkBox.isChecked()
             if not self._useVideoFPS:
-                self._fps = spinBox.value()
+                self._frameBar.fps = spinBox.value()
             dialog.close()
 
         def onRejected():
@@ -129,7 +107,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         spinBox = QtWidgets.QSpinBox(dialog)
         spinBox.setMinimum(0)
         spinBox.setMaximum(1000)
-        spinBox.setValue(self._fps)
+        spinBox.setValue(self._frameBar.fps)
 
         formLayout = QtWidgets.QFormLayout()
         formLayout.addRow(label, spinBox)
@@ -185,8 +163,12 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
             overwrite,
         ) = selectVideoDirectories()
         videoPaths, savePaths = extract_video_paths(
-            directories, recursive, sameConfig, overwrite, config_extension,
-            video_extensions
+            directories,
+            recursive,
+            sameConfig,
+            overwrite,
+            config_extension,
+            video_extensions,
         )
         self._videoPaths.extend(videoPaths)
         self._savePaths.extend(savePaths)
