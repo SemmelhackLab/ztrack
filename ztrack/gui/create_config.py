@@ -3,28 +3,38 @@ from typing import List, Optional
 from decord import VideoReader
 from PyQt5 import QtCore, QtWidgets
 
+from ztrack._settings import config_extension, video_extensions
 from ztrack.gui._control_widget import ControlWidget
-from ztrack.gui._tracking_display_widget import TrackingDisplayWidget
+from ztrack.gui.tracking_image_view import TrackingPlotWidget
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.gui.utils.frame_bar import FrameBar
-from ztrack.utils.config import config_extension, video_extensions
 from ztrack.utils.file import extract_video_paths
 
 
 class CreateConfigWindow(QtWidgets.QMainWindow):
-    def __init__(self, parent: QtWidgets.QWidget = None):
+    def __init__(
+        self,
+        parent: QtWidgets.QWidget = None,
+        videoPaths: List[str] = None,
+        savePaths: List[List[str]] = None,
+    ):
         super().__init__(parent)
-        self._useVideoFPS = True
+        if videoPaths is None:
+            videoPaths = []
+        if savePaths is None:
+            savePaths = []
+        self._videoPaths: List[str] = videoPaths
+        self._savePaths: List[List[str]] = savePaths
 
-        self._videoPaths: List[str] = []
-        self._savePaths: List[List[str]] = []
+        self._useVideoFPS = True
+        self._videoReader = None
 
         self._currentVideoPath: Optional[str] = None
         self._currentSavePaths: Optional[List[str]] = None
 
         self._frameBar = FrameBar(self)
         self._controlWidget = ControlWidget(self)
-        self._trackingDisplayWidget = TrackingDisplayWidget(self)
+        self._trackingImageView = TrackingPlotWidget(self)
 
         self._buttonBox = QtWidgets.QDialogButtonBox(self)
         self._buttonBox.setStandardButtons(
@@ -34,7 +44,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
 
         hBoxLayout1 = QtWidgets.QHBoxLayout()
         hBoxLayout1.setContentsMargins(0, 0, 0, 0)
-        hBoxLayout1.addWidget(self._trackingDisplayWidget)
+        hBoxLayout1.addWidget(self._trackingImageView)
         hBoxLayout1.addWidget(self._controlWidget)
         hBoxLayout1.setStretch(0, 50)
         hBoxLayout1.setStretch(1, 50)
@@ -83,6 +93,9 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         actionOpenFiles.triggered.connect(self._openFiles)
         actionOpenFolders.triggered.connect(self._openFolders)
         actionSetFPS.triggered.connect(self._setFPS)
+        self._frameBar.valueChanged.connect(self._updateFrame)
+
+        self.triggerCreateConfig()
 
     def _setFPS(self):
         def onCheckBoxStateChange(state: int):
@@ -94,6 +107,9 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
             self._useVideoFPS = checkBox.isChecked()
             if not self._useVideoFPS:
                 self._frameBar.fps = spinBox.value()
+            else:
+                if self._videoReader is not None:
+                    self._frameBar.fps = int(self._videoReader.get_avg_fps())
             dialog.close()
 
         def onRejected():
@@ -131,29 +147,43 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         buttonBox.accepted.connect(onAccepted)
         buttonBox.rejected.connect(onRejected)
 
+        checkBox.setChecked(self._useVideoFPS)
+
         dialog.exec()
 
-    def _reset(self):
-        pass
+    def _updateVideo(self):
+        if self._currentVideoPath is not None:
+            self._videoReader = VideoReader(self._currentVideoPath)
+            self._frameBar.maximum = len(self._videoReader) - 1
+            if self._useVideoFPS:
+                self._frameBar.fps = int(self._videoReader.get_avg_fps())
+            img = self._videoReader[self._frameBar.value].asnumpy()
+            self._trackingImageView.setImage(img)
 
-    def _triggerCreateConfig(self):
+    def _updateFrame(self):
+        if self._videoReader is not None:
+            img = self._videoReader[self._frameBar.value].asnumpy()
+            self._trackingImageView.setImage(img)
+
+    def triggerCreateConfig(self):
         if len(self._videoPaths) == 0:
-            self._reset()
-            return
+            self._currentVideoPath = None
+            self._currentSavePaths = None
+        else:
+            self._currentVideoPath = self._videoPaths.pop(0)
+            self._currentSavePaths = self._savePaths.pop(0)
 
-        self._currentVideoPath = self._videoPaths.pop(0)
-        self._currentSavePaths = self._savePaths.pop(0)
-        self._videoReader = VideoReader(self._currentVideoPath)
+        self._updateVideo()
 
-    def _enqueue(self, videoPath: str, savePaths: List[str]):
+    def enqueue(self, videoPath: str, savePaths: List[str]):
         self._videoPaths.append(videoPath)
         self._savePaths.append(savePaths)
 
     def _openFiles(self):
         videoPaths = selectVideoPaths(native=True)
         for videoPath in videoPaths:
-            self._enqueue(videoPath, [videoPath])
-        self._triggerCreateConfig()
+            self.enqueue(videoPath, [videoPath])
+        self.triggerCreateConfig()
 
     def _openFolders(self):
         (
@@ -172,7 +202,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         )
         self._videoPaths.extend(videoPaths)
         self._savePaths.extend(savePaths)
-        self._triggerCreateConfig()
+        self.triggerCreateConfig()
 
 
 if __name__ == "__main__":

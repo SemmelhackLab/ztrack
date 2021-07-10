@@ -34,7 +34,11 @@ class FrameBar(QtWidgets.QWidget):
         self._playTimer.timeout.connect(self._playTick)
         self._pushButton.clicked.connect(self._onPushButtonClicked)
 
-        self.setMaximum(3000)
+        self.maximum = 3000
+
+    @property
+    def valueChanged(self):
+        return self._slider.valueChanged
 
     @property
     def fps(self):
@@ -45,9 +49,23 @@ class FrameBar(QtWidgets.QWidget):
         self._fps = fps
         self._playTimer.setInterval(int(1000 / fps))
 
-    def setMaximum(self, value: int):
+    @property
+    def maximum(self):
+        return self._slider.maximum()
+
+    @maximum.setter
+    def maximum(self, value: int):
         self._slider.setMaximum(value)
         self._spinBox.setMaximum(value)
+
+    @property
+    def value(self):
+        return self._slider.value()
+
+    @value.setter
+    def value(self, value: int):
+        self._slider.setValue(value)
+        self._spinBox.setValue(value)
 
     def _onPushButtonClicked(self):
         self._playing = not self._playing

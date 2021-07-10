@@ -29,9 +29,9 @@ def launch(
     except TypeError:
         pass
     except ModuleNotFoundError:
-        app.setStyle(style)     # type: ignore
+        app.setStyle(style)  # type: ignore
     except AttributeError:
-        app.setStyle(style)     # type: ignore
+        app.setStyle(style)  # type: ignore
     finally:
         if isinstance(show, str) and (show := show.capitalize()) in (
             "FullScreen",

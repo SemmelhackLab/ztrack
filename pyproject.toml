@@ -41,6 +41,7 @@ python = "^3.8"
 opencv-python = "^4.5.2"
 matplotlib = "^3.4.2"
 PyQt5 = "^5.15.4"
+pyqtgraph = "^0.12.2"
 decord = "^0.6.0"
 click = "^8.0.1"
 
