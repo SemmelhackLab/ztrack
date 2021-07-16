@@ -4,10 +4,7 @@ import numpy as np
 import pandas as pd
 
 from ztrack.utils.roi import normalize_roi, roi2slice
-
-
-class Params(ABC):
-    pass
+from ztrack.tracking.params import Params
 
 
 class Tracker(ABC):
@@ -16,7 +13,7 @@ class Tracker(ABC):
 
     @property
     @abstractmethod
-    def params(self):
+    def params(self) -> Params:
         pass
 
     @property

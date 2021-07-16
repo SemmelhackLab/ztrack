@@ -1,6 +1,7 @@
 from abc import ABC
 
-from ztrack.tracking.tracker import Params, Tracker
+from ztrack.tracking.tracker import Tracker
+from ztrack.tracking.params import Params
 
 
 class EyeParams(Params):
