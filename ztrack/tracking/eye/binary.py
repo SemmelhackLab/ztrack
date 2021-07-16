@@ -2,10 +2,32 @@ import cv2
 import numpy as np
 import pandas as pd
 
-from ztrack.tracking.eye.eye_tracker import EyeTracker
+from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
+from ztrack.utils.geometry import wrap_degrees
 
 
 class BinaryEyeTracker(EyeTracker):
+    class Params(EyeParams):
+        def __init__(self, sigma=0, threshold=127):
+            self._sigma = sigma
+            self._threshold = threshold
+
+        @property
+        def sigma(self):
+            return self._sigma
+
+        @property
+        def threshold(self):
+            return self._threshold
+
+    def __init__(self):
+        super().__init__()
+        self._params = BinaryEyeTracker.Params()
+
+    @property
+    def params(self):
+        return self._params
+
     @property
     def name(self):
         return "binary"

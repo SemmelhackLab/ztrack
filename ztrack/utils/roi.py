@@ -17,4 +17,4 @@ def roi2slice(roi=None, axis=0):
     if roi is None:
         return np.s_[:]
     x, y, width, height = roi
-    return (np.s_[:],) * axis + np.s_[y: y + height, x: x + width]
+    return (np.s_[:],) * axis + np.s_[y : y + height, x : x + width]

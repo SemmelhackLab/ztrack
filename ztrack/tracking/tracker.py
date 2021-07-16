@@ -2,12 +2,22 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
+
 from ztrack.utils.roi import normalize_roi, roi2slice
+
+
+class Params(ABC):
+    pass
 
 
 class Tracker(ABC):
     def __init__(self):
         self._roi = None
+
+    @property
+    @abstractmethod
+    def params(self):
+        pass
 
     @property
     def roi(self):
