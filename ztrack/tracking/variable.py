@@ -59,7 +59,9 @@ class Bounded(Numerical, ABC):
 
 
 class Int(Bounded):
-    def __init__(self, display_name: str, value: int, minimum: int, maximum: int):
+    def __init__(
+        self, display_name: str, value: int, minimum: int, maximum: int
+    ):
         super().__init__(display_name, value, minimum, maximum)
 
 
@@ -69,7 +71,14 @@ class UInt8(Int):
 
 
 class Float(Bounded):
-    def __init__(self, display_name: str, value: float, minimum: float, maximum: float, step: float):
+    def __init__(
+        self,
+        display_name: str,
+        value: float,
+        minimum: float,
+        maximum: float,
+        step: float,
+    ):
         super().__init__(display_name, value, minimum, maximum)
         self._step = step
 

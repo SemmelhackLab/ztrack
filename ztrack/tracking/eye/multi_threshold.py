@@ -4,15 +4,19 @@ import pandas as pd
 
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
 from ztrack.tracking.variable import Float, UInt8
+from ztrack.utils.cv import binary_threshold, find_contours, is_in_contour
 from ztrack.utils.geometry import wrap_degrees
 
 
-class BinaryEyeTracker(EyeTracker):
+class MultiThresholdEyeTracker(EyeTracker):
     class Params(EyeParams):
         def __init__(self):
             super().__init__()
             self.sigma = Float("Sigma", 0, 0, 100, 0.1)
-            self.threshold = UInt8("Threshold", 127)
+            self.threshold_segmentation = UInt8("Segmentation threshold", 127)
+            self.threshold_left_eye = UInt8("Left eye threshold", 127)
+            self.threshold_right_eye = UInt8("Right eye threshold", 127)
+            self.threshold_swim_bladder = UInt8("Swim bladder threshold", 127)
 
     def __init__(self):
         super().__init__()
@@ -24,11 +28,11 @@ class BinaryEyeTracker(EyeTracker):
 
     @property
     def name(self):
-        return "binary"
+        return "multithreshold"
 
     @property
     def display_name(self):
-        return "Binary threshold"
+        return "Multi-threshold"
 
     def _track_region(self, img) -> pd.Series:
         pass
@@ -40,18 +44,21 @@ class BinaryEyeTracker(EyeTracker):
         if cv2.mean(img)[0] > 127:
             img = cv2.bitwise_not(img)
 
-        if self.params.sigma > 0:
-            img = cv2.GaussianBlur(img, (0, 0), self.params.sigma)
+        contours_left_eye = find_contours(
+            binary_threshold(img, self.params.threshold_left_eye)
+        )
+        contours_right_eye = find_contours(
+            binary_threshold(img, self.params.threshold_right_eye)
+        )
+        contours_swim_bladder = find_contours(
+            binary_threshold(img, self.params.threshold_swim_bladder)
+        )
 
         # binary threshold
-        img = cv2.threshold(
-            img, self.params.threshold, 255, cv2.THRESH_BINARY
-        )[1]
+        img = binary_threshold(img, self.params.threshold_segmentation)
 
         # find contours
-        contours = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[
-            0
-        ]
+        contours = find_contours(img)
 
         # get the 3 largest contours
         largest3 = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
@@ -79,6 +86,28 @@ class BinaryEyeTracker(EyeTracker):
             eyes
             if np.cross(*centers[eyes] - centers[swim_bladder]) > 0
             else eyes[::-1]
+        )
+
+        largest3[swim_bladder] = max(
+            contours_swim_bladder,
+            key=lambda cnt: is_in_contour(cnt, tuple(centers[swim_bladder])),
+        )
+        largest3[left_eye] = max(
+            contours_left_eye,
+            key=lambda cnt: is_in_contour(cnt, tuple(centers[left_eye])),
+        )
+        largest3[right_eye] = max(
+            contours_right_eye,
+            key=lambda cnt: is_in_contour(cnt, tuple(centers[right_eye])),
+        )
+
+        ellipses = np.array(
+            [
+                (x, y, b / 2, a / 2, theta - 90)
+                for (x, y), (a, b), theta in map(
+                    cv2.fitEllipse, map(cv2.convexHull, largest3)
+                )
+            ]
         )
 
         # correct orientation

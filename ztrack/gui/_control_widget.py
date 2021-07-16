@@ -1,7 +1,9 @@
 from typing import List
 
 from PyQt5 import QtCore, QtWidgets
+
 from ztrack.tracking.eye.binary import BinaryEyeTracker
+from ztrack.tracking.eye.multi_threshold import MultiThresholdEyeTracker
 from ztrack.tracking.tracker import Tracker
 from ztrack.tracking.variable import Float, Int, Variable
 
@@ -9,7 +11,9 @@ from ztrack.tracking.variable import Float, Int, Variable
 class ControlWidget(QtWidgets.QTabWidget):
     def __init__(self, parent: QtWidgets.QWidget = None):
         super().__init__(parent)
-        self.addTrackingTab("Eye", [BinaryEyeTracker()])
+        self.addTrackingTab(
+            "Eye", [BinaryEyeTracker(), MultiThresholdEyeTracker()]
+        )
 
     def addTrackingTab(self, name: str, trackers: List[Tracker]):
         tab = TrackingTab(self)
@@ -22,7 +26,7 @@ class TrackingTab(QtWidgets.QWidget):
     def __init__(self, parent: QtWidgets.QWidget = None):
         super().__init__(parent)
         self._comboBox = QtWidgets.QComboBox(self)
-        self._paramsFrame = ParamsStackedWidget(self)
+        self._paramsStackWidget = ParamsStackedWidget(self)
         label = QtWidgets.QLabel(self)
         label.setText("Method")
         formLayout = QtWidgets.QFormLayout()
@@ -30,12 +34,16 @@ class TrackingTab(QtWidgets.QWidget):
         formLayout.addRow(label, self._comboBox)
         layout = QtWidgets.QVBoxLayout()
         layout.addLayout(formLayout)
-        layout.addWidget(self._paramsFrame)
+        layout.addWidget(self._paramsStackWidget)
         self.setLayout(layout)
+        self._comboBox.currentIndexChanged.connect(self.setTracker)
+
+    def setTracker(self, i: int):
+        self._paramsStackWidget.setCurrentIndex(i)
 
     def addTracker(self, tracker: Tracker):
         self._comboBox.addItem(tracker.display_name)
-        self._paramsFrame.addTracker(tracker)
+        self._paramsStackWidget.addTracker(tracker)
 
 
 class ParamsStackedWidget(QtWidgets.QStackedWidget):
