@@ -9,9 +9,9 @@ import ztrack.gui
 
 def launch(
     Widget: Type[QtWidgets.QWidget],
-    style: str = "light",
-    show: str = None,
-    modern_window=False,
+    style: str = "dark",
+    show: str = "Maximized",
+    modern_window=True,
     **kwargs,
 ) -> int:
     app = QtWidgets.QApplication(sys.argv)
@@ -41,6 +41,6 @@ def launch(
         ):
             getattr(widget, f"show{show}")()
         else:
-            widget.show()
+            widget.showMaximized()
 
         return app.exec()
