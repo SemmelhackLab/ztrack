@@ -14,6 +14,14 @@ def launch(
     modern_window=True,
     **kwargs,
 ) -> int:
+    try:
+        import ctypes
+
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("ztrack")
+    except ModuleNotFoundError:
+        pass
+    except AttributeError:
+        pass
     app = QtWidgets.QApplication(sys.argv)
     widget = Widget(**kwargs)
     icon_path = str(Path(ztrack.gui.__file__).parent / "img" / "logo.svg")
