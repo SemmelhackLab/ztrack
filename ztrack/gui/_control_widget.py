@@ -1,4 +1,4 @@
-from typing import List
+from typing import Dict, List
 
 from PyQt5 import QtWidgets
 
@@ -9,12 +9,17 @@ from ztrack.tracking.tracker import Tracker
 class ControlWidget(QtWidgets.QTabWidget):
     def __init__(self, parent: QtWidgets.QWidget = None):
         super().__init__(parent)
+        self._tabs: Dict[str, TrackingTab] = {}
 
     def addTrackerGroup(self, name: str, trackers: List[Tracker]):
         tab = TrackingTab(self)
         for tracker in trackers:
             tab.addTracker(tracker)
         self.addTab(tab, name)
+        self._tabs[name] = tab
+
+    def getTrackerIndex(self, name):
+        return self._tabs[name].currentIndex
 
 
 class TrackingTab(QtWidgets.QWidget):
@@ -32,6 +37,10 @@ class TrackingTab(QtWidgets.QWidget):
         layout.addWidget(self._paramsStackWidget)
         self.setLayout(layout)
         self._comboBox.currentIndexChanged.connect(self.setTracker)
+
+    @property
+    def currentIndex(self):
+        return self._comboBox.currentIndex()
 
     def setTracker(self, i: int):
         self._paramsStackWidget.setCurrentIndex(i)

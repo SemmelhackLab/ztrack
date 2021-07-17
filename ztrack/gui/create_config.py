@@ -34,6 +34,8 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         self._currentVideoPath: Optional[str] = None
         self._currentSavePaths: Optional[List[str]] = None
 
+        self._trackers = get_trackers()
+
         self._frameBar = FrameBar(self)
         self._controlWidget = ControlWidget(self)
         self._trackingImageView = TrackingPlotWidget(self)
@@ -97,20 +99,18 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         actionSetFPS.triggered.connect(self._setFPS)
         self._frameBar.valueChanged.connect(self._updateFrame)
 
+        for k, v in self._trackers.items():
+            self._addTrackerGroup(k, v)
+
         self.triggerCreateConfig()
 
-        self._initTrackers()
+        self._controlWidget.currentChanged.connect(self._onTabChanged)
+        self._controlWidget.setCurrentIndex(0)
+        self._controlWidget.currentChanged.emit(0)
 
     def _addTrackerGroup(self, name: str, trackers: List[Tracker]):
         self._controlWidget.addTrackerGroup(name, trackers)
         self._trackingImageView.addTrackerGroup(trackers)
-
-    def _initTrackers(self):
-        for key, value in get_trackers().items():
-            self._addTrackerGroup(key, value)
-        self._controlWidget.currentChanged.connect(self._onTabChanged)
-        self._controlWidget.setCurrentIndex(0)
-        self._controlWidget.currentChanged.emit(0)
 
     def _onTabChanged(self, index: int):
         self._trackingImageView.setTrackerGroup(index)
@@ -181,6 +181,9 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         if self._videoReader is not None:
             img = self._videoReader[self._frameBar.value].asnumpy()
             self._trackingImageView.setImage(img)
+            for k, v in self._trackers.items():
+                i = self._controlWidget.getTrackerIndex(k)
+                v[i].annotate(img)
 
     def triggerCreateConfig(self):
         if len(self._videoPaths) == 0:
