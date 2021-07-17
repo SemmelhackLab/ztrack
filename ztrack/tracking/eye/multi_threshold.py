@@ -12,7 +12,6 @@ class MultiThresholdEyeTracker(EyeTracker):
     class Params(EyeParams):
         def __init__(self):
             super().__init__()
-            self.roi = ROI("ROI", None)
             self.sigma = Float("Sigma", 0, 0, 100, 0.1)
             self.threshold_segmentation = UInt8("Segmentation threshold", 127)
             self.threshold_left_eye = UInt8("Left eye threshold", 127)
