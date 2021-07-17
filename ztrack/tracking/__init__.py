@@ -1,4 +1,5 @@
 from typing import Dict, List
+
 from .eye import trackers as eye_trackers
 from .tail import trackers as tail_trackers
 from .tracker import Tracker

@@ -17,9 +17,9 @@ class EyeParams(Params):
 class EyeTracker(Tracker, ABC):
     def __init__(self):
         super().__init__()
-        self._left_eye = Ellipse(0, 0, 0, 0, 0)
-        self._right_eye = Ellipse(0, 0, 0, 0, 0)
-        self._swim_bladder = Ellipse(0, 0, 0, 0, 0)
+        self._left_eye = Ellipse(0, 0, 1, 1, 0)
+        self._right_eye = Ellipse(0, 0, 1, 1, 0)
+        self._swim_bladder = Ellipse(0, 0, 1, 1, 0)
 
     @property
     def shapes(self):

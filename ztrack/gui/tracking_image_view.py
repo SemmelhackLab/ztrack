@@ -1,9 +1,11 @@
-from typing import List
+from abc import abstractmethod
+from typing import Dict, List
 
 import pyqtgraph as pg
 from PyQt5 import QtWidgets
 
 from ztrack.tracking.tracker import Tracker
+from ztrack.utils.shape import Ellipse, Shape
 
 
 class TrackingPlotWidget(pg.PlotWidget):
@@ -12,6 +14,8 @@ class TrackingPlotWidget(pg.PlotWidget):
         pg.setConfigOptions(imageAxisOrder="row-major")
         self._imageItem = pg.ImageItem()
         self._rois: List[pg.RectROI] = []
+        self._roiGroups: Dict[str, List[ROIGroup]] = {}
+        self._currentROIGroups: Dict[str, ROIGroup] = {}
         self._currentROI = None
         self.addItem(self._imageItem)
         self.invertY(True)
@@ -20,8 +24,18 @@ class TrackingPlotWidget(pg.PlotWidget):
         self.hideAxis("left")
         self.setBackground(None)
 
-    def addTrackerGroup(self, trackers: List[Tracker]):
+    def setTracker(self, name, index):
+        for roi in self._currentROIGroups[name].rois:
+            self.removeItem(roi)
+        self._currentROIGroups[name] = self._roiGroups[name][index]
+        for roi in self._currentROIGroups[name].rois:
+            self.addItem(roi)
+
+    def addTrackerGroup(self, name, trackers: List[Tracker]):
         self.addROI()
+        self._roiGroups[name] = [ROIGroup.fromTracker(i) for i in trackers]
+        self._currentROIGroups[name] = self._roiGroups[name][0]
+        self.setTracker(name, 0)
 
     def setTrackerGroup(self, index: int):
         self.setROI(index)
@@ -51,3 +65,52 @@ class TrackingPlotWidget(pg.PlotWidget):
 
     def setImage(self, img):
         self._imageItem.setImage(img)
+
+    def updateROIGroups(self):
+        for roiGroup in self._currentROIGroups.values():
+            roiGroup.update()
+
+
+class ROIGroup:
+    def __init__(self, rois):
+        self._rois = rois
+
+    @property
+    def rois(self):
+        return self._rois
+
+    @staticmethod
+    def fromTracker(tracker: Tracker):
+        return ROIGroup([roiFromShape(shape) for shape in tracker.shapes])
+
+    def update(self):
+        for roi in self._rois:
+            roi.updateAttr()
+
+
+def roiFromShape(shape: Shape):
+    if isinstance(shape, Ellipse):
+        return EllipseROI(shape)
+
+
+class ShapeMixin:
+    @abstractmethod
+    def updateAttr(self):
+        pass
+
+
+class EllipseROI(pg.EllipseROI, ShapeMixin):
+    def __init__(self, ellipse: Ellipse):
+        self._ellipse = ellipse
+        super().__init__(pos=(0, 0), size=(1, 1))
+        self.updateAttr()
+
+    def updateAttr(self):
+        pos = (
+            self._ellipse.cx - self._ellipse.a,
+            self._ellipse.cy - self._ellipse.b,
+        )
+        size = (self._ellipse.a * 2, self._ellipse.b * 2)
+        self.setPos(pos)
+        self.setSize(size)
+        self.setAngle(0)

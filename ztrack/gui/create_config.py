@@ -107,10 +107,15 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         self._controlWidget.currentChanged.connect(self._onTabChanged)
         self._controlWidget.setCurrentIndex(0)
         self._controlWidget.currentChanged.emit(0)
+        self._controlWidget.trackerChanged.connect(self._onTrackerChanged)
+        self._controlWidget.paramsChanged.connect(self._updateFrame)
+
+    def _onTrackerChanged(self, name: str, index: int):
+        self._trackingImageView.setTracker(name, index)
 
     def _addTrackerGroup(self, name: str, trackers: List[Tracker]):
         self._controlWidget.addTrackerGroup(name, trackers)
-        self._trackingImageView.addTrackerGroup(trackers)
+        self._trackingImageView.addTrackerGroup(name, trackers)
 
     def _onTabChanged(self, index: int):
         self._trackingImageView.setTrackerGroup(index)
@@ -184,6 +189,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
             for k, v in self._trackers.items():
                 i = self._controlWidget.getTrackerIndex(k)
                 v[i].annotate(img)
+                self._trackingImageView.updateROIGroups()
 
     def triggerCreateConfig(self):
         if len(self._videoPaths) == 0:
