@@ -1,4 +1,10 @@
 from abc import ABC, abstractmethod
+from typing import Optional, Tuple
+
+from ztrack.utils.roi import normalize_roi
+
+
+_bbox = Optional[Tuple[int, int, int, int]]
 
 
 class Variable(ABC):
@@ -17,6 +23,20 @@ class Variable(ABC):
     @value.setter
     def value(self, value):
         pass
+
+
+class ROI(Variable):
+    def __init__(self, display_name: str, bbox: _bbox = None):
+        super().__init__(display_name)
+        self._value = bbox
+
+    @property
+    def value(self) -> _bbox:
+        return self._value
+
+    @value.setter
+    def value(self, value: _bbox):
+        self._value = normalize_roi(value)
 
 
 class Numerical(Variable, ABC):

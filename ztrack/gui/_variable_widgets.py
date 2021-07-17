@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, QtCore
 
-from ztrack.tracking.variable import Float, Int, Variable
+from ztrack.tracking.variable import Float, Int, Variable, ROI
 
 
 class VariableWidget(QtWidgets.QWidget):
@@ -13,8 +13,28 @@ class VariableWidget(QtWidgets.QWidget):
             return IntWidget(parent, variable=variable)
         elif isinstance(variable, Float):
             return FloatWidget(parent, variable=variable)
+        elif isinstance(variable, ROI):
+            return ROIWidget(parent, variable=variable)
         else:
             raise NotImplementedError
+
+
+class ROIWidget(VariableWidget):
+    def __init__(self, parent: QtWidgets.QWidget = None, *, variable: ROI):
+        super().__init__(parent)
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self._label = QtWidgets.QLabel(self)
+        self._label.setText(str(variable.value))
+        self._pushButton = QtWidgets.QPushButton(self)
+        self._pushButton.setText("Select ROI")
+        layout.addWidget(self._label)
+        layout.addWidget(self._pushButton)
+        self.setLayout(layout)
+
+    @property
+    def clicked(self):
+        return self._pushButton.clicked
 
 
 class FloatWidget(VariableWidget):
