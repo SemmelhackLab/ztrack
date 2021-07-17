@@ -8,17 +8,17 @@ from ztrack.gui._control_widget import ControlWidget
 from ztrack.gui.tracking_image_view import TrackingPlotWidget
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.gui.utils.frame_bar import FrameBar
-from ztrack.utils.file import extract_video_paths
 from ztrack.tracking import get_trackers
 from ztrack.tracking.tracker import Tracker
+from ztrack.utils.file import extract_video_paths
 
 
 class CreateConfigWindow(QtWidgets.QMainWindow):
     def __init__(
-            self,
-            parent: QtWidgets.QWidget = None,
-            videoPaths: List[str] = None,
-            savePaths: List[List[str]] = None,
+        self,
+        parent: QtWidgets.QWidget = None,
+        videoPaths: List[str] = None,
+        savePaths: List[List[str]] = None,
     ):
         super().__init__(parent)
         if videoPaths is None:
@@ -113,7 +113,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         self._controlWidget.currentChanged.emit(0)
 
     def _onTabChanged(self, index: int):
-        self._trackingImageView.setROI(index)
+        self._trackingImageView.setTrackerGroup(index)
 
     def _setFPS(self):
         def onCheckBoxStateChange(state: int):
@@ -175,8 +175,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
             self._frameBar.maximum = len(self._videoReader) - 1
             if self._useVideoFPS:
                 self._frameBar.fps = int(self._videoReader.get_avg_fps())
-            img = self._videoReader[self._frameBar.value].asnumpy()
-            self._trackingImageView.setImage(img)
+            self._updateFrame()
 
     def _updateFrame(self):
         if self._videoReader is not None:

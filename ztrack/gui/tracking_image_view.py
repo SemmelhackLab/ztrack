@@ -1,4 +1,5 @@
 from typing import List
+
 import pyqtgraph as pg
 from PyQt5 import QtWidgets
 
@@ -22,9 +23,13 @@ class TrackingPlotWidget(pg.PlotWidget):
     def addTrackerGroup(self, trackers: List[Tracker]):
         self.addROI()
 
+    def setTrackerGroup(self, index: int):
+        self.setROI(index)
+
     def addROI(self):
-        roi = pg.RectROI((0, 0), (100, 100), rotatable=False, movable=False,
-                         resizable=False)
+        roi = pg.RectROI(
+            (0, 0), (100, 100), rotatable=False, movable=False, resizable=False
+        )
         self.addItem(roi)
         self._rois.append(roi)
 

@@ -9,4 +9,9 @@ class TailParams(Params):
 
 
 class TailTracker(Tracker, ABC):
-    pass
+    @property
+    def shapes(self):
+        return []
+
+    def annotate(self):
+        pass

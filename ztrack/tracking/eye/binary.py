@@ -4,7 +4,6 @@ import pandas as pd
 
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
 from ztrack.tracking.variable import Float, UInt8
-from ztrack.utils.geometry import wrap_degrees
 
 
 class BinaryEyeTracker(EyeTracker):
@@ -34,60 +33,19 @@ class BinaryEyeTracker(EyeTracker):
         pass
 
     def _track_ellipses(self, src: np.ndarray):
-        img = cv2.cvtColor(src, cv2.COLOR_RGB2GRAY)
+        img = self._preprocess(src, self.params.sigma)
 
-        # invert image if mean intensity is greater than 127
-        if cv2.mean(img)[0] > 127:
-            img = cv2.bitwise_not(img)
-
-        if self.params.sigma > 0:
-            img = cv2.GaussianBlur(img, (0, 0), self.params.sigma)
-
-        # binary threshold
-        img = cv2.threshold(
-            img, self.params.threshold, 255, cv2.THRESH_BINARY
-        )[1]
-
-        # find contours
-        contours = cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[
-            0
-        ]
+        contours = self._binary_segmentation(img, self.params.threshold)
 
         # get the 3 largest contours
         largest3 = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
-
         assert len(largest3) == 3
 
-        # fit ellipses (x, y, semi-major axis, semi-minor axis, theta in degrees)
-        ellipses = np.array(
-            [
-                (x, y, b / 2, a / 2, theta - 90)
-                for (x, y), (a, b), theta in map(
-                    cv2.fitEllipse, map(cv2.convexHull, largest3)
-                )
-            ]
-        )
+        # fit ellipses (x, y, semi-major axis, semi-minor axis, theta in
+        # degrees)
+        ellipses = self._fit_ellipses(largest3)
 
-        # identify contours
         centers = ellipses[:, :2]
-        idx = np.arange(3)
-        swim_bladder = np.argmin(
-            [np.linalg.norm(np.subtract(*centers[idx != i])) for i in idx]
-        )
-        eyes = idx[idx != swim_bladder]
-        left_eye, right_eye = (
-            eyes
-            if np.cross(*centers[eyes] - centers[swim_bladder]) > 0
-            else eyes[::-1]
-        )
+        ellipses = ellipses[list(self._sort_centers(centers))]
 
-        # correct orientation
-        midpoint = centers[eyes].mean(0)
-        midline = midpoint - centers[swim_bladder]
-        heading = np.rad2deg(np.arctan2(*midline[::-1]))
-        is_opposite = abs(wrap_degrees(heading - ellipses[:, -1])) > 90
-        ellipses[is_opposite, -1] = wrap_degrees(
-            ellipses[is_opposite, -1] - 180
-        )
-
-        return ellipses[[left_eye, right_eye, swim_bladder]]
+        return self._correct_orientation(ellipses)

@@ -3,9 +3,8 @@ import numpy as np
 import pandas as pd
 
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
-from ztrack.tracking.variable import ROI, Float, UInt8
-from ztrack.utils.cv import binary_threshold, find_contours, is_in_contour
-from ztrack.utils.geometry import wrap_degrees
+from ztrack.tracking.variable import Float, UInt8
+from ztrack.utils.cv import is_in_contour
 
 
 class MultiThresholdEyeTracker(EyeTracker):
@@ -38,55 +37,30 @@ class MultiThresholdEyeTracker(EyeTracker):
         pass
 
     def _track_ellipses(self, src: np.ndarray):
-        img = cv2.cvtColor(src, cv2.COLOR_RGB2GRAY)
+        img = self._preprocess(src)
 
-        # invert image if mean intensity is greater than 127
-        if cv2.mean(img)[0] > 127:
-            img = cv2.bitwise_not(img)
-
-        contours_left_eye = find_contours(
-            binary_threshold(img, self.params.threshold_left_eye)
+        contours_left_eye = self._binary_segmentation(
+            img, self.params.threshold_left_eye
         )
-        contours_right_eye = find_contours(
-            binary_threshold(img, self.params.threshold_right_eye)
+        contours_right_eye = self._binary_segmentation(
+            img, self.params.threshold_right_eye
         )
-        contours_swim_bladder = find_contours(
-            binary_threshold(img, self.params.threshold_swim_bladder)
+        contours_swim_bladder = self._binary_segmentation(
+            img, self.params.threshold_swim_bladder
         )
-
-        # binary threshold
-        img = binary_threshold(img, self.params.threshold_segmentation)
-
-        # find contours
-        contours = find_contours(img)
+        contours = self._binary_segmentation(
+            img, self.params.threshold_segmentation
+        )
 
         # get the 3 largest contours
         largest3 = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
-
         assert len(largest3) == 3
 
-        # fit ellipses (x, y, semi-major axis, semi-minor axis, theta in degrees)
-        ellipses = np.array(
-            [
-                (x, y, b / 2, a / 2, theta - 90)
-                for (x, y), (a, b), theta in map(
-                    cv2.fitEllipse, map(cv2.convexHull, largest3)
-                )
-            ]
-        )
+        ellipses = self._fit_ellipses(largest3)
 
         # identify contours
         centers = ellipses[:, :2]
-        idx = np.arange(3)
-        swim_bladder = np.argmin(
-            [np.linalg.norm(np.subtract(*centers[idx != i])) for i in idx]
-        )
-        eyes = idx[idx != swim_bladder]
-        left_eye, right_eye = (
-            eyes
-            if np.cross(*centers[eyes] - centers[swim_bladder]) > 0
-            else eyes[::-1]
-        )
+        left_eye, right_eye, swim_bladder = self._sort_centers(centers)
 
         largest3[swim_bladder] = max(
             contours_swim_bladder,
@@ -101,22 +75,7 @@ class MultiThresholdEyeTracker(EyeTracker):
             key=lambda cnt: is_in_contour(cnt, tuple(centers[right_eye])),
         )
 
-        ellipses = np.array(
-            [
-                (x, y, b / 2, a / 2, theta - 90)
-                for (x, y), (a, b), theta in map(
-                    cv2.fitEllipse, map(cv2.convexHull, largest3)
-                )
-            ]
-        )
+        ellipses = self._fit_ellipses(largest3)
+        ellipses = ellipses[[left_eye, right_eye, swim_bladder]]
 
-        # correct orientation
-        midpoint = centers[eyes].mean(0)
-        midline = midpoint - centers[swim_bladder]
-        heading = np.rad2deg(np.arctan2(*midline[::-1]))
-        is_opposite = abs(wrap_degrees(heading - ellipses[:, -1])) > 90
-        ellipses[is_opposite, -1] = wrap_degrees(
-            ellipses[is_opposite, -1] - 180
-        )
-
-        return ellipses[[left_eye, right_eye, swim_bladder]]
+        return self._correct_orientation(ellipses)

@@ -13,6 +13,15 @@ class Tracker(ABC):
 
     @property
     @abstractmethod
+    def shapes(self):
+        pass
+
+    @abstractmethod
+    def annotate(self, img: np.ndarray) -> None:
+        pass
+
+    @property
+    @abstractmethod
     def params(self) -> Params:
         pass
 

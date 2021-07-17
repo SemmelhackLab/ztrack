@@ -1,7 +1,7 @@
 import pandas as pd
 
 from ..variable import Float, UInt8
-from .tail_tracker import TailTracker, TailParams
+from .tail_tracker import TailParams, TailTracker
 
 
 class BinaryTailTracker(TailTracker):

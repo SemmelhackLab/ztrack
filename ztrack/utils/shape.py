@@ -7,11 +7,11 @@ class Shape(ABC):
 
 class Ellipse(Shape):
     def __init__(self, cx, cy, a, b, theta):
-        self._cx = cx
-        self._cy = cy
-        self._a = a
-        self._b = b
-        self._theta = theta
+        self.cx = cx
+        self.cy = cy
+        self.a = a
+        self.b = b
+        self.theta = theta
 
 
 class Circle(Ellipse):
@@ -21,15 +21,15 @@ class Circle(Ellipse):
 
 class Line(Shape):
     def __init__(self, x0, y0, x1, y1):
-        self._x0 = x0
-        self._y0 = y0
-        self._x1 = x1
-        self._y1 = y1
+        self.x0 = x0
+        self.y0 = y0
+        self.x1 = x1
+        self.y1 = y1
 
 
 class Rectangle(Shape):
     def __init__(self, x0, y0, w, h):
-        self._x0 = x0
-        self._y0 = y0
-        self._w = w
-        self._h = h
+        self.x0 = x0
+        self.y0 = y0
+        self.w = w
+        self.h = h
