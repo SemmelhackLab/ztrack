@@ -10,7 +10,7 @@ class ControlWidget(QtWidgets.QTabWidget):
     def __init__(self, parent: QtWidgets.QWidget = None):
         super().__init__(parent)
 
-    def addTrackingTab(self, name: str, trackers: List[Tracker]):
+    def addTrackerGroup(self, name: str, trackers: List[Tracker]):
         tab = TrackingTab(self)
         for tracker in trackers:
             tab.addTracker(tracker)

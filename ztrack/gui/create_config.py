@@ -102,8 +102,8 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         self._initTrackers()
 
     def _addTrackerGroup(self, name: str, trackers: List[Tracker]):
-        self._controlWidget.addTrackingTab(name, trackers)
-        self._trackingImageView.addROI()
+        self._controlWidget.addTrackerGroup(name, trackers)
+        self._trackingImageView.addTrackerGroup(trackers)
 
     def _initTrackers(self):
         for key, value in get_trackers().items():

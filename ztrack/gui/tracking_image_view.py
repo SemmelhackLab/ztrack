@@ -2,6 +2,8 @@ from typing import List
 import pyqtgraph as pg
 from PyQt5 import QtWidgets
 
+from ztrack.tracking.tracker import Tracker
+
 
 class TrackingPlotWidget(pg.PlotWidget):
     def __init__(self, parent: QtWidgets.QWidget = None):
@@ -16,6 +18,9 @@ class TrackingPlotWidget(pg.PlotWidget):
         self.hideAxis("bottom")
         self.hideAxis("left")
         self.setBackground(None)
+
+    def addTrackerGroup(self, trackers: List[Tracker]):
+        self.addROI()
 
     def addROI(self):
         roi = pg.RectROI((0, 0), (100, 100), rotatable=False, movable=False,
