@@ -9,14 +9,16 @@ from ztrack.gui.tracking_image_view import TrackingPlotWidget
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.gui.utils.frame_bar import FrameBar
 from ztrack.utils.file import extract_video_paths
+from ztrack.tracking import get_trackers
+from ztrack.tracking.tracker import Tracker
 
 
 class CreateConfigWindow(QtWidgets.QMainWindow):
     def __init__(
-        self,
-        parent: QtWidgets.QWidget = None,
-        videoPaths: List[str] = None,
-        savePaths: List[List[str]] = None,
+            self,
+            parent: QtWidgets.QWidget = None,
+            videoPaths: List[str] = None,
+            savePaths: List[List[str]] = None,
     ):
         super().__init__(parent)
         if videoPaths is None:
@@ -96,6 +98,22 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         self._frameBar.valueChanged.connect(self._updateFrame)
 
         self.triggerCreateConfig()
+
+        self._initTrackers()
+
+    def _addTrackerGroup(self, name: str, trackers: List[Tracker]):
+        self._controlWidget.addTrackingTab(name, trackers)
+        self._trackingImageView.addROI()
+
+    def _initTrackers(self):
+        for key, value in get_trackers().items():
+            self._addTrackerGroup(key, value)
+        self._controlWidget.currentChanged.connect(self._onTabChanged)
+        self._controlWidget.setCurrentIndex(0)
+        self._controlWidget.currentChanged.emit(0)
+
+    def _onTabChanged(self, index: int):
+        self._trackingImageView.setROI(index)
 
     def _setFPS(self):
         def onCheckBoxStateChange(state: int):

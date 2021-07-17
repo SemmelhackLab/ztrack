@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
-from ztrack.tracking.variable import Float, UInt8, ROI
+from ztrack.tracking.variable import ROI, Float, UInt8
 from ztrack.utils.cv import binary_threshold, find_contours, is_in_contour
 from ztrack.utils.geometry import wrap_degrees
 
@@ -12,7 +12,6 @@ class MultiThresholdEyeTracker(EyeTracker):
     class Params(EyeParams):
         def __init__(self):
             super().__init__()
-            self.roi = ROI("ROI", None)
             self.sigma = Float("Sigma", 0, 0, 100, 0.1)
             self.threshold_segmentation = UInt8("Segmentation threshold", 127)
             self.threshold_left_eye = UInt8("Left eye threshold", 127)

@@ -1,6 +1,6 @@
-from PyQt5 import QtWidgets, QtCore
+from PyQt5 import QtCore, QtWidgets
 
-from ztrack.tracking.variable import Float, Int, Variable, ROI
+from ztrack.tracking.variable import ROI, Float, Int, Variable
 
 
 class VariableWidget(QtWidgets.QWidget):
@@ -20,10 +20,13 @@ class VariableWidget(QtWidgets.QWidget):
 
 
 class ROIWidget(VariableWidget):
+    selectModeChanged = QtCore.pyqtSignal(bool)
+
     def __init__(self, parent: QtWidgets.QWidget = None, *, variable: ROI):
         super().__init__(parent)
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
+        self._isSelectMode = False
         self._label = QtWidgets.QLabel(self)
         self._label.setText(str(variable.value))
         self._pushButton = QtWidgets.QPushButton(self)
@@ -31,10 +34,22 @@ class ROIWidget(VariableWidget):
         layout.addWidget(self._label)
         layout.addWidget(self._pushButton)
         self.setLayout(layout)
+        self._pushButton.clicked.connect(self.onClicked)
 
-    @property
-    def clicked(self):
-        return self._pushButton.clicked
+    def enableSelectMode(self):
+        self._pushButton.setText("Cancel")
+        self.selectModeChanged.emit(True)
+
+    def disableSelectMode(self):
+        self._pushButton.setText("Select ROI")
+        self.selectModeChanged.emit(False)
+
+    def onClicked(self):
+        self._isSelectMode = not self._isSelectMode
+        if self._isSelectMode:
+            self.enableSelectMode()
+        else:
+            self.disableSelectMode()
 
 
 class FloatWidget(VariableWidget):

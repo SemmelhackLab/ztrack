@@ -3,17 +3,12 @@ from typing import List
 from PyQt5 import QtWidgets
 
 from ztrack.gui._variable_widgets import VariableWidget
-from ztrack.tracking.eye.binary import BinaryEyeTracker
-from ztrack.tracking.eye.multi_threshold import MultiThresholdEyeTracker
 from ztrack.tracking.tracker import Tracker
 
 
 class ControlWidget(QtWidgets.QTabWidget):
     def __init__(self, parent: QtWidgets.QWidget = None):
         super().__init__(parent)
-        self.addTrackingTab(
-            "Eye", [BinaryEyeTracker(), MultiThresholdEyeTracker()]
-        )
 
     def addTrackingTab(self, name: str, trackers: List[Tracker]):
         tab = TrackingTab(self)

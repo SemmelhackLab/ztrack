@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
-from ztrack.tracking.variable import Float, UInt8, ROI
+from ztrack.tracking.variable import Float, UInt8
 from ztrack.utils.geometry import wrap_degrees
 
 
@@ -11,7 +11,6 @@ class BinaryEyeTracker(EyeTracker):
     class Params(EyeParams):
         def __init__(self):
             super().__init__()
-            self.roi = ROI("ROI", None)
             self.sigma = Float("Sigma", 0, 0, 100, 0.1)
             self.threshold = UInt8("Threshold", 127)
 
