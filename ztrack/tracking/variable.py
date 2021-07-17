@@ -3,7 +3,6 @@ from typing import Optional, Tuple
 
 from ztrack.utils.roi import normalize_roi
 
-
 _bbox = Optional[Tuple[int, int, int, int]]
 
 
