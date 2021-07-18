@@ -16,10 +16,10 @@ class TrackingPlotWidget(pg.PlotWidget):
         super().__init__(parent)
         pg.setConfigOptions(imageAxisOrder="row-major")
         self._imageItem = pg.ImageItem()
-        self._rois: List[pg.RectROI] = []
+        self._rois: Dict[str, pg.RectROI] = {}
         self._roiGroups: Dict[str, List[ROIGroup]] = {}
         self._currentROIGroups: Dict[str, ROIGroup] = {}
-        self._currentROI: Optional[int] = None
+        self._currentTab: Optional[str] = None
         self.addItem(self._imageItem)
         self.invertY(True)
         self.setAspectLocked(1)
@@ -37,7 +37,7 @@ class TrackingPlotWidget(pg.PlotWidget):
                 roi.removeHandle(handle)
 
     def addTrackerGroup(self, name, trackers: List[Tracker]):
-        roi = self.addROI()
+        roi = self.addROI(name)
         self._roiGroups[name] = [ROIGroup.fromTracker(i) for i in trackers]
         for tracker in trackers:
             tracker.bbox = roi.bbox
@@ -45,32 +45,32 @@ class TrackingPlotWidget(pg.PlotWidget):
         self._currentROIGroups[name] = self._roiGroups[name][0]
         self.setTracker(name, 0)
 
-    def setTrackerGroup(self, index: int):
-        self.setROI(index)
+    def setTrackerGroup(self, name: str):
+        self.setROI(name)
 
-    def addROI(self):
+    def addROI(self, name):
         roi = RoiBBox(
             (0, 0), (100, 100), rotatable=False, movable=False, resizable=False
         )
         self.addItem(roi)
-        self._rois.append(roi)
+        self._rois[name] = roi
         return roi
 
-    def _disableROI(self, index):
-        roi = self._rois[index]
+    def _disableROI(self, name):
+        roi = self._rois[name]
         roi.translatable = False
         roi.resizable = False
 
-    def _enableROI(self, index):
-        roi = self._rois[index]
+    def _enableROI(self, name):
+        roi = self._rois[name]
         roi.translatable = True
         roi.resizable = True
 
-    def setROI(self, index: int):
-        if self._currentROI is not None:
-            self._disableROI(self._currentROI)
-        self._enableROI(index)
-        self._currentROI = index
+    def setROI(self, name):
+        if self._currentTab is not None:
+            self._disableROI(self._currentTab)
+        self._enableROI(name)
+        self._currentTab = name
 
     def setImage(self, img):
         self._imageItem.setImage(img)

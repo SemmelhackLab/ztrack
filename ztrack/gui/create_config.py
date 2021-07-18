@@ -119,7 +119,8 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         self._trackingImageView.addTrackerGroup(name, trackers)
 
     def _onTabChanged(self, index: int):
-        self._trackingImageView.setTrackerGroup(index)
+        name = list(self._trackers)[index]
+        self._trackingImageView.setTrackerGroup(name)
 
     def _setFPS(self):
         def onCheckBoxStateChange(state: int):
