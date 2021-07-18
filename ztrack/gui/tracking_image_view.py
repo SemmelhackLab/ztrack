@@ -33,6 +33,7 @@ class TrackingPlotWidget(pg.PlotWidget):
         self._currentROIGroups[name] = self._roiGroups[name][index]
         for roi in self._currentROIGroups[name].rois:
             self.addItem(roi)
+            roi.setBBox(self._rois[name].bbox)
             for handle in roi.getHandles():
                 roi.removeHandle(handle)
 
@@ -139,6 +140,9 @@ class EllipseROI(pg.EllipseROI, ShapeMixin):
         )
         self.updateAttr()
 
+    def setBBox(self, bbox):
+        self._ellipse.set_bbox(bbox)
+
     @property
     def cx(self):
         return self._ellipse.cx
@@ -160,7 +164,11 @@ class EllipseROI(pg.EllipseROI, ShapeMixin):
         return self._ellipse.theta
 
     def updateAttr(self):
-        self.setTransformOriginPoint(self.a, self.b)
-        self.setPos((self.cx - self.a, self.cy - self.b))
-        self.setSize((self.a * 2, self.b * 2))
-        self.setRotation(self.theta)
+        if self._ellipse.visible:
+            self.setVisible(True)
+            self.setTransformOriginPoint(self.a, self.b)
+            self.setPos((self.cx - self.a, self.cy - self.b))
+            self.setSize((self.a * 2, self.b * 2))
+            self.setRotation(self.theta)
+        else:
+            self.setVisible(False)

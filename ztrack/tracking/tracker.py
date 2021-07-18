@@ -27,8 +27,8 @@ class Tracker(ABC):
     def shapes(self):
         pass
 
-    def annotate(self, img: np.ndarray) -> None:
-        return self._annotate_img(img)
+    def annotate(self, frame: np.ndarray) -> None:
+        return self._annotate_img(self._get_bbox_img(frame))
 
     @abstractmethod
     def _annotate_img(self, img: np.ndarray) -> None:
