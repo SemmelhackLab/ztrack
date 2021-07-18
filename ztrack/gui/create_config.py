@@ -92,7 +92,6 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
 
         self.setMenuBar(menuBar)
         self.setWindowTitle("ztrack")
-        self.setWindowState(QtCore.Qt.WindowMaximized)
 
         actionOpenFiles.triggered.connect(self._openFiles)
         actionOpenFolders.triggered.connect(self._openFolders)

@@ -10,8 +10,7 @@ import ztrack.gui
 def launch(
     Widget: Type[QtWidgets.QWidget],
     style: str = "dark",
-    show: str = "Maximized",
-    modern_window=True,
+    modern_window=False,
     **kwargs,
 ) -> int:
     try:
@@ -41,14 +40,5 @@ def launch(
     except AttributeError:
         app.setStyle(style)  # type: ignore
     finally:
-        if isinstance(show, str) and (show := show.capitalize()) in (
-            "FullScreen",
-            "Maximized",
-            "Minimized",
-            "Normal",
-        ):
-            getattr(widget, f"show{show}")()
-        else:
-            widget.showMaximized()
-
+        widget.showMaximized()
         return app.exec()
