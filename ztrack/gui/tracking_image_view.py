@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Dict, List, Optional
 
 import pyqtgraph as pg
-from PyQt5 import QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 from ztrack.tracking.tracker import Tracker
 from ztrack.utils.shape import Ellipse, Shape
@@ -10,6 +10,8 @@ from ztrack.tracking.variable import BBox
 
 
 class TrackingPlotWidget(pg.PlotWidget):
+    roiChanged = QtCore.pyqtSignal(str)
+
     def __init__(self, parent: QtWidgets.QWidget = None):
         super().__init__(parent)
         pg.setConfigOptions(imageAxisOrder="row-major")
@@ -38,7 +40,8 @@ class TrackingPlotWidget(pg.PlotWidget):
         roi = self.addROI()
         self._roiGroups[name] = [ROIGroup.fromTracker(i) for i in trackers]
         for tracker in trackers:
-            tracker.bbox = roi
+            tracker.bbox = roi.bbox
+        roi.sigRegionChanged.connect(lambda: self.roiChanged.emit(name))
         self._currentROIGroups[name] = self._roiGroups[name][0]
         self.setTracker(name, 0)
 
@@ -83,6 +86,10 @@ class RoiBBox(pg.RectROI):
         x, y = pos
         w, h = size
         self._bbox = BBox("", (w, y, w, h))
+
+    @property
+    def bbox(self):
+        return self._bbox
 
     def mouseDragEvent(self, ev):
         x, y = self.pos()

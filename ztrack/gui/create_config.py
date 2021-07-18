@@ -107,7 +107,8 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         self._controlWidget.setCurrentIndex(0)
         self._controlWidget.currentChanged.emit(0)
         self._controlWidget.trackerChanged.connect(self._onTrackerChanged)
-        self._controlWidget.paramsChanged.connect(self._updateFrame)
+        self._controlWidget.paramsChanged.connect(self._updateTracker)
+        self._trackingImageView.roiChanged.connect(self._updateTracker)
 
     def _onTrackerChanged(self, name: str, index: int):
         self._trackingImageView.setTracker(name, index)
@@ -181,6 +182,14 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
             if self._useVideoFPS:
                 self._frameBar.fps = int(self._videoReader.get_avg_fps())
             self._updateFrame()
+
+    def _updateTracker(self, name: str):
+        if self._videoReader is not None:
+            img = self._videoReader[self._frameBar.value].asnumpy()
+            self._trackingImageView.setImage(img)
+            i = self._controlWidget.getTrackerIndex(name)
+            self._trackers[name][i].annotate(img)
+            self._trackingImageView.updateROIGroups()
 
     def _updateFrame(self):
         if self._videoReader is not None:

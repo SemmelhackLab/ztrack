@@ -8,7 +8,7 @@ from ztrack.tracking.tracker import Tracker
 
 class ControlWidget(QtWidgets.QTabWidget):
     trackerChanged = QtCore.pyqtSignal(str, int)
-    paramsChanged = QtCore.pyqtSignal()
+    paramsChanged = QtCore.pyqtSignal(str)
 
     def __init__(self, parent: QtWidgets.QWidget = None):
         super().__init__(parent)
@@ -57,7 +57,9 @@ class TrackingTab(QtWidgets.QWidget):
     def addTracker(self, tracker: Tracker):
         self._comboBox.addItem(tracker.display_name)
         widget = ParamsWidget(self, tracker=tracker)
-        widget.paramsChanged.connect(self._parent.paramsChanged.emit)
+        widget.paramsChanged.connect(
+            lambda: self._parent.paramsChanged.emit(self._name)
+        )
         self._paramsStackWidget.addWidget(widget)
 
 
