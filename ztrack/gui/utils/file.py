@@ -1,6 +1,7 @@
 from typing import Iterable, List, Tuple
 
 from PyQt5 import QtCore, QtWidgets
+from PyQt5.QtWidgets import QAbstractItemView
 
 
 def selectFiles(filter_: str = None, native=False) -> List[str]:
@@ -33,9 +34,7 @@ def selectVideoDirectories() -> Tuple[List[str], bool, bool, bool]:
     recursiveCheckBox.setText("Include subdirectories")
     recursiveCheckBox.setChecked(True)
     sameConfigCheckBox = QtWidgets.QCheckBox(dialog)
-    sameConfigCheckBox.setText(
-        "Generate one configuration file for each directory"
-    )
+    sameConfigCheckBox.setText("Use one configuration file per directory")
     sameConfigCheckBox.setChecked(True)
     overwriteCheckBox = QtWidgets.QCheckBox(dialog)
     overwriteCheckBox.setText("Overwrite existing configuration files")
@@ -49,19 +48,18 @@ def selectVideoDirectories() -> Tuple[List[str], bool, bool, bool]:
     groupBox.setTitle("Options")
     groupBox.setLayout(vBoxLayout)
 
-    if isinstance(dialog.layout(), QtWidgets.QGridLayout):
-        dialog.layout().addWidget(groupBox, 4, 0, 1, 3)  # noqa
+    layout = dialog.layout()
+    if isinstance(layout, QtWidgets.QGridLayout):
+        layout.addWidget(groupBox, 4, 0, 1, 3)
     else:
-        dialog.layout().addWidget(groupBox)
+        layout.addWidget(groupBox)
 
     fileView = dialog.findChild(QtWidgets.QListView, "listView")
     treeView = dialog.findChild(QtWidgets.QTreeView)
 
     for view in (fileView, treeView):
         if view is not None:
-            view.setSelectionMode(
-                QtWidgets.QAbstractItemView.ExtendedSelection
-            )
+            view.setSelectionMode(QAbstractItemView.ExtendedSelection)
 
     return (
         (dialog.selectedFiles() if dialog.exec() else []),

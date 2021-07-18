@@ -7,37 +7,37 @@ class FrameBar(QtWidgets.QWidget):
         super().__init__(parent)
 
         self._fps = 100
-        self._playTimer = QtCore.QTimer()
-        self._playTimer.setInterval(int(1000 / self._fps))
-
-        self._playing = False
+        self._isPlaying = False
+        self._timer = QtCore.QTimer()
+        self._timer.setInterval(self._fpsToInterval(self._fps))
         self._playIcon = self.style().standardIcon(QStyle.SP_MediaPlay)
         self._pauseIcon = self.style().standardIcon(QStyle.SP_MediaPause)
         self._pushButton = QtWidgets.QPushButton(self)
         self._pushButton.setIcon(self._playIcon)
-
         self._slider = QtWidgets.QSlider(self)
         self._slider.setOrientation(QtCore.Qt.Horizontal)
-
         self._spinBox = QtWidgets.QSpinBox(self)
 
-        layout = QtWidgets.QHBoxLayout(self)
+        layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._pushButton)
         layout.addWidget(self._slider)
         layout.addWidget(self._spinBox)
-
         self.setLayout(layout)
 
         self._slider.valueChanged.connect(self._spinBox.setValue)
         self._spinBox.valueChanged.connect(self._slider.setValue)
-        self._playTimer.timeout.connect(self._playTick)
+        self._timer.timeout.connect(self._playTick)
         self._pushButton.clicked.connect(self._onPushButtonClicked)
 
         self.maximum = 3000
 
+    @staticmethod
+    def _fpsToInterval(fps: int):
+        return int(1000 / fps)
+
     @property
-    def valueChanged(self):
+    def valueChanged(self) -> QtCore.pyqtBoundSignal:
         return self._slider.valueChanged
 
     @property
@@ -47,7 +47,7 @@ class FrameBar(QtWidgets.QWidget):
     @fps.setter
     def fps(self, fps: int):
         self._fps = fps
-        self._playTimer.setInterval(int(1000 / fps))
+        self._timer.setInterval(self._fpsToInterval(fps))
 
     @property
     def maximum(self):
@@ -65,24 +65,18 @@ class FrameBar(QtWidgets.QWidget):
     @value.setter
     def value(self, value: int):
         self._slider.setValue(value)
-        self._spinBox.setValue(value)
 
     def _onPushButtonClicked(self):
-        self._playing = not self._playing
-
-        if self._playing:
-            self._play()
-        else:
-            self._pause()
+        self._isPlaying = not self._isPlaying
+        return self._play() if self._isPlaying else self._pause()
 
     def _play(self):
         self._pushButton.setIcon(self._pauseIcon)
-        self._playTimer.start()
+        self._timer.start()
 
     def _pause(self):
         self._pushButton.setIcon(self._playIcon)
-        self._playTimer.stop()
+        self._timer.stop()
 
     def _playTick(self):
-        value = (self._slider.value() + 1) % self._slider.maximum()
-        self._slider.setValue(value)
+        self.value = (self.value + 1) % self.maximum
