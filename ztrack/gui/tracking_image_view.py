@@ -35,8 +35,10 @@ class TrackingPlotWidget(pg.PlotWidget):
                 roi.removeHandle(handle)
 
     def addTrackerGroup(self, name, trackers: List[Tracker]):
-        self.addROI()
+        roi = self.addROI()
         self._roiGroups[name] = [ROIGroup.fromTracker(i) for i in trackers]
+        for tracker in trackers:
+            tracker.bbox = roi
         self._currentROIGroups[name] = self._roiGroups[name][0]
         self.setTracker(name, 0)
 
@@ -49,6 +51,7 @@ class TrackingPlotWidget(pg.PlotWidget):
         )
         self.addItem(roi)
         self._rois.append(roi)
+        return roi
 
     def _disableROI(self, index):
         roi = self._rois[index]
@@ -84,7 +87,6 @@ class RoiBBox(pg.RectROI):
     def mouseDragEvent(self, ev):
         x, y = self.pos()
         w, h = self.size()
-        print(x, y, w, h)
         self._bbox.value = (x, y, w, h)
         super().mouseDragEvent(ev)
 
