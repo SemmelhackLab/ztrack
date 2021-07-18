@@ -7,15 +7,15 @@ from ztrack.tracking.variable import Float, UInt8
 
 
 class BinaryEyeTracker(EyeTracker):
+    def __init__(self):
+        super().__init__()
+        self._params = self.Params()
+
     class Params(EyeParams):
         def __init__(self):
             super().__init__()
             self.sigma = Float("Sigma", 0, 0, 100, 0.1)
             self.threshold = UInt8("Threshold", 127)
-
-    def __init__(self):
-        super().__init__()
-        self._params = self.Params()
 
     @property
     def params(self):
@@ -28,9 +28,6 @@ class BinaryEyeTracker(EyeTracker):
     @property
     def display_name(self):
         return "Binary threshold"
-
-    def _track_region(self, img) -> pd.Series:
-        pass
 
     def _track_ellipses(self, src: np.ndarray):
         img = self._preprocess(src, self.params.sigma)
@@ -49,3 +46,6 @@ class BinaryEyeTracker(EyeTracker):
         ellipses = ellipses[list(self._sort_centers(centers))]
 
         return self._correct_orientation(ellipses)
+
+    def _track_frame(self, frame: np.ndarray) -> pd.Series:
+        pass

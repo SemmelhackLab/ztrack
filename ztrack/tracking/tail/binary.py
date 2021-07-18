@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from ..variable import Float, UInt8
@@ -27,5 +28,5 @@ class BinaryTailTracker(TailTracker):
     def display_name(self):
         return "Binary threshold"
 
-    def _track_region(self, img) -> pd.Series:
+    def _track_frame(self, frame: np.ndarray) -> pd.Series:
         pass

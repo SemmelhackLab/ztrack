@@ -33,9 +33,6 @@ class MultiThresholdEyeTracker(EyeTracker):
     def display_name(self):
         return "Multi-threshold"
 
-    def _track_region(self, img) -> pd.Series:
-        pass
-
     def _track_ellipses(self, src: np.ndarray):
         img = self._preprocess(src)
 
@@ -79,3 +76,6 @@ class MultiThresholdEyeTracker(EyeTracker):
         ellipses = ellipses[[left_eye, right_eye, swim_bladder]]
 
         return self._correct_orientation(ellipses)
+
+    def _track_frame(self, frame: np.ndarray) -> pd.Series:
+        pass

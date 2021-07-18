@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, Tuple
 
-from ztrack.utils.roi import normalize_roi
+import numpy as np
 
 _bbox = Optional[Tuple[int, int, int, int]]
 
@@ -24,7 +24,7 @@ class Variable(ABC):
         pass
 
 
-class ROI(Variable):
+class BBox(Variable):
     def __init__(self, display_name: str, bbox: _bbox = None):
         super().__init__(display_name)
         self._value = bbox
@@ -35,7 +35,25 @@ class ROI(Variable):
 
     @value.setter
     def value(self, value: _bbox):
-        self._value = normalize_roi(value)
+        self._value = self.normalize_bbox(value)
+
+    @staticmethod
+    def normalize_bbox(roi=None):
+        if roi is not None:
+
+            def relu(a):
+                return max(0, a)
+
+            x, y, width, height = map(int, roi)
+            x0, x1 = sorted(map(relu, (x, x + width)))
+            y0, y1 = sorted(map(relu, (y, y + height)))
+            return x0, y0, x1 - x0, y1 - y0
+
+    def to_slice(self, axis=0):
+        if self._value is None:
+            return np.s_[:]
+        x, y, width, height = self._value
+        return (np.s_[:],) * axis + np.s_[y : y + height, x : x + width]
 
 
 class Numerical(Variable, ABC):

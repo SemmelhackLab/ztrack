@@ -6,6 +6,7 @@ from PyQt5 import QtWidgets
 
 from ztrack.tracking.tracker import Tracker
 from ztrack.utils.shape import Ellipse, Shape
+from ztrack.tracking.variable import BBox
 
 
 class TrackingPlotWidget(pg.PlotWidget):
@@ -43,7 +44,7 @@ class TrackingPlotWidget(pg.PlotWidget):
         self.setROI(index)
 
     def addROI(self):
-        roi = pg.RectROI(
+        roi = RoiBBox(
             (0, 0), (100, 100), rotatable=False, movable=False, resizable=False
         )
         self.addItem(roi)
@@ -71,6 +72,21 @@ class TrackingPlotWidget(pg.PlotWidget):
     def updateROIGroups(self):
         for roiGroup in self._currentROIGroups.values():
             roiGroup.update()
+
+
+class RoiBBox(pg.RectROI):
+    def __init__(self, pos, size, **kwargs):
+        super().__init__(pos, size, **kwargs)
+        x, y = pos
+        w, h = size
+        self._bbox = BBox("", (w, y, w, h))
+
+    def mouseDragEvent(self, ev):
+        x, y = self.pos()
+        w, h = self.size()
+        print(x, y, w, h)
+        self._bbox.value = (x, y, w, h)
+        super().mouseDragEvent(ev)
 
 
 class ROIGroup:

@@ -3,13 +3,21 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 
-from ztrack.tracking.params import Params
-from ztrack.utils.roi import normalize_roi, roi2slice
+from .params import Params
+from .variable import BBox
 
 
 class Tracker(ABC):
     def __init__(self):
-        self._roi = None
+        self._bbox = BBox("")
+
+    @property
+    def bbox(self):
+        return self._bbox
+
+    @bbox.setter
+    def bbox(self, bbox):
+        self._bbox = bbox
 
     @property
     @abstractmethod
@@ -26,14 +34,6 @@ class Tracker(ABC):
         pass
 
     @property
-    def roi(self):
-        return self._roi
-
-    @roi.setter
-    def roi(self, roi):
-        self._roi = normalize_roi(roi)
-
-    @property
     @abstractmethod
     def name(self):
         pass
@@ -44,12 +44,8 @@ class Tracker(ABC):
         pass
 
     @abstractmethod
-    def _track_region(self, img) -> pd.Series:
-        pass
-
     def _track_frame(self, frame: np.ndarray) -> pd.Series:
-        img = frame[roi2slice(self.roi)]
-        return self._track_region(img)
+        pass
 
     def track_frames(self, frames: np.ndarray) -> pd.DataFrame:
         return pd.DataFrame([self._track_frame(frame) for frame in frames])
