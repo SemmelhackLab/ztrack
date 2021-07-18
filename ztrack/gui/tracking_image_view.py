@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 import pyqtgraph as pg
 from PyQt5 import QtWidgets
@@ -16,7 +16,7 @@ class TrackingPlotWidget(pg.PlotWidget):
         self._rois: List[pg.RectROI] = []
         self._roiGroups: Dict[str, List[ROIGroup]] = {}
         self._currentROIGroups: Dict[str, ROIGroup] = {}
-        self._currentROI = None
+        self._currentROI: Optional[int] = None
         self.addItem(self._imageItem)
         self.invertY(True)
         self.setAspectLocked(1)

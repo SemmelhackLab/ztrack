@@ -1,10 +1,13 @@
-from typing import Dict, List
+from typing import Dict, Iterable, List, Type
 
 from .eye import trackers as eye_trackers
 from .tail import trackers as tail_trackers
 from .tracker import Tracker
 
-_trackers = {"Eye": eye_trackers, "Tail": tail_trackers}
+_trackers: Dict[str, Iterable[Type[Tracker]]] = {
+    "Eye": eye_trackers,
+    "Tail": tail_trackers,
+}
 
 
 def get_trackers() -> Dict[str, List[Tracker]]:
