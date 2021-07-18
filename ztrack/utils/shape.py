@@ -1,6 +1,6 @@
 from abc import ABC
 
-from ztrack.tracking.variable import BBox
+from ztrack.utils.variable import BBox
 
 
 class Shape(ABC):

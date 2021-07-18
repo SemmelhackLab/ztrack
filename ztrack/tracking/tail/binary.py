@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from ..variable import Float, UInt8
+from ztrack.utils.variable import Float, UInt8
 from .tail_tracker import TailParams, TailTracker
 
 

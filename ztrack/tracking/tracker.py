@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from .params import Params
-from .variable import BBox
+from ztrack.utils.variable import BBox
 
 
 class Tracker(ABC):

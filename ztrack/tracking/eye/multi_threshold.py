@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
-from ztrack.tracking.variable import Float, UInt8
+from ztrack.utils.variable import Float, UInt8
 from ztrack.utils.cv import is_in_contour
 
 

@@ -1,7 +1,7 @@
 from abc import ABC
 from typing import List
 
-from ztrack.tracking.variable import Variable
+from ztrack.utils.variable import Variable
 
 
 class Params(ABC):

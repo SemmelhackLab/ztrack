@@ -5,7 +5,7 @@ import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets
 
 from ztrack.tracking.tracker import Tracker
-from ztrack.tracking.variable import BBox
+from ztrack.utils.variable import BBox
 from ztrack.utils.shape import Ellipse, Shape
 
 

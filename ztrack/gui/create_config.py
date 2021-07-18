@@ -106,7 +106,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         self._controlWidget.currentChanged.connect(self._onTabChanged)
         self._controlWidget.setCurrentIndex(0)
         self._controlWidget.currentChanged.emit(0)
-        self._controlWidget.trackerChanged.connect(self._onTrackerChanged)
+        self._controlWidget.tabChanged.connect(self._onTrackerChanged)
         self._controlWidget.paramsChanged.connect(self._updateTracker)
         self._trackingImageView.roiChanged.connect(self._updateTracker)
 

@@ -2,12 +2,12 @@ from typing import Dict, List
 
 from PyQt5 import QtCore, QtWidgets
 
-from ztrack.gui._variable_widgets import VariableWidget
+from ztrack.gui.utils.variable_widgets import VariableWidget
 from ztrack.tracking.tracker import Tracker
 
 
 class ControlWidget(QtWidgets.QTabWidget):
-    trackerChanged = QtCore.pyqtSignal(str, int)
+    tabChanged = QtCore.pyqtSignal(str, int)
     paramsChanged = QtCore.pyqtSignal(str)
 
     def __init__(self, parent: QtWidgets.QWidget = None):
@@ -45,7 +45,7 @@ class TrackingTab(QtWidgets.QWidget):
 
     def onComboBoxChanged(self, index):
         self.setTracker(index)
-        self._parent.trackerChanged.emit(self._name, index)
+        self._parent.tabChanged.emit(self._name, index)
 
     @property
     def currentIndex(self):
@@ -77,9 +77,3 @@ class ParamsWidget(QtWidgets.QWidget):
             field = VariableWidget.fromVariable(param)
             field.valueChanged.connect(self.paramsChanged.emit)
             self._formLayout.addRow(label, field)
-
-
-if __name__ == "__main__":
-    from ztrack.gui.utils.launch import launch
-
-    launch(ControlWidget)
