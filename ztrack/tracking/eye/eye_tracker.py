@@ -84,7 +84,7 @@ class EyeTracker(Tracker, ABC):
         )
         return left_eye, right_eye, swim_bladder
 
-    def annotate(self, img: np.ndarray):
+    def _annotate_img(self, img: np.ndarray):
         ellipse_shapes = [self._left_eye, self._right_eye, self._swim_bladder]
         ellipses = self._track_ellipses(img)
         for i, j in zip(ellipse_shapes, ellipses):

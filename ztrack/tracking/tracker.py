@@ -11,6 +11,9 @@ class Tracker(ABC):
     def __init__(self):
         self._bbox = BBox("")
 
+    def _get_bbox_img(self, frame: np.ndarray):
+        return frame[self._bbox.to_slice()]
+
     @property
     def bbox(self):
         return self._bbox
@@ -24,8 +27,11 @@ class Tracker(ABC):
     def shapes(self):
         pass
 
-    @abstractmethod
     def annotate(self, img: np.ndarray) -> None:
+        return self._annotate_img(img)
+
+    @abstractmethod
+    def _annotate_img(self, img: np.ndarray) -> None:
         pass
 
     @property

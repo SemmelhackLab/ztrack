@@ -198,7 +198,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
             self._trackingImageView.setImage(img)
             for k, v in self._trackers.items():
                 i = self._controlWidget.getTrackerIndex(k)
-                v[i].annotate(img)
+                v[i]._annotate_img(img)
                 self._trackingImageView.updateROIGroups()
 
     def triggerCreateConfig(self):

@@ -13,5 +13,5 @@ class TailTracker(Tracker, ABC):
     def shapes(self):
         return []
 
-    def annotate(self, img):
+    def _annotate_img(self, img):
         pass
