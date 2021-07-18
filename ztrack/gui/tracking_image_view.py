@@ -62,9 +62,7 @@ class TrackingPlotWidget(pg.PlotWidget):
             roi.setDefaultSize(w, h)
 
     def addROI(self, name):
-        roi = RoiBBox(
-            None, rotatable=False, movable=False, resizable=False
-        )
+        roi = RoiBBox(None, rotatable=False, movable=False, resizable=False)
         roi.setVisible(False)
         self.addItem(roi)
         self._rois[name] = roi

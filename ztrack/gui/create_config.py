@@ -244,9 +244,3 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         self._videoPaths.extend(videoPaths)
         self._savePaths.extend(savePaths)
         self.triggerCreateConfig()
-
-
-if __name__ == "__main__":
-    from ztrack.gui.utils.launch import launch
-
-    launch(CreateConfigWindow)
