@@ -86,16 +86,16 @@ class RoiBBox(pg.RectROI):
         x, y = pos
         w, h = size
         self._bbox = BBox("", (w, y, w, h))
+        self.sigRegionChanged.connect(self._onRegionChanged)
 
     @property
     def bbox(self):
         return self._bbox
 
-    def mouseDragEvent(self, ev):
+    def _onRegionChanged(self):
         x, y = self.pos()
         w, h = self.size()
         self._bbox.value = (x, y, w, h)
-        super().mouseDragEvent(ev)
 
 
 class ROIGroup:
