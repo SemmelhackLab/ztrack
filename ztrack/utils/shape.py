@@ -2,11 +2,14 @@ from abc import ABC
 
 
 class Shape(ABC):
-    pass
+    def __init__(self, lw, lc):
+        self.lw = lw
+        self.lc = lc
 
 
 class Ellipse(Shape):
-    def __init__(self, cx, cy, a, b, theta):
+    def __init__(self, cx, cy, a, b, theta, lw, lc):
+        super().__init__(lw, lc)
         self.cx = cx
         self.cy = cy
         self.a = a
@@ -15,12 +18,13 @@ class Ellipse(Shape):
 
 
 class Circle(Ellipse):
-    def __init__(self, cx, cy, r):
-        super().__init__(cx, cy, r, r, 0)
+    def __init__(self, cx, cy, r, lw, lc):
+        super().__init__(cx, cy, r, r, 0, lw, lc)
 
 
 class Line(Shape):
-    def __init__(self, x0, y0, x1, y1):
+    def __init__(self, x0, y0, x1, y1, lw, lc):
+        super().__init__(lw, lc)
         self.x0 = x0
         self.y0 = y0
         self.x1 = x1
@@ -28,7 +32,8 @@ class Line(Shape):
 
 
 class Rectangle(Shape):
-    def __init__(self, x0, y0, w, h):
+    def __init__(self, x0, y0, w, h, lw, lc):
+        super().__init__(lw, lc)
         self.x0 = x0
         self.y0 = y0
         self.w = w

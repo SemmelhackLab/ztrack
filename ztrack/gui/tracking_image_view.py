@@ -30,6 +30,8 @@ class TrackingPlotWidget(pg.PlotWidget):
         self._currentROIGroups[name] = self._roiGroups[name][index]
         for roi in self._currentROIGroups[name].rois:
             self.addItem(roi)
+            for handle in roi.getHandles():
+                roi.removeHandle(handle)
 
     def addTrackerGroup(self, name, trackers: List[Tracker]):
         self.addROI()
@@ -102,15 +104,38 @@ class ShapeMixin:
 class EllipseROI(pg.EllipseROI, ShapeMixin):
     def __init__(self, ellipse: Ellipse):
         self._ellipse = ellipse
-        super().__init__(pos=(0, 0), size=(1, 1))
+        super().__init__(
+            pos=(0, 0),
+            size=(1, 1),
+            pen=pg.mkPen(ellipse.lc, width=ellipse.lw),
+            movable=False,
+            resizable=False,
+            rotatable=False,
+        )
         self.updateAttr()
 
+    @property
+    def cx(self):
+        return self._ellipse.cx
+
+    @property
+    def cy(self):
+        return self._ellipse.cy
+
+    @property
+    def a(self):
+        return self._ellipse.a
+
+    @property
+    def b(self):
+        return self._ellipse.b
+
+    @property
+    def theta(self):
+        return self._ellipse.theta
+
     def updateAttr(self):
-        pos = (
-            self._ellipse.cx - self._ellipse.a,
-            self._ellipse.cy - self._ellipse.b,
-        )
-        size = (self._ellipse.a * 2, self._ellipse.b * 2)
-        self.setPos(pos)
-        self.setSize(size)
-        self.setAngle(0)
+        self.setTransformOriginPoint(self.a, self.b)
+        self.setPos((self.cx - self.a, self.cy - self.b))
+        self.setSize((self.a * 2, self.b * 2))
+        self.setRotation(self.theta)

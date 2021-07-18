@@ -112,6 +112,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
 
     def _onTrackerChanged(self, name: str, index: int):
         self._trackingImageView.setTracker(name, index)
+        self._updateFrame()
 
     def _addTrackerGroup(self, name: str, trackers: List[Tracker]):
         self._controlWidget.addTrackerGroup(name, trackers)
