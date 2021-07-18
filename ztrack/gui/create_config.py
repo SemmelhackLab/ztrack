@@ -15,10 +15,10 @@ from ztrack.utils.file import extract_video_paths
 
 class CreateConfigWindow(QtWidgets.QMainWindow):
     def __init__(
-        self,
-        parent: QtWidgets.QWidget = None,
-        videoPaths: List[str] = None,
-        savePaths: List[List[str]] = None,
+            self,
+            parent: QtWidgets.QWidget = None,
+            videoPaths: List[str] = None,
+            savePaths: List[List[str]] = None,
     ):
         super().__init__(parent)
         if videoPaths is None:
@@ -96,31 +96,61 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         actionOpenFiles.triggered.connect(self._openFiles)
         actionOpenFolders.triggered.connect(self._openFolders)
         actionSetFPS.triggered.connect(self._setFPS)
-        self._frameBar.valueChanged.connect(self._updateFrame)
 
         for k, v in self._trackers.items():
             self._addTrackerGroup(k, v)
+        self._trackingImageView.setROI(list(self._trackers)[0])
+
+        self._frameBar.valueChanged.connect(self._onFrameChanged)
+        self._controlWidget.currentChanged.connect(self._onTabChanged)
+        self._controlWidget.trackerChanged.connect(self._onTrackerChanged)
+        self._controlWidget.paramsChanged.connect(self._onParamsChanged)
+        self._trackingImageView.roiChanged.connect(self._onRoiChanged)
 
         self.triggerCreateConfig()
 
-        self._controlWidget.currentChanged.connect(self._onTabChanged)
-        self._controlWidget.setCurrentIndex(0)
-        self._controlWidget.currentChanged.emit(0)
-        self._controlWidget.tabChanged.connect(self._onTrackerChanged)
-        self._controlWidget.paramsChanged.connect(self._updateTracker)
-        self._trackingImageView.roiChanged.connect(self._updateTracker)
+    @property
+    def _currentFrame(self):
+        if self._videoReader is None:
+            return None
+        return self._videoReader[self._frameBar.value].asnumpy()
+
+    def _onFrameChanged(self):
+        img = self._currentFrame
+        if img is not None:
+            self._trackingImageView.setImage(img)
+            for name, tracker in self._trackers.items():
+                index = self._controlWidget.getCurrentTrackerIndex(name)
+                tracker[index].annotate(img)
+                self._trackingImageView.updateROIGroups()
 
     def _onTrackerChanged(self, name: str, index: int):
         self._trackingImageView.setTracker(name, index)
-        self._updateFrame()
+        img = self._currentFrame
+        if img is not None:
+            self._trackers[name][index].annotate(self._currentFrame)
+            self._trackingImageView.updateROIGroups()
 
-    def _addTrackerGroup(self, name: str, trackers: List[Tracker]):
-        self._controlWidget.addTrackerGroup(name, trackers)
-        self._trackingImageView.addTrackerGroup(name, trackers)
+    def _onRoiChanged(self, name: str):
+        img = self._currentFrame
+        if img is not None:
+            index = self._controlWidget.getCurrentTrackerIndex(name)
+            self._trackers[name][index].annotate(img)
+            self._trackingImageView.updateROIGroups()
 
     def _onTabChanged(self, index: int):
         name = list(self._trackers)[index]
         self._trackingImageView.setTrackerGroup(name)
+
+    def _onParamsChanged(self, name: str, index: int):
+        img = self._currentFrame
+        if img is not None:
+            self._trackers[name][index].annotate(img)
+            self._trackingImageView.updateROIGroups()
+
+    def _addTrackerGroup(self, name: str, trackers: List[Tracker]):
+        self._controlWidget.addTrackerGroup(name, trackers)
+        self._trackingImageView.addTrackerGroup(name, trackers)
 
     def _setFPS(self):
         def onCheckBoxStateChange(state: int):
@@ -182,29 +212,11 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
             self._frameBar.maximum = len(self._videoReader) - 1
             if self._useVideoFPS:
                 self._frameBar.fps = int(self._videoReader.get_avg_fps())
-            self._updateFrame()
-            self._trackingImageView.setRoiVisible(True)
+            self._onFrameChanged()
             h, w = self._videoReader[0].shape[:2]
             self._trackingImageView.setRoiDefaultSize(w, h)
             rect = QtCore.QRectF(0, 0, w, h)
             self._trackingImageView.setRoiMaxBounds(rect)
-
-    def _updateTracker(self, name: str):
-        if self._videoReader is not None:
-            img = self._videoReader[self._frameBar.value].asnumpy()
-            self._trackingImageView.setImage(img)
-            i = self._controlWidget.getTrackerIndex(name)
-            self._trackers[name][i].annotate(img)
-            self._trackingImageView.updateROIGroups()
-
-    def _updateFrame(self):
-        if self._videoReader is not None:
-            img = self._videoReader[self._frameBar.value].asnumpy()
-            self._trackingImageView.setImage(img)
-            for k, v in self._trackers.items():
-                i = self._controlWidget.getTrackerIndex(k)
-                v[i].annotate(img)
-                self._trackingImageView.updateROIGroups()
 
     def triggerCreateConfig(self):
         if len(self._videoPaths) == 0:

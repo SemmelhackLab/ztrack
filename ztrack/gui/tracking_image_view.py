@@ -49,10 +49,6 @@ class TrackingPlotWidget(pg.PlotWidget):
     def setTrackerGroup(self, name: str):
         self.setROI(name)
 
-    def setRoiVisible(self, b):
-        for roi in self._rois.values():
-            roi.setVisible(b)
-
     def setRoiMaxBounds(self, rect):
         for roi in self._rois.values():
             roi.maxBounds = rect
@@ -62,21 +58,19 @@ class TrackingPlotWidget(pg.PlotWidget):
             roi.setDefaultSize(w, h)
 
     def addROI(self, name):
-        roi = RoiBBox(None, rotatable=False, movable=False, resizable=False)
-        roi.setVisible(False)
+        roi = RoiBBox(None, rotatable=False)
         self.addItem(roi)
+        roi.setVisible(False)
         self._rois[name] = roi
         return roi
 
     def _disableROI(self, name):
         roi = self._rois[name]
-        roi.translatable = False
-        roi.resizable = False
+        roi.setVisible(False)
 
     def _enableROI(self, name):
         roi = self._rois[name]
-        roi.translatable = True
-        roi.resizable = True
+        roi.setVisible(True)
 
     def setROI(self, name):
         if self._currentTab is not None:

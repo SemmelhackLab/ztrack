@@ -7,21 +7,25 @@ from ztrack.tracking.tracker import Tracker
 
 
 class ControlWidget(QtWidgets.QTabWidget):
-    tabChanged = QtCore.pyqtSignal(str, int)
-    paramsChanged = QtCore.pyqtSignal(str)
+    trackerChanged = QtCore.pyqtSignal(str, int)
+    paramsChanged = QtCore.pyqtSignal(str, int)
 
     def __init__(self, parent: QtWidgets.QWidget = None):
         super().__init__(parent)
         self._tabs: Dict[str, TrackingTab] = {}
 
     def addTrackerGroup(self, name: str, trackers: List[Tracker]):
+        assert name not in self._tabs
         tab = TrackingTab(self, name)
+        tab.trackerIndexChanged.connect(
+            lambda index: self.trackerChanged.emit(name, index)
+        )
         for tracker in trackers:
             tab.addTracker(tracker)
         self.addTab(tab, name)
         self._tabs[name] = tab
 
-    def getTrackerIndex(self, name):
+    def getCurrentTrackerIndex(self, name: str):
         return self._tabs[name].currentIndex
 
 
@@ -30,6 +34,7 @@ class TrackingTab(QtWidgets.QWidget):
         super().__init__(parent)
         self._parent = parent
         self._name = name
+
         self._comboBox = QtWidgets.QComboBox(self)
         self._paramsStackWidget = QtWidgets.QStackedWidget(self)
         label = QtWidgets.QLabel(self)
@@ -41,11 +46,12 @@ class TrackingTab(QtWidgets.QWidget):
         layout.addLayout(formLayout)
         layout.addWidget(self._paramsStackWidget)
         self.setLayout(layout)
-        self._comboBox.currentIndexChanged.connect(self.onComboBoxChanged)
 
-    def onComboBoxChanged(self, index):
-        self.setTracker(index)
-        self._parent.tabChanged.emit(self._name, index)
+        self.trackerIndexChanged.connect(self.setTracker)
+
+    @property
+    def trackerIndexChanged(self) -> QtCore.pyqtBoundSignal:
+        return self._comboBox.currentIndexChanged
 
     @property
     def currentIndex(self):
@@ -55,10 +61,11 @@ class TrackingTab(QtWidgets.QWidget):
         self._paramsStackWidget.setCurrentIndex(i)
 
     def addTracker(self, tracker: Tracker):
+        index = self._comboBox.count()
         self._comboBox.addItem(tracker.display_name)
         widget = ParamsWidget(self, tracker=tracker)
         widget.paramsChanged.connect(
-            lambda: self._parent.paramsChanged.emit(self._name)
+            lambda: self._parent.paramsChanged.emit(self._name, index)
         )
         self._paramsStackWidget.addWidget(widget)
 
