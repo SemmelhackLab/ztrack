@@ -183,6 +183,11 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
             if self._useVideoFPS:
                 self._frameBar.fps = int(self._videoReader.get_avg_fps())
             self._updateFrame()
+            self._trackingImageView.setRoiVisible(True)
+            h, w = self._videoReader[0].shape[:2]
+            self._trackingImageView.setRoiDefaultSize(w, h)
+            rect = QtCore.QRectF(0, 0, w, h)
+            self._trackingImageView.setRoiMaxBounds(rect)
 
     def _updateTracker(self, name: str):
         if self._videoReader is not None:

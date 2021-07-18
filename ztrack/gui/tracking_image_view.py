@@ -49,10 +49,23 @@ class TrackingPlotWidget(pg.PlotWidget):
     def setTrackerGroup(self, name: str):
         self.setROI(name)
 
+    def setRoiVisible(self, b):
+        for roi in self._rois.values():
+            roi.setVisible(b)
+
+    def setRoiMaxBounds(self, rect):
+        for roi in self._rois.values():
+            roi.maxBounds = rect
+
+    def setRoiDefaultSize(self, w, h):
+        for roi in self._rois.values():
+            roi.setDefaultSize(w, h)
+
     def addROI(self, name):
         roi = RoiBBox(
-            (0, 0), (100, 100), rotatable=False, movable=False, resizable=False
+            None, rotatable=False, movable=False, resizable=False
         )
+        roi.setVisible(False)
         self.addItem(roi)
         self._rois[name] = roi
         return roi
@@ -82,12 +95,29 @@ class TrackingPlotWidget(pg.PlotWidget):
 
 
 class RoiBBox(pg.RectROI):
-    def __init__(self, pos, size, **kwargs):
-        super().__init__(pos, size, **kwargs)
-        x, y = pos
-        w, h = size
-        self._bbox = BBox("", (w, y, w, h))
+    def __init__(self, bbox=None, **kwargs):
+        self._bbox = BBox("", bbox)
+        self._default_origin = 0, 0
+        self._default_size = 100, 100
+
+        super().__init__(self._pos, self._size, **kwargs)
         self.sigRegionChanged.connect(self._onRegionChanged)
+
+    @property
+    def _pos(self):
+        if self._bbox.value is None:
+            return self._default_origin
+        return self._bbox.value[:2]
+
+    @property
+    def _size(self):
+        if self._bbox.value is None:
+            return self._default_size
+        return self._bbox.value[2:]
+
+    def setDefaultSize(self, w, h):
+        self._default_size = w, h
+        self.setSize(self._size)
 
     @property
     def bbox(self):
