@@ -53,7 +53,9 @@ def create_config(**kwargs):
 )
 @my_command
 def run(**kwargs):
-    pass
+    from ztrack._run_tracking import run_tracking
+
+    run_tracking(**kwargs)
 
 
 @main.command(short_help="View tracking results.")
