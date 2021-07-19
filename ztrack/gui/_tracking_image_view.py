@@ -29,6 +29,12 @@ class TrackingPlotWidget(pg.PlotWidget):
         self.hideAxis("bottom")
         self.setBackground(None)
 
+    def setEnabled(self, b: bool):
+        for shapeGroup in self._currentShapeGroup.values():
+            for shape in shapeGroup.shapes:
+                shape.setVisible(b)
+        self._rois[self._currentTab].setVisible(b)
+
     def setTracker(self, group_name: str, index: int):
         for roi in self._currentShapeGroup[group_name].shapes:
             self.removeItem(roi)

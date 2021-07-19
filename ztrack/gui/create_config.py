@@ -43,8 +43,8 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         self._controlWidget = ControlWidget(self)
         self._trackingImageView = TrackingPlotWidget(self)
 
-        self._dialogButtonBox = QtWidgets.QDialogButtonBox(self)
-        self._dialogButtonBox.setStandardButtons(
+        self._buttonBox = QtWidgets.QDialogButtonBox(self)
+        self._buttonBox.setStandardButtons(
             QtWidgets.QDialogButtonBox.Ok  # type: ignore
             | QtWidgets.QDialogButtonBox.Cancel
         )
@@ -59,7 +59,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self._frameBar)
         layout.addLayout(hBoxLayout1)
-        layout.addWidget(self._dialogButtonBox)
+        layout.addWidget(self._buttonBox)
 
         widget = QtWidgets.QWidget(self)
         widget.setLayout(layout)
@@ -109,8 +109,12 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         self._controlWidget.trackerChanged.connect(self._onTrackerChanged)
         self._controlWidget.paramsChanged.connect(self._onParamsChanged)
         self._trackingImageView.roiChanged.connect(self._onRoiChanged)
-
+        self._setEnabled(False)
         self.triggerCreateConfig()
+
+    def _setEnabled(self, b: bool):
+        self._controlWidget.setEnabled(b)
+        self._trackingImageView.setEnabled(b)
 
     @property
     def _currentFrame(self):
@@ -220,6 +224,9 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
             self._trackingImageView.setRoiDefaultSize(w, h)
             rect = QtCore.QRectF(0, 0, w, h)
             self._trackingImageView.setRoiMaxBounds(rect)
+            self._setEnabled(True)
+        else:
+            self._setEnabled(False)
 
     def triggerCreateConfig(self):
         if len(self._videoPaths) == 0:
