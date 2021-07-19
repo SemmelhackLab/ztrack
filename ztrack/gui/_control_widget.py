@@ -1,4 +1,4 @@
-from typing import Dict, Iterable
+from typing import Dict, Iterable, List
 
 from PyQt5 import QtCore, QtWidgets
 
@@ -14,26 +14,33 @@ class ControlWidget(QtWidgets.QTabWidget):
         super().__init__(parent)
         self._tabs: Dict[str, TrackingTab] = {}
 
-    def addTrackerGroup(self, group_name: str, trackers: Iterable[Tracker]):
-        assert group_name not in self._tabs
-        tab = TrackingTab(self, group_name)
+    def addTrackerGroup(self, groupName: str, trackers: Iterable[Tracker]):
+        assert groupName not in self._tabs
+        tab = TrackingTab(self, groupName)
         tab.trackerIndexChanged.connect(
-            lambda index: self.trackerChanged.emit(group_name, index)
+            lambda index: self.trackerChanged.emit(groupName, index)
         )
         for tracker in trackers:
             tab.addTracker(tracker)
-        self.addTab(tab, group_name.capitalize())
-        self._tabs[group_name] = tab
+        self.addTab(tab, groupName.capitalize())
+        self._tabs[groupName] = tab
 
-    def getCurrentTrackerIndex(self, group_name: str):
-        return self._tabs[group_name].currentIndex
+    def getCurrentTrackerIndex(self, groupName: str):
+        return self._tabs[groupName].currentIndex
+
+    def setStateFromTrackingConfig(self, trackingConfig: dict):
+        for groupName, groupDict in trackingConfig.items():
+            self._tabs[groupName].setState(groupDict["method"], groupDict["params"])
 
 
 class TrackingTab(QtWidgets.QWidget):
-    def __init__(self, parent: ControlWidget, group_name: str):
+    def __init__(self, parent: ControlWidget, groupName: str):
         super().__init__(parent)
-        self._group_name = group_name
-
+        self._parent = parent
+        self._groupName = groupName
+        self._trackers: List[Tracker] = []
+        self._trackerNames: List[str] = []
+        self._paramsWidgets: List[ParamsWidget] = []
         self._comboBox = QtWidgets.QComboBox(self)
         self._paramsStackWidget = QtWidgets.QStackedWidget(self)
         label = QtWidgets.QLabel(self)
@@ -59,13 +66,21 @@ class TrackingTab(QtWidgets.QWidget):
     def setTracker(self, i: int):
         self._paramsStackWidget.setCurrentIndex(i)
 
+    def setState(self, methodName: str, params: dict):
+        index = self._trackerNames.index(methodName)
+        self._comboBox.setCurrentIndex(index)
+        self._paramsWidgets[index].setParams(params)
+
     def addTracker(self, tracker: Tracker):
+        self._trackerNames.append(tracker.name)
+        self._trackers.append(tracker)
         index = self._comboBox.count()
         self._comboBox.addItem(tracker.display_name)
         widget = ParamsWidget(self, tracker=tracker)
         widget.paramsChanged.connect(
-            lambda: self._parent.paramsChanged.emit(self._group_name, index)
+            lambda: self._parent.paramsChanged.emit(self._groupName, index)
         )
+        self._paramsWidgets.append(widget)
         self._paramsStackWidget.addWidget(widget)
 
 
@@ -76,10 +91,16 @@ class ParamsWidget(QtWidgets.QFrame):
         super().__init__(parent)
         self._formLayout = QtWidgets.QFormLayout()
         self.setLayout(self._formLayout)
+        self._fields: Dict[str, VariableWidget] = {}
 
-        for param in tracker.params.parameter_list:
+        for name, param in zip(tracker.params.parameter_names, tracker.params.parameter_list):
             label = QtWidgets.QLabel(self)
             label.setText(param.display_name)
             field = VariableWidget.fromVariable(param)
             field.valueChanged.connect(self.paramsChanged.emit)
+            self._fields[name] = field
             self._formLayout.addRow(label, field)
+
+    def setParams(self, params: dict):
+        for name, value in params.items():
+            self._fields[name].setValue(value)

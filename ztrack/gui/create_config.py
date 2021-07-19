@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import List, Optional
 
 from decord import VideoReader
@@ -258,8 +259,17 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
 
         dialog.exec()
 
+    def _setStateFromTrackingConfig(self, trackingConfig: dict):
+        self._controlWidget.setStateFromTrackingConfig(trackingConfig)
+        self._trackingImageView.setStateFromTrackingConfig(trackingConfig)
+
     def updateVideo(self):
         if self._currentVideoPath is not None:
+            configPath = Path(self._currentVideoPath + config_extension)
+            if configPath.exists():
+                with open(configPath) as fp:
+                    trackingConfig = json.load(fp)
+                self._setStateFromTrackingConfig(trackingConfig)
             self._videoReader = VideoReader(self._currentVideoPath)
             self._frameBar.maximum = len(self._videoReader) - 1
             if self._useVideoFPS:

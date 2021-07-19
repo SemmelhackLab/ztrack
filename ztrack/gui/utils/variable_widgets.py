@@ -17,6 +17,10 @@ class VariableWidget(QtWidgets.QWidget):
             return FloatWidget(parent, variable=variable)
         raise NotImplementedError
 
+    @abstractmethod
+    def setValue(self, value):
+        pass
+
     @property
     @abstractmethod
     def valueChanged(self) -> QtCore.pyqtBoundSignal:
@@ -43,6 +47,9 @@ class FloatWidget(VariableWidget):
 
     def _onValueChanged(self, value: float):
         self._variable.value = value
+
+    def setValue(self, value: float):
+        self._spinBox.setValue(value)
 
     @property
     def valueChanged(self):
@@ -73,6 +80,9 @@ class IntWidget(VariableWidget):
         self._slider.valueChanged.connect(self._spinBox.setValue)
         self._spinBox.valueChanged.connect(self._slider.setValue)
         self._slider.valueChanged.connect(self._onValueChanged)
+
+    def setValue(self, value: int):
+        self._slider.setValue(value)
 
     @property
     def valueChanged(self):

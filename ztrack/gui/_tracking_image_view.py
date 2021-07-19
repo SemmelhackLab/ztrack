@@ -17,7 +17,7 @@ class TrackingPlotWidget(pg.PlotWidget):
     def __init__(self, parent: QtWidgets.QWidget = None):
         super().__init__(parent)
         self._imageItem = pg.ImageItem()
-        self._rois: Dict[str, pg.RectROI] = {}
+        self._rois: Dict[str, Roi] = {}
         self._shapeGroups: Dict[str, List[ShapeGroup]] = {}
         self._currentShapeGroup: Dict[str, ShapeGroup] = {}
         self._currentTab: Optional[str] = None
@@ -28,6 +28,10 @@ class TrackingPlotWidget(pg.PlotWidget):
         self.hideAxis("left")
         self.hideAxis("bottom")
         self.setBackground(None)
+
+    def setStateFromTrackingConfig(self, trackingConfig: dict):
+        for groupName, groupDict in trackingConfig.items():
+            self._rois[groupName].setRect(groupDict["roi"])
 
     def setEnabled(self, b: bool):
         for shapeGroup in self._currentShapeGroup.values():
@@ -95,6 +99,12 @@ class Roi(pg.RectROI):
 
         super().__init__(self._pos, self._size, **kwargs)
         self.sigRegionChanged.connect(self._onRegionChanged)
+
+    def setRect(self, rect):
+        self._bbox.value = rect
+        self.setPos(self._pos)
+        self._bbox.value = rect
+        self.setSize(self._size)
 
     @property
     def _pos(self):
