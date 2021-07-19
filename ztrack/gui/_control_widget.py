@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, Iterable
 
 from PyQt5 import QtCore, QtWidgets
 
@@ -14,26 +14,25 @@ class ControlWidget(QtWidgets.QTabWidget):
         super().__init__(parent)
         self._tabs: Dict[str, TrackingTab] = {}
 
-    def addTrackerGroup(self, name: str, trackers: List[Tracker]):
-        assert name not in self._tabs
-        tab = TrackingTab(self, name)
+    def addTrackerGroup(self, group_name: str, trackers: Iterable[Tracker]):
+        assert group_name not in self._tabs
+        tab = TrackingTab(self, group_name)
         tab.trackerIndexChanged.connect(
-            lambda index: self.trackerChanged.emit(name, index)
+            lambda index: self.trackerChanged.emit(group_name, index)
         )
         for tracker in trackers:
             tab.addTracker(tracker)
-        self.addTab(tab, name)
-        self._tabs[name] = tab
+        self.addTab(tab, group_name)
+        self._tabs[group_name] = tab
 
-    def getCurrentTrackerIndex(self, name: str):
-        return self._tabs[name].currentIndex
+    def getCurrentTrackerIndex(self, group_name: str):
+        return self._tabs[group_name].currentIndex
 
 
 class TrackingTab(QtWidgets.QWidget):
-    def __init__(self, parent: ControlWidget, name: str):
+    def __init__(self, parent: ControlWidget, group_name: str):
         super().__init__(parent)
-        self._parent = parent
-        self._name = name
+        self._group_name = group_name
 
         self._comboBox = QtWidgets.QComboBox(self)
         self._paramsStackWidget = QtWidgets.QStackedWidget(self)
@@ -65,12 +64,12 @@ class TrackingTab(QtWidgets.QWidget):
         self._comboBox.addItem(tracker.display_name)
         widget = ParamsWidget(self, tracker=tracker)
         widget.paramsChanged.connect(
-            lambda: self._parent.paramsChanged.emit(self._name, index)
+            lambda: self._parent.paramsChanged.emit(self._group_name, index)
         )
         self._paramsStackWidget.addWidget(widget)
 
 
-class ParamsWidget(QtWidgets.QWidget):
+class ParamsWidget(QtWidgets.QFrame):
     paramsChanged = QtCore.pyqtSignal()
 
     def __init__(self, parent: QtWidgets.QWidget = None, *, tracker: Tracker):

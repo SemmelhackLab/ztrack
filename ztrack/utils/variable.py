@@ -3,7 +3,7 @@ from typing import Optional, Tuple
 
 import numpy as np
 
-_bbox = Optional[Tuple[int, int, int, int]]
+_rect = Optional[Tuple[int, int, int, int]]
 
 
 class Variable(ABC):
@@ -24,26 +24,24 @@ class Variable(ABC):
         pass
 
 
-class BBox(Variable):
-    def __init__(self, display_name: str, bbox: _bbox = None):
+class Rect(Variable):
+    def __init__(self, display_name: str, bbox: _rect = None):
         super().__init__(display_name)
         self._value = bbox
 
     @property
-    def value(self) -> _bbox:
+    def value(self) -> _rect:
         return self._value
 
     @value.setter
-    def value(self, value: _bbox):
-        self._value = self.normalize_bbox(value)
+    def value(self, value: _rect):
+        self._value = self._normalize(value)
 
     @staticmethod
-    def normalize_bbox(roi=None):
+    def _normalize(roi: _rect = None):
         if roi is not None:
-
             def relu(a):
                 return max(0, a)
-
             x, y, width, height = map(int, roi)
             x0, x1 = sorted(map(relu, (x, x + width)))
             y0, y1 = sorted(map(relu, (y, y + height)))

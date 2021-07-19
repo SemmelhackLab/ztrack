@@ -4,12 +4,12 @@ import numpy as np
 import pandas as pd
 
 from .params import Params
-from ztrack.utils.variable import BBox
+from ztrack.utils.variable import Rect
 
 
 class Tracker(ABC):
     def __init__(self):
-        self._bbox = BBox("")
+        self._bbox = Rect("")
 
     def _get_bbox_img(self, frame: np.ndarray):
         return frame[self._bbox.to_slice()]

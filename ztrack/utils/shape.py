@@ -1,13 +1,13 @@
 from abc import ABC
 
-from ztrack.utils.variable import BBox
+from ztrack.utils.variable import Rect
 
 
 class Shape(ABC):
     def __init__(self, lw, lc):
         self.lw = lw
         self.lc = lc
-        self._bbox = BBox("")
+        self._bbox = Rect("")
         self._visible = True
 
     @property
@@ -23,7 +23,7 @@ class Shape(ABC):
 
 
 class Ellipse(Shape):
-    def __init__(self, cx, cy, a, b, theta, lw, lc):
+    def __init__(self, cx: float, cy: float, a: float, b: float, theta: float, lw, lc):
         super().__init__(lw, lc)
         self._cx = cx
         self._cy = cy
@@ -38,7 +38,7 @@ class Ellipse(Shape):
         return self._cx + self._bbox.value[0]
 
     @cx.setter
-    def cx(self, cx):
+    def cx(self, cx: float):
         self._cx = cx
 
     @property
@@ -48,28 +48,5 @@ class Ellipse(Shape):
         return self._cy + self._bbox.value[1]
 
     @cy.setter
-    def cy(self, cy):
+    def cy(self, cy: float):
         self._cy = cy
-
-
-# class Circle(Ellipse):
-#     def __init__(self, cx, cy, r, lw, lc):
-#         super().__init__(cx, cy, r, r, 0, lw, lc)
-#
-#
-# class Line(Shape):
-#     def __init__(self, x0, y0, x1, y1, lw, lc):
-#         super().__init__(lw, lc)
-#         self.x0 = x0
-#         self.y0 = y0
-#         self.x1 = x1
-#         self.y1 = y1
-#
-#
-# class Rectangle(Shape):
-#     def __init__(self, x0, y0, w, h, lw, lc):
-#         super().__init__(lw, lc)
-#         self.x0 = x0
-#         self.y0 = y0
-#         self.w = w
-#         self.h = h

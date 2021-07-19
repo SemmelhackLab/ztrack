@@ -5,7 +5,7 @@ from PyQt5 import QtCore, QtWidgets
 
 from ztrack._settings import config_extension, video_extensions
 from ztrack.gui._control_widget import ControlWidget
-from ztrack.gui.tracking_image_view import TrackingPlotWidget
+from ztrack.gui._tracking_image_view import TrackingPlotWidget
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.gui.utils.frame_bar import FrameBar
 from ztrack.tracking import get_trackers
@@ -19,14 +19,17 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
             parent: QtWidgets.QWidget = None,
             videoPaths: List[str] = None,
             savePaths: List[List[str]] = None,
+            verbose=False,
     ):
         super().__init__(parent)
         if videoPaths is None:
             videoPaths = []
         if savePaths is None:
             savePaths = []
+
         self._videoPaths: List[str] = videoPaths
         self._savePaths: List[List[str]] = savePaths
+        self._verbose = verbose
 
         self._useVideoFPS = True
         self._videoReader = None
@@ -99,7 +102,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
 
         for k, v in self._trackers.items():
             self._addTrackerGroup(k, v)
-        self._trackingImageView.setROI(list(self._trackers)[0])
+        self._trackingImageView.setTrackerGroup(list(self._trackers)[0])
 
         self._frameBar.valueChanged.connect(self._onFrameChanged)
         self._controlWidget.currentChanged.connect(self._onTabChanged)
@@ -122,21 +125,21 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
             for name, tracker in self._trackers.items():
                 index = self._controlWidget.getCurrentTrackerIndex(name)
                 tracker[index].annotate(img)
-                self._trackingImageView.updateROIGroups()
+                self._trackingImageView.updateRoiGroups()
 
     def _onTrackerChanged(self, name: str, index: int):
         self._trackingImageView.setTracker(name, index)
         img = self._currentFrame
         if img is not None:
             self._trackers[name][index].annotate(self._currentFrame)
-            self._trackingImageView.updateROIGroups()
+            self._trackingImageView.updateRoiGroups()
 
     def _onRoiChanged(self, name: str):
         img = self._currentFrame
         if img is not None:
             index = self._controlWidget.getCurrentTrackerIndex(name)
             self._trackers[name][index].annotate(img)
-            self._trackingImageView.updateROIGroups()
+            self._trackingImageView.updateRoiGroups()
 
     def _onTabChanged(self, index: int):
         name = list(self._trackers)[index]
@@ -146,7 +149,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         img = self._currentFrame
         if img is not None:
             self._trackers[name][index].annotate(img)
-            self._trackingImageView.updateROIGroups()
+            self._trackingImageView.updateRoiGroups()
 
     def _addTrackerGroup(self, name: str, trackers: List[Tracker]):
         self._controlWidget.addTrackerGroup(name, trackers)

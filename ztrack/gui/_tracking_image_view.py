@@ -1,12 +1,14 @@
 from abc import abstractmethod
-from typing import Dict, List, Optional
+from typing import Dict, List, Iterable, Optional
 
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets
 
 from ztrack.tracking.tracker import Tracker
-from ztrack.utils.variable import BBox
+from ztrack.utils.variable import Rect
 from ztrack.utils.shape import Ellipse, Shape
+
+pg.setConfigOptions(imageAxisOrder="row-major")
 
 
 class TrackingPlotWidget(pg.PlotWidget):
@@ -14,40 +16,40 @@ class TrackingPlotWidget(pg.PlotWidget):
 
     def __init__(self, parent: QtWidgets.QWidget = None):
         super().__init__(parent)
-        pg.setConfigOptions(imageAxisOrder="row-major")
         self._imageItem = pg.ImageItem()
         self._rois: Dict[str, pg.RectROI] = {}
-        self._roiGroups: Dict[str, List[ROIGroup]] = {}
-        self._currentROIGroups: Dict[str, ROIGroup] = {}
+        self._shapeGroups: Dict[str, List[ShapeGroup]] = {}
+        self._currentShapeGroup: Dict[str, ShapeGroup] = {}
         self._currentTab: Optional[str] = None
+
         self.addItem(self._imageItem)
         self.invertY(True)
         self.setAspectLocked(1)
-        self.hideAxis("bottom")
         self.hideAxis("left")
+        self.hideAxis("bottom")
         self.setBackground(None)
 
-    def setTracker(self, name, index):
-        for roi in self._currentROIGroups[name].rois:
+    def setTracker(self, group_name: str, index: int):
+        for roi in self._currentShapeGroup[group_name].shapes:
             self.removeItem(roi)
-        self._currentROIGroups[name] = self._roiGroups[name][index]
-        for roi in self._currentROIGroups[name].rois:
+        self._currentShapeGroup[group_name] = self._shapeGroups[group_name][index]
+        for roi in self._currentShapeGroup[group_name].shapes:
             self.addItem(roi)
-            roi.setBBox(self._rois[name].bbox)
+            roi.setBBox(self._rois[group_name].bbox)
             for handle in roi.getHandles():
                 roi.removeHandle(handle)
 
-    def addTrackerGroup(self, name, trackers: List[Tracker]):
-        roi = self.addROI(name)
-        self._roiGroups[name] = [ROIGroup.fromTracker(i) for i in trackers]
+    def addTrackerGroup(self, group_name: str, trackers: Iterable[Tracker]):
+        roi = self.addRoi(group_name)
+        self._shapeGroups[group_name] = [ShapeGroup.fromTracker(i) for i in trackers]
         for tracker in trackers:
             tracker.bbox = roi.bbox
-        roi.sigRegionChanged.connect(lambda: self.roiChanged.emit(name))
-        self._currentROIGroups[name] = self._roiGroups[name][0]
-        self.setTracker(name, 0)
+        roi.sigRegionChanged.connect(lambda: self.roiChanged.emit(group_name))
+        self._currentShapeGroup[group_name] = self._shapeGroups[group_name][0]
+        self.setTracker(group_name, 0)
 
     def setTrackerGroup(self, name: str):
-        self.setROI(name)
+        self._setCurrentRoi(name)
 
     def setRoiMaxBounds(self, rect):
         for roi in self._rois.values():
@@ -57,38 +59,30 @@ class TrackingPlotWidget(pg.PlotWidget):
         for roi in self._rois.values():
             roi.setDefaultSize(w, h)
 
-    def addROI(self, name):
-        roi = RoiBBox(None, rotatable=False)
+    def addRoi(self, name):
+        roi = Roi(None, rotatable=False)
         self.addItem(roi)
         roi.setVisible(False)
         self._rois[name] = roi
         return roi
 
-    def _disableROI(self, name):
-        roi = self._rois[name]
-        roi.setVisible(False)
-
-    def _enableROI(self, name):
-        roi = self._rois[name]
-        roi.setVisible(True)
-
-    def setROI(self, name):
+    def _setCurrentRoi(self, name):
         if self._currentTab is not None:
-            self._disableROI(self._currentTab)
-        self._enableROI(name)
+            self._rois[self._currentTab].setVisible(False)
+        self._rois[name].setVisible(True)
         self._currentTab = name
 
     def setImage(self, img):
         self._imageItem.setImage(img)
 
-    def updateROIGroups(self):
-        for roiGroup in self._currentROIGroups.values():
+    def updateRoiGroups(self):
+        for roiGroup in self._currentShapeGroup.values():
             roiGroup.update()
 
 
-class RoiBBox(pg.RectROI):
+class Roi(pg.RectROI):
     def __init__(self, bbox=None, **kwargs):
-        self._bbox = BBox("", bbox)
+        self._bbox = Rect("", bbox)
         self._default_origin = 0, 0
         self._default_size = 100, 100
 
@@ -121,35 +115,35 @@ class RoiBBox(pg.RectROI):
         self._bbox.value = (x, y, w, h)
 
 
-class ROIGroup:
-    def __init__(self, rois):
-        self._rois = rois
+class ShapeGroup:
+    def __init__(self, shapes: List[pg.ROI]):
+        self._shapes = shapes
 
     @property
-    def rois(self):
-        return self._rois
+    def shapes(self):
+        return self._shapes
 
     @staticmethod
     def fromTracker(tracker: Tracker):
-        return ROIGroup([roiFromShape(shape) for shape in tracker.shapes])
+        return ShapeGroup([roiFromShape(shape) for shape in tracker.shapes])
 
     def update(self):
-        for roi in self._rois:
-            roi.updateAttr()
+        for roi in self._shapes:
+            roi.refresh()
 
 
 def roiFromShape(shape: Shape):
     if isinstance(shape, Ellipse):
-        return EllipseROI(shape)
+        return EllipseRoi(shape)
 
 
 class ShapeMixin:
     @abstractmethod
-    def updateAttr(self):
+    def refresh(self):
         pass
 
 
-class EllipseROI(pg.EllipseROI, ShapeMixin):
+class EllipseRoi(pg.EllipseROI, ShapeMixin):
     def __init__(self, ellipse: Ellipse):
         self._ellipse = ellipse
         super().__init__(
@@ -160,7 +154,7 @@ class EllipseROI(pg.EllipseROI, ShapeMixin):
             resizable=False,
             rotatable=False,
         )
-        self.updateAttr()
+        self.refresh()
 
     def setBBox(self, bbox):
         self._ellipse.set_bbox(bbox)
@@ -185,7 +179,7 @@ class EllipseROI(pg.EllipseROI, ShapeMixin):
     def theta(self):
         return self._ellipse.theta
 
-    def updateAttr(self):
+    def refresh(self):
         if self._ellipse.visible:
             self.setVisible(True)
             self.setTransformOriginPoint(self.a, self.b)
