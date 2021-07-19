@@ -43,9 +43,9 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         self._controlWidget = ControlWidget(self)
         self._trackingImageView = TrackingPlotWidget(self)
 
-        self._buttonBox = QtWidgets.QDialogButtonBox(self)
-        self._buttonBox.setStandardButtons(
-            QtWidgets.QDialogButtonBox.Apply  # type: ignore
+        self._dialogButtonBox = QtWidgets.QDialogButtonBox(self)
+        self._dialogButtonBox.setStandardButtons(
+            QtWidgets.QDialogButtonBox.Ok  # type: ignore
             | QtWidgets.QDialogButtonBox.Cancel
         )
 
@@ -59,7 +59,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         layout = QtWidgets.QVBoxLayout()
         layout.addWidget(self._frameBar)
         layout.addLayout(hBoxLayout1)
-        layout.addWidget(self._buttonBox)
+        layout.addWidget(self._dialogButtonBox)
 
         widget = QtWidgets.QWidget(self)
         widget.setLayout(layout)
