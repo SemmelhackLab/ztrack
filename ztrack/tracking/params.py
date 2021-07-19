@@ -29,3 +29,6 @@ class Params(ABC):
     @property
     def parameter_list(self):
         return self._parameter_list
+
+    def to_dict(self):
+        return {name: value.value for name, value in zip(self._parameter_names, self._parameter_list)}

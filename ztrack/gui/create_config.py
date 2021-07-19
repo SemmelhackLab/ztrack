@@ -1,7 +1,8 @@
+import json
 from typing import List, Optional
 
 from decord import VideoReader
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 from ztrack._settings import config_extension, video_extensions
 from ztrack.gui._control_widget import ControlWidget
@@ -34,10 +35,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         self._useVideoFPS = True
         self._videoReader = None
 
-        self._currentVideoPath: Optional[str] = None
-        self._currentSavePaths: Optional[List[str]] = None
-
-        self._trackers = get_trackers()
+        self._trackerGroups = get_trackers()
 
         self._frameBar = FrameBar(self)
         self._controlWidget = ControlWidget(self)
@@ -95,26 +93,73 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
 
         self.setMenuBar(menuBar)
         self.setWindowTitle("ztrack")
+        self.setAcceptDrops(True)
 
         actionOpenFiles.triggered.connect(self._openFiles)
         actionOpenFolders.triggered.connect(self._openFolders)
         actionSetFPS.triggered.connect(self._setFPS)
 
-        for k, v in self._trackers.items():
+        for k, v in self._trackerGroups.items():
             self._addTrackerGroup(k, v)
-        self._trackingImageView.setTrackerGroup(list(self._trackers)[0])
+        self._trackingImageView.setTrackerGroup(list(self._trackerGroups)[0])
 
         self._frameBar.valueChanged.connect(self._onFrameChanged)
         self._controlWidget.currentChanged.connect(self._onTabChanged)
         self._controlWidget.trackerChanged.connect(self._onTrackerChanged)
         self._controlWidget.paramsChanged.connect(self._onParamsChanged)
         self._trackingImageView.roiChanged.connect(self._onRoiChanged)
+        self._buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self._onCancelButtonClicked)
+        self._buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self._onOkButtonClicked)
         self._setEnabled(False)
-        self.triggerCreateConfig()
+        self.updateVideo()
+
+    @property
+    def _currentVideoPath(self) -> Optional[str]:
+        if len(self._videoPaths) > 0:
+            return self._videoPaths[0]
+
+    @property
+    def _currentSavePaths(self) -> List[str]:
+        if len(self._savePaths) > 0:
+            return self._savePaths[0]
+
+    def _saveTrackingConfig(self):
+        trackingConfig = {}
+        for group_name, trackers in self._trackerGroups.items():
+            tracker = trackers[self._controlWidget.getCurrentTrackerIndex(group_name)]
+            trackingConfig[group_name] = dict(
+                method=tracker.name,
+                roi=tracker.roi.value,
+                params=tracker.params.to_dict()
+            )
+        for savePath in self._currentSavePaths:
+            with open(savePath + config_extension, "w") as fp:
+                json.dump(trackingConfig, fp)
+
+    def _onOkButtonClicked(self):
+        self._saveTrackingConfig()
+        self.dequeue()
+        self.updateVideo()
+
+    def _onCancelButtonClicked(self):
+        self.dequeue()
+        self.updateVideo()
+
+    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
+        if event.mimeData().hasUrls():
+            event.accept()
+        else:
+            event.ignore()
+
+    def dropEvent(self, event: QtGui.QDropEvent) -> None:
+        paths = [u.toLocalFile() for u in event.mimeData().urls()]
+        for path in paths:
+            self.enqueue(path, [path], first=True)
+        self.updateVideo()
 
     def _setEnabled(self, b: bool):
-        self._controlWidget.setEnabled(b)
         self._trackingImageView.setEnabled(b)
+        self.centralWidget().setEnabled(b)
 
     @property
     def _currentFrame(self):
@@ -126,7 +171,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         img = self._currentFrame
         if img is not None:
             self._trackingImageView.setImage(img)
-            for name, tracker in self._trackers.items():
+            for name, tracker in self._trackerGroups.items():
                 index = self._controlWidget.getCurrentTrackerIndex(name)
                 tracker[index].annotate(img)
                 self._trackingImageView.updateRoiGroups()
@@ -135,24 +180,24 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         self._trackingImageView.setTracker(name, index)
         img = self._currentFrame
         if img is not None:
-            self._trackers[name][index].annotate(self._currentFrame)
+            self._trackerGroups[name][index].annotate(self._currentFrame)
             self._trackingImageView.updateRoiGroups()
 
     def _onRoiChanged(self, name: str):
         img = self._currentFrame
         if img is not None:
             index = self._controlWidget.getCurrentTrackerIndex(name)
-            self._trackers[name][index].annotate(img)
+            self._trackerGroups[name][index].annotate(img)
             self._trackingImageView.updateRoiGroups()
 
     def _onTabChanged(self, index: int):
-        name = list(self._trackers)[index]
+        name = list(self._trackerGroups)[index]
         self._trackingImageView.setTrackerGroup(name)
 
     def _onParamsChanged(self, name: str, index: int):
         img = self._currentFrame
         if img is not None:
-            self._trackers[name][index].annotate(img)
+            self._trackerGroups[name][index].annotate(img)
             self._trackingImageView.updateRoiGroups()
 
     def _addTrackerGroup(self, name: str, trackers: List[Tracker]):
@@ -213,7 +258,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
 
         dialog.exec()
 
-    def _updateVideo(self):
+    def updateVideo(self):
         if self._currentVideoPath is not None:
             self._videoReader = VideoReader(self._currentVideoPath)
             self._frameBar.maximum = len(self._videoReader) - 1
@@ -228,25 +273,24 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         else:
             self._setEnabled(False)
 
-    def triggerCreateConfig(self):
-        if len(self._videoPaths) == 0:
-            self._currentVideoPath = None
-            self._currentSavePaths = None
+    def enqueue(self, videoPath: str, savePaths: List[str], first=False):
+        if first:
+            self._videoPaths.insert(0, videoPath)
+            self._savePaths.insert(0, savePaths)
         else:
-            self._currentVideoPath = self._videoPaths.pop(0)
-            self._currentSavePaths = self._savePaths.pop(0)
+            self._videoPaths.append(videoPath)
+            self._savePaths.append(savePaths)
 
-        self._updateVideo()
-
-    def enqueue(self, videoPath: str, savePaths: List[str]):
-        self._videoPaths.append(videoPath)
-        self._savePaths.append(savePaths)
+    def dequeue(self):
+        if len(self._videoPaths) > 0:
+            self._videoPaths.pop(0)
+            self._savePaths.pop(0)
 
     def _openFiles(self):
         videoPaths = selectVideoPaths(native=True)
-        for videoPath in videoPaths:
-            self.enqueue(videoPath, [videoPath])
-        self.triggerCreateConfig()
+        for videoPath in reversed(videoPaths):
+            self.enqueue(videoPath, [videoPath], first=True)
+        self.updateVideo()
 
     def _openFolders(self):
         (
@@ -263,6 +307,6 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
             config_extension,
             video_extensions,
         )
-        self._videoPaths.extend(videoPaths)
-        self._savePaths.extend(savePaths)
-        self.triggerCreateConfig()
+        for videoPath, savePath in zip(videoPaths, savePaths):
+            self.enqueue(videoPath, savePath)
+        self.updateVideo()

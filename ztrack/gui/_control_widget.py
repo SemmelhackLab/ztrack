@@ -22,7 +22,7 @@ class ControlWidget(QtWidgets.QTabWidget):
         )
         for tracker in trackers:
             tab.addTracker(tracker)
-        self.addTab(tab, group_name)
+        self.addTab(tab, group_name.capitalize())
         self._tabs[group_name] = tab
 
     def getCurrentTrackerIndex(self, group_name: str):

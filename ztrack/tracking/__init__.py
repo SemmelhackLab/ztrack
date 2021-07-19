@@ -5,7 +5,7 @@ from .tail import trackers as tail_trackers
 from .tracker import Tracker
 
 _trackers: Dict[str, Iterable[Type[Tracker]]] = {
-    "Eye": eye_trackers,
+    "eye": eye_trackers,
     # "Tail": tail_trackers
 }
 

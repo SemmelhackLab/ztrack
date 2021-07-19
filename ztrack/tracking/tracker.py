@@ -15,11 +15,11 @@ class Tracker(ABC):
         return frame[self._bbox.to_slice()]
 
     @property
-    def bbox(self):
+    def roi(self):
         return self._bbox
 
-    @bbox.setter
-    def bbox(self, bbox):
+    @roi.setter
+    def roi(self, bbox):
         self._bbox = bbox
 
     @property

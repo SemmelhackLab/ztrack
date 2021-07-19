@@ -34,6 +34,7 @@ class TrackingPlotWidget(pg.PlotWidget):
             for shape in shapeGroup.shapes:
                 shape.setVisible(b)
         self._rois[self._currentTab].setVisible(b)
+        self._imageItem.setVisible(b)
 
     def setTracker(self, group_name: str, index: int):
         for roi in self._currentShapeGroup[group_name].shapes:
@@ -49,7 +50,7 @@ class TrackingPlotWidget(pg.PlotWidget):
         roi = self.addRoi(group_name)
         self._shapeGroups[group_name] = [ShapeGroup.fromTracker(i) for i in trackers]
         for tracker in trackers:
-            tracker.bbox = roi.bbox
+            tracker.roi = roi.bbox
         roi.sigRegionChanged.connect(lambda: self.roiChanged.emit(group_name))
         self._currentShapeGroup[group_name] = self._shapeGroups[group_name][0]
         self.setTracker(group_name, 0)
