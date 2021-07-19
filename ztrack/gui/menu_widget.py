@@ -65,8 +65,8 @@ class MenuWidget(QtWidgets.QWidget):
         self.verticalLayout.addWidget(self.createConfigPushButton)
         self.runTrackingPushButton = QtWidgets.QPushButton(self)
         self.verticalLayout.addWidget(self.runTrackingPushButton)
-        self.plotResultsPushButton = QtWidgets.QPushButton(self)
-        self.verticalLayout.addWidget(self.plotResultsPushButton)
+        self.viewResultsPushButton = QtWidgets.QPushButton(self)
+        self.verticalLayout.addWidget(self.viewResultsPushButton)
         self.helpPushButton = QtWidgets.QPushButton(self)
         self.verticalLayout.addWidget(self.helpPushButton)
         self.gridLayout.addLayout(self.verticalLayout, 1, 1, 1, 1)
@@ -83,7 +83,7 @@ class MenuWidget(QtWidgets.QWidget):
         self.zFishTrackLabel.setText("ztrack")
         self.createConfigPushButton.setText("Create config")
         self.runTrackingPushButton.setText("Run tracking")
-        self.plotResultsPushButton.setText("Plot results")
+        self.viewResultsPushButton.setText("View results")
         self.helpPushButton.setText("Help")
         self.action_Help.setText("&Help")
 
@@ -95,8 +95,8 @@ class MenuWidget(QtWidgets.QWidget):
         self.runTrackingPushButton.clicked.connect(
             self._onRunTrackingPushButtonClicked
         )
-        self.plotResultsPushButton.clicked.connect(
-            self._onPlotResultsPushButtonClicked
+        self.viewResultsPushButton.clicked.connect(
+            self._onViewResultsPushButtonClicked
         )
         print(homepage)
         self.helpPushButton.clicked.connect(lambda: webbrowser.open(homepage))
@@ -127,7 +127,7 @@ class MenuWidget(QtWidgets.QWidget):
     def _onRunTrackingPushButtonClicked(self):
         pass
 
-    def _onPlotResultsPushButtonClicked(self):
+    def _onViewResultsPushButtonClicked(self):
         pass
 
 

@@ -56,9 +56,9 @@ def run(**kwargs):
     pass
 
 
-@main.command(short_help="Plot tracking results.")
+@main.command(short_help="View tracking results.")
 @my_command
-def plot(**kwargs):
+def view(**kwargs):
     pass
 
 
