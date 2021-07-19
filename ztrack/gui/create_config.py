@@ -16,12 +16,14 @@ from ztrack.utils.file import extract_video_paths
 
 
 class CreateConfigWindow(QtWidgets.QMainWindow):
+    closedSignal = QtCore.pyqtSignal()
+
     def __init__(
-            self,
-            parent: QtWidgets.QWidget = None,
-            videoPaths: List[str] = None,
-            savePaths: List[List[str]] = None,
-            verbose=False,
+        self,
+        parent: QtWidgets.QWidget = None,
+        videoPaths: List[str] = None,
+        savePaths: List[List[str]] = None,
+        verbose=False,
     ):
         super().__init__(parent)
         if videoPaths is None:
@@ -109,8 +111,12 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         self._controlWidget.trackerChanged.connect(self._onTrackerChanged)
         self._controlWidget.paramsChanged.connect(self._onParamsChanged)
         self._trackingImageView.roiChanged.connect(self._onRoiChanged)
-        self._buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(self._onCancelButtonClicked)
-        self._buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(self._onOkButtonClicked)
+        self._buttonBox.button(
+            QtWidgets.QDialogButtonBox.Cancel
+        ).clicked.connect(self._onCancelButtonClicked)
+        self._buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(
+            self._onOkButtonClicked
+        )
         self._setEnabled(False)
         self.updateVideo()
 
@@ -118,20 +124,24 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
     def _currentVideoPath(self) -> Optional[str]:
         if len(self._videoPaths) > 0:
             return self._videoPaths[0]
+        return None
 
     @property
-    def _currentSavePaths(self) -> List[str]:
+    def _currentSavePaths(self) -> Optional[List[str]]:
         if len(self._savePaths) > 0:
             return self._savePaths[0]
+        return None
 
     def _saveTrackingConfig(self):
         trackingConfig = {}
         for group_name, trackers in self._trackerGroups.items():
-            tracker = trackers[self._controlWidget.getCurrentTrackerIndex(group_name)]
+            tracker = trackers[
+                self._controlWidget.getCurrentTrackerIndex(group_name)
+            ]
             trackingConfig[group_name] = dict(
                 method=tracker.name,
                 roi=tracker.roi.value,
-                params=tracker.params.to_dict()
+                params=tracker.params.to_dict(),
             )
         for savePath in self._currentSavePaths:
             with open(savePath + config_extension, "w") as fp:
@@ -320,3 +330,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         for videoPath, savePath in zip(videoPaths, savePaths):
             self.enqueue(videoPath, savePath)
         self.updateVideo()
+
+    def closeEvent(self, a0: QtGui.QCloseEvent):
+        self.closedSignal.emit()
+        super().closeEvent(a0)

@@ -40,8 +40,10 @@ class Rect(Variable):
     @staticmethod
     def _normalize(roi: _rect = None):
         if roi is not None:
+
             def relu(a):
                 return max(0, a)
+
             x, y, width, height = map(int, roi)
             x0, x1 = sorted(map(relu, (x, x + width)))
             y0, y1 = sorted(map(relu, (y, y + height)))
@@ -51,7 +53,7 @@ class Rect(Variable):
         if self._value is None:
             return np.s_[:]
         x, y, width, height = self._value
-        return (np.s_[:],) * axis + np.s_[y: y + height, x: x + width]
+        return (np.s_[:],) * axis + np.s_[y : y + height, x : x + width]
 
 
 class Numerical(Variable, ABC):

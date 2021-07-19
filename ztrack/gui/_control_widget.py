@@ -30,7 +30,9 @@ class ControlWidget(QtWidgets.QTabWidget):
 
     def setStateFromTrackingConfig(self, trackingConfig: dict):
         for groupName, groupDict in trackingConfig.items():
-            self._tabs[groupName].setState(groupDict["method"], groupDict["params"])
+            self._tabs[groupName].setState(
+                groupDict["method"], groupDict["params"]
+            )
 
 
 class TrackingTab(QtWidgets.QWidget):
@@ -93,7 +95,9 @@ class ParamsWidget(QtWidgets.QFrame):
         self.setLayout(self._formLayout)
         self._fields: Dict[str, VariableWidget] = {}
 
-        for name, param in zip(tracker.params.parameter_names, tracker.params.parameter_list):
+        for name, param in zip(
+            tracker.params.parameter_names, tracker.params.parameter_list
+        ):
             label = QtWidgets.QLabel(self)
             label.setText(param.display_name)
             field = VariableWidget.fromVariable(param)

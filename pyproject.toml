@@ -25,8 +25,8 @@ description = ""
 authors = ["Ka Chung Lam <kclamar@connect.ust.hk>"]
 license = "MIT"
 readme = "README.md"
-homepage = "https://github.com/kclamar/stimpy"
-repository = "https://github.com/kclamar/stimpy"
+homepage = "https://github.com/kclamar/ztrack"
+repository = "https://github.com/kclamar/ztrack"
 classifiers=[
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",

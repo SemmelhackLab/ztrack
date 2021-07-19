@@ -3,8 +3,9 @@ from abc import ABC, abstractmethod
 import numpy as np
 import pandas as pd
 
-from .params import Params
 from ztrack.utils.variable import Rect
+
+from .params import Params
 
 
 class Tracker(ABC):

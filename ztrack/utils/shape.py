@@ -23,7 +23,9 @@ class Shape(ABC):
 
 
 class Ellipse(Shape):
-    def __init__(self, cx: float, cy: float, a: float, b: float, theta: float, lw, lc):
+    def __init__(
+        self, cx: float, cy: float, a: float, b: float, theta: float, lw, lc
+    ):
         super().__init__(lw, lc)
         self._cx = cx
         self._cy = cy

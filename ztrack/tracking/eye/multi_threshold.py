@@ -3,8 +3,8 @@ import numpy as np
 import pandas as pd
 
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
-from ztrack.utils.variable import Float, UInt8
 from ztrack.utils.cv import is_in_contour
+from ztrack.utils.variable import Float, UInt8
 
 
 class MultiThresholdEyeTracker(EyeTracker):

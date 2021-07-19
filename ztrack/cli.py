@@ -65,4 +65,5 @@ def plot(**kwargs):
 @main.command(short_help="Open GUI.")
 @click.option("--style", default="dark", show_default=True)
 def gui(**kwargs):
-    pass
+    from ztrack.gui.menu_widget import main as main_
+    main_()

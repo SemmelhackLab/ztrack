@@ -19,4 +19,9 @@ def create_config(
         config_extension,
         video_extensions,
     )
-    launch(CreateConfigWindow, videoPaths=video_paths, savePaths=save_paths, verbose=verbose)
+    launch(
+        CreateConfigWindow,
+        videoPaths=video_paths,
+        savePaths=save_paths,
+        verbose=verbose,
+    )

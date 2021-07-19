@@ -1,12 +1,12 @@
 from abc import abstractmethod
-from typing import Dict, List, Iterable, Optional
+from typing import Dict, Iterable, List, Optional
 
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets
 
 from ztrack.tracking.tracker import Tracker
-from ztrack.utils.variable import Rect
 from ztrack.utils.shape import Ellipse, Shape
+from ztrack.utils.variable import Rect
 
 pg.setConfigOptions(imageAxisOrder="row-major")
 
@@ -37,13 +37,16 @@ class TrackingPlotWidget(pg.PlotWidget):
         for shapeGroup in self._currentShapeGroup.values():
             for shape in shapeGroup.shapes:
                 shape.setVisible(b)
-        self._rois[self._currentTab].setVisible(b)
+        if self._currentTab is not None:
+            self._rois[self._currentTab].setVisible(b)
         self._imageItem.setVisible(b)
 
     def setTracker(self, group_name: str, index: int):
         for roi in self._currentShapeGroup[group_name].shapes:
             self.removeItem(roi)
-        self._currentShapeGroup[group_name] = self._shapeGroups[group_name][index]
+        self._currentShapeGroup[group_name] = self._shapeGroups[group_name][
+            index
+        ]
         for roi in self._currentShapeGroup[group_name].shapes:
             self.addItem(roi)
             roi.setBBox(self._rois[group_name].bbox)
@@ -52,7 +55,9 @@ class TrackingPlotWidget(pg.PlotWidget):
 
     def addTrackerGroup(self, group_name: str, trackers: Iterable[Tracker]):
         roi = self.addRoi(group_name)
-        self._shapeGroups[group_name] = [ShapeGroup.fromTracker(i) for i in trackers]
+        self._shapeGroups[group_name] = [
+            ShapeGroup.fromTracker(i) for i in trackers
+        ]
         for tracker in trackers:
             tracker.roi = roi.bbox
         roi.sigRegionChanged.connect(lambda: self.roiChanged.emit(group_name))

@@ -35,4 +35,7 @@ class Params(ABC):
         return self._parameter_names
 
     def to_dict(self):
-        return {name: value.value for name, value in zip(self._parameter_names, self._parameter_list)}
+        return {
+            name: value.value
+            for name, value in zip(self._parameter_names, self._parameter_list)
+        }

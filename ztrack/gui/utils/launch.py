@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 from typing import Type
 
-from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 import ztrack.gui
 
@@ -11,6 +11,7 @@ def launch(
     Widget: Type[QtWidgets.QWidget],
     style: str = "dark",
     modern_window=False,
+    windowState=QtCore.Qt.WindowMaximized,
     **kwargs,
 ) -> int:
     try:
@@ -41,5 +42,6 @@ def launch(
     except AttributeError:
         app.setStyle(style)  # type: ignore
     finally:
-        widget.showMaximized()
+        widget.setWindowState(windowState)
+        widget.setVisible(True)
         return app.exec()
