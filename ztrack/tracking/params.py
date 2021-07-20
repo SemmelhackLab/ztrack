@@ -7,6 +7,7 @@ from ztrack.utils.variable import Variable
 class Params(ABC):
     def __setattr__(self, name: str, value):
         if isinstance(value, Variable):
+            assert name not in self._parameter_names
             self._parameter_names.append(name)
             self._parameter_list.append(value)
             has_attr = False
@@ -30,7 +31,7 @@ class Params(ABC):
         return object.__getattribute__(self, name)
 
     def __init__(self, params: dict = None):
-        self._parameter_names = []
+        self._parameter_names: List[str] = []
         self._parameter_list: List[Variable] = []
         if params is not None:
             self._set_params(params)

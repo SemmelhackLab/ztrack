@@ -10,12 +10,12 @@ from .params import Params
 
 
 class Tracker(ABC):
-    def __init__(self, params: dict = None):
-        self._bbox = Rect("")
+    def __init__(self, roi=None, params: dict = None):
+        self._roi = Rect("", roi)
         self._params = self._Params(params)
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(params={self.params.to_dict()})"
+        return f"{self.__class__.__name__}(roi={self._roi.value}, params={self.params.to_dict()})"
 
     @property
     @abstractmethod
@@ -23,15 +23,15 @@ class Tracker(ABC):
         pass
 
     def _get_bbox_img(self, frame: np.ndarray):
-        return frame[self._bbox.to_slice()]
+        return frame[self._roi.to_slice()]
 
     @property
     def roi(self):
-        return self._bbox
+        return self._roi
 
     @roi.setter
     def roi(self, bbox):
-        self._bbox = bbox
+        self._roi = bbox
 
     @property
     @abstractmethod

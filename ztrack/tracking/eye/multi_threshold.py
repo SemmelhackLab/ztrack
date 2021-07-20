@@ -21,8 +21,8 @@ class MultiThresholdEyeTracker(EyeTracker):
     def _Params(self):
         return self.__Params
 
-    def __init__(self, params: dict = None):
-        super().__init__(params)
+    def __init__(self, roi=None, params: dict = None):
+        super().__init__(roi, params)
 
     @staticmethod
     def name():

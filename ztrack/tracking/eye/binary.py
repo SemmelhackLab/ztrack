@@ -7,8 +7,8 @@ from ztrack.utils.variable import Float, UInt8
 
 
 class BinaryEyeTracker(EyeTracker):
-    def __init__(self, params: dict = None):
-        super().__init__(params)
+    def __init__(self, roi=None, params: dict = None):
+        super().__init__(roi, params)
 
     class __Params(EyeParams):
         def __init__(self, params: dict = None):

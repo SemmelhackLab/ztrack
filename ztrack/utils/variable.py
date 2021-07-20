@@ -25,8 +25,11 @@ class Variable(ABC):
 
 
 class Rect(Variable):
-    def __init__(self, display_name: str, bbox: _rect = None):
+    def __init__(self, display_name: str, bbox=None):
         super().__init__(display_name)
+        if bbox is not None:
+            x, y, w, h = bbox
+            bbox = x, y, w, h
         self._value = bbox
 
     @property

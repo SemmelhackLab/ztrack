@@ -13,8 +13,8 @@ class BinaryTailTracker(TailTracker):
             self.sigma = Float("Sigma", 0, 0, 100, 0.1)
             self.threshold = UInt8("Threshold", 127)
 
-    def __init__(self, params: dict = None):
-        super().__init__(params)
+    def __init__(self, roi=None, params: dict = None):
+        super().__init__(roi, params)
 
     @property
     def _Params(self):
