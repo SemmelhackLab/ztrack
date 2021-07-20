@@ -10,13 +10,13 @@ from ztrack.utils.geometry import wrap_degrees
 from ztrack.utils.shape import Ellipse
 
 
-class EyeParams(Params):
+class EyeParams(Params, ABC):
     pass
 
 
 class EyeTracker(Tracker, ABC):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, params: dict = None):
+        super().__init__(params)
         self._left_eye = Ellipse(0, 0, 1, 1, 0, 4, "b")
         self._right_eye = Ellipse(0, 0, 1, 1, 0, 4, "r")
         self._swim_bladder = Ellipse(0, 0, 1, 1, 0, 4, "g")

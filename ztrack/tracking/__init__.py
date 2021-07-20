@@ -20,5 +20,9 @@ def get_trackers() -> Dict[str, List[Tracker]]:
 
 
 def get_trackers_from_config(config_dict) -> Dict[str, Type[Tracker]]:
-    return {group_name: _trackers_dict[group_name][group_dict["method"]]
-            for group_name, group_dict in config_dict.items()}
+    return {
+        group_name: _trackers_dict[group_name][group_dict["method"]](
+            group_dict["params"]
+        )
+        for group_name, group_dict in config_dict.items()
+    }

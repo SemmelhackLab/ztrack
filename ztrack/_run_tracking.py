@@ -2,8 +2,9 @@ from pathlib import Path
 from typing import List, Tuple
 
 from ztrack._settings import video_extensions
-from ztrack.utils.file import get_config_path, get_results_path, get_config_dict
 from ztrack.tracking import get_trackers_from_config
+from ztrack.utils.file import (get_config_dict, get_config_path,
+                               get_results_path)
 
 
 def get_video_paths_from_inputs(
@@ -13,16 +14,24 @@ def get_video_paths_from_inputs(
     video_suffixes: Tuple[str, ...],
 ):
     paths: List[Path] = list(map(Path, inputs))
-    videos = [path for path in paths if path.is_file() and path.suffix in video_suffixes]
+    videos = [
+        path
+        for path in paths
+        if path.is_file() and path.suffix in video_suffixes
+    ]
 
     for path in filter(Path.is_dir, paths):
         for ext in video_suffixes:
-            videos.extend(path.rglob(f"*{ext}") if recursive else path.glob(f"*{ext}"))
+            videos.extend(
+                path.rglob(f"*{ext}") if recursive else path.glob(f"*{ext}")
+            )
 
     videos = [file for file in videos if get_config_path(file).exists()]
 
     if not overwrite:
-        videos = [file for file in videos if not get_results_path(file).exists()]
+        videos = [
+            file for file in videos if not get_results_path(file).exists()
+        ]
 
     return videos
 

@@ -9,7 +9,14 @@ class Params(ABC):
         if isinstance(value, Variable):
             self._parameter_names.append(name)
             self._parameter_list.append(value)
+            has_attr = False
+            attr = None
+            if hasattr(self, name):
+                has_attr = True
+                attr = object.__getattribute__(self, name)
             object.__setattr__(self, name, value)
+            if has_attr:
+                self.__setattr__(name, attr)
         elif hasattr(self, name) and isinstance(
             object.__getattribute__(self, name), Variable
         ):
@@ -22,9 +29,15 @@ class Params(ABC):
             return object.__getattribute__(self, name).value
         return object.__getattribute__(self, name)
 
-    def __init__(self):
+    def __init__(self, params: dict = None):
         self._parameter_names = []
         self._parameter_list: List[Variable] = []
+        if params is not None:
+            self._set_params(params)
+
+    def _set_params(self, params: dict):
+        for key, value in params.items():
+            self.__setattr__(key, value)
 
     @property
     def parameter_list(self):

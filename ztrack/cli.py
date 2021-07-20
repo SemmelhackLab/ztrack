@@ -68,4 +68,5 @@ def view(**kwargs):
 @click.option("--style", default="dark", show_default=True)
 def gui(**kwargs):
     from ztrack.gui.menu_widget import main as main_
+
     main_()

@@ -7,19 +7,18 @@ from ztrack.utils.variable import Float, UInt8
 
 
 class BinaryEyeTracker(EyeTracker):
-    def __init__(self):
-        super().__init__()
-        self._params = self.Params()
+    def __init__(self, params: dict = None):
+        super().__init__(params)
 
-    class Params(EyeParams):
-        def __init__(self):
-            super().__init__()
+    class __Params(EyeParams):
+        def __init__(self, params: dict = None):
+            super().__init__(params)
             self.sigma = Float("Sigma", 0, 0, 100, 0.1)
             self.threshold = UInt8("Threshold", 127)
 
     @property
-    def params(self):
-        return self._params
+    def _Params(self):
+        return self.__Params
 
     @staticmethod
     def name():

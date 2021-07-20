@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Type
 
 import numpy as np
 import pandas as pd
@@ -9,8 +10,17 @@ from .params import Params
 
 
 class Tracker(ABC):
-    def __init__(self):
+    def __init__(self, params: dict = None):
         self._bbox = Rect("")
+        self._params = self._Params(params)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(params={self.params.to_dict()})"
+
+    @property
+    @abstractmethod
+    def _Params(self) -> Type[Params]:
+        pass
 
     def _get_bbox_img(self, frame: np.ndarray):
         return frame[self._bbox.to_slice()]
@@ -36,9 +46,8 @@ class Tracker(ABC):
         pass
 
     @property
-    @abstractmethod
     def params(self) -> Params:
-        pass
+        return self._params
 
     @staticmethod
     @abstractmethod

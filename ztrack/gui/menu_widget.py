@@ -56,7 +56,7 @@ class MenuWidget(QtWidgets.QWidget):
         self.versionLabel = QtWidgets.QLabel(self)
         self.versionLabel.setText("")
         self.versionLabel.setAlignment(
-            QtCore.Qt.AlignRight    # type: ignore
+            QtCore.Qt.AlignRight  # type: ignore
             | QtCore.Qt.AlignTrailing
             | QtCore.Qt.AlignVCenter
         )
@@ -133,4 +133,5 @@ class MenuWidget(QtWidgets.QWidget):
 
 def main():
     from ztrack.gui.utils.launch import launch
+
     launch(MenuWidget, windowState=QtCore.Qt.WindowNoState)

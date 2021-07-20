@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
-from ztrack._settings import results_extension, config_extension
+from ztrack._settings import config_extension, results_extension
 
 
 def get_results_path(video):
@@ -35,9 +35,14 @@ def get_paths_for_config_creation(
 ):
     def _str(path: Path):
         return path.resolve().as_posix()
+
     paths: List[Path] = [Path(path) for path in inputs]
     directories = [path for path in paths if path.is_dir()]
-    files = [path for path in paths if path.is_file() and path.suffix in video_suffixes]
+    files = [
+        path
+        for path in paths
+        if path.is_file() and path.suffix in video_suffixes
+    ]
 
     video_paths: List[str] = []
     save_paths: List[List[str]] = []
@@ -67,7 +72,9 @@ def get_paths_for_config_creation(
 
     if not overwrite:
         files = [
-            file for file in files if not file.with_suffix(results_suffix).exists()
+            file
+            for file in files
+            if not file.with_suffix(results_suffix).exists()
         ]
 
     for file in files:

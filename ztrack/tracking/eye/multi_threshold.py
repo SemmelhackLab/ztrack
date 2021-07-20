@@ -8,22 +8,21 @@ from ztrack.utils.variable import Float, UInt8
 
 
 class MultiThresholdEyeTracker(EyeTracker):
-    class Params(EyeParams):
-        def __init__(self):
-            super().__init__()
+    class __Params(EyeParams):
+        def __init__(self, params: dict = None):
+            super().__init__(params)
             self.sigma = Float("Sigma", 0, 0, 100, 0.1)
             self.threshold_segmentation = UInt8("Segmentation threshold", 127)
             self.threshold_left_eye = UInt8("Left eye threshold", 127)
             self.threshold_right_eye = UInt8("Right eye threshold", 127)
             self.threshold_swim_bladder = UInt8("Swim bladder threshold", 127)
 
-    def __init__(self):
-        super().__init__()
-        self._params = self.Params()
-
     @property
-    def params(self):
-        return self._params
+    def _Params(self):
+        return self.__Params
+
+    def __init__(self, params: dict = None):
+        super().__init__(params)
 
     @staticmethod
     def name():

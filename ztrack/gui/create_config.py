@@ -1,5 +1,4 @@
 import json
-from pathlib import Path
 from typing import List, Optional
 
 from decord import VideoReader
@@ -12,7 +11,7 @@ from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.gui.utils.frame_bar import FrameBar
 from ztrack.tracking import get_trackers
 from ztrack.tracking.tracker import Tracker
-from ztrack.utils.file import get_paths_for_config_creation, get_config_dict
+from ztrack.utils.file import get_config_dict, get_paths_for_config_creation
 
 
 class CreateConfigWindow(QtWidgets.QMainWindow):
