@@ -45,6 +45,10 @@ class Tracker(ABC):
         return self._annotate_img(self._get_bbox_img(frame))
 
     @abstractmethod
+    def annotate_from_series(self, s: pd.Series) -> None:
+        pass
+
+    @abstractmethod
     def _annotate_img(self, img: np.ndarray) -> None:
         pass
 

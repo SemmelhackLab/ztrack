@@ -1,10 +1,13 @@
-from pathlib import Path
-from typing import List
+import json
+from typing import Dict, List
 
+import pandas as pd
 from PyQt5 import QtGui, QtWidgets
 
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
-from ztrack.utils.file import get_paths_for_view_results, video_extensions
+from ztrack.utils.file import get_paths_for_view_results, get_results_path, get_config_path
+from ztrack.tracking.tracker import Tracker
+from ztrack.tracking import get_trackers_from_config
 from ._main_window import MainWindow
 
 
@@ -16,6 +19,8 @@ class TrackingViewer(MainWindow):
         verbose=False,
     ):
         super().__init__(parent, videoPaths=videoPaths, verbose=verbose)
+        self._results: Dict[str, pd.DataFrame] = {}
+        self._trackers: Dict[str, Tracker] = {}
         self.updateVideo()
 
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
@@ -28,6 +33,9 @@ class TrackingViewer(MainWindow):
         img = self._currentFrame
         if img is not None:
             self._trackingImageView.setImage(img)
+            for name, tracker in self._trackers.items():
+                tracker.annotate_from_series(self._results[name].iloc[self._frameBar.value])
+                self._trackingImageView.updateRoiGroups()
 
     def enqueue(self, videoPath: str, first=False):
         if first:
@@ -59,3 +67,19 @@ class TrackingViewer(MainWindow):
         for videoPath in videoPaths:
             self.enqueue(videoPath)
         self.updateVideo()
+
+    def updateVideo(self):
+        if self._currentVideoPath is not None:
+            results_path = get_results_path(self._currentVideoPath)
+            config_path = get_config_path(self._currentVideoPath)
+            if results_path.exists() and config_path.exists():
+                store = pd.HDFStore(results_path)
+                for key in store.keys():
+                    self._results[key.lstrip("/")] = pd.DataFrame(store.get(key))
+                with open(config_path) as fp:
+                    config_dict = json.load(fp)
+                self._trackers = get_trackers_from_config(config_dict)
+                for name, tracker in self._trackers.items():
+                    self._trackingImageView.addTrackerGroup(name, [tracker])
+                store.close()
+        super().updateVideo()

@@ -92,6 +92,14 @@ class EyeTracker(Tracker, ABC):
         )
         return left_eye, right_eye, swim_bladder
 
+    def annotate_from_series(self, series: pd.Series) -> None:
+        ellipse_shapes = [self._left_eye, self._right_eye, self._swim_bladder]
+        body_parts = ["left_eye", "right_eye", "swim_bladder"]
+        for i, j in zip(ellipse_shapes, body_parts):
+            i.visible = True
+            s = series[j]
+            i.cx, i.cy, i.a, i.b, i.theta = s.cx, s.cy, s.a, s.b, s.theta
+
     def _annotate_img(self, img: np.ndarray):
         ellipse_shapes = [self._left_eye, self._right_eye, self._swim_bladder]
         try:
