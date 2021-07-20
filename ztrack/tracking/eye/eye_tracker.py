@@ -16,10 +16,15 @@ class EyeParams(Params, ABC):
 
 
 class EyeTracker(Tracker, ABC):
-    _index = pd.MultiIndex.from_product((("left_eye", "right_eye", "swim_bladder"), ("cx", "cy", "a", "b", "theta")))
+    _index = pd.MultiIndex.from_product(
+        (
+            ("left_eye", "right_eye", "swim_bladder"),
+            ("cx", "cy", "a", "b", "theta"),
+        )
+    )
 
-    def __init__(self, roi=None, params: dict = None):
-        super().__init__(roi, params)
+    def __init__(self, roi=None, params: dict = None, *, verbose=0):
+        super().__init__(roi, params, verbose=verbose)
         self._left_eye = Ellipse(0, 0, 1, 1, 0, 4, "b")
         self._right_eye = Ellipse(0, 0, 1, 1, 0, 4, "r")
         self._swim_bladder = Ellipse(0, 0, 1, 1, 0, 4, "g")

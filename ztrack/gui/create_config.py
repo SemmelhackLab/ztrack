@@ -310,12 +310,17 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
         self.updateVideo()
 
     def _openFolders(self):
-        (
-            directories,
+        directories, (
             recursive,
             sameConfig,
             overwrite,
-        ) = selectVideoDirectories()
+        ) = selectVideoDirectories(
+            (
+                ("Include subdirectories", True),
+                ("Use one configuration file per directory", True),
+                ("Overwrite existing configuration files", True),
+            )
+        )
         videoPaths, savePaths = get_paths_for_config_creation(
             directories,
             recursive,

@@ -2,6 +2,7 @@ from functools import reduce
 
 import click
 
+verbose = click.option("-v", "--verbose", count=True, help="Verbosity.")
 common_parameters = (
     click.argument("inputs", nargs=-1, type=click.Path(exists=True)),
     click.option(
@@ -13,12 +14,7 @@ common_parameters = (
     click.option(
         "--overwrite/--no-overwrite", default=True, show_default=True
     ),
-    click.option(
-        "-v",
-        "--verbose",
-        count=True,
-        help="Level of logging (default: WARNING; -v: INFO; -vv: DEBUG).",
-    ),
+    verbose,
 )
 
 
@@ -65,8 +61,9 @@ def view(**kwargs):
 
 
 @main.command(short_help="Open GUI.")
+@verbose
 @click.option("--style", default="dark", show_default=True)
 def gui(**kwargs):
     from ztrack.gui.menu_widget import main as main_
 
-    main_()
+    main_(**kwargs)

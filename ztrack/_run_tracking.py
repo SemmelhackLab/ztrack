@@ -49,7 +49,8 @@ def run_tracking(
     )
     for video in videos:
         config = get_config_dict(video)
-        trackers = get_trackers_from_config(config)
+        trackers = get_trackers_from_config(config, verbose=verbose)
         s = pd.HDFStore(get_results_path(video))
         for key, tracker in trackers.items():
             s[key] = tracker.track_video(video)
+        s.close()

@@ -19,10 +19,10 @@ def get_trackers() -> Dict[str, List[Tracker]]:
     return {key: [i() for i in value] for key, value in _trackers.items()}
 
 
-def get_trackers_from_config(config_dict) -> Dict[str, Tracker]:
+def get_trackers_from_config(config_dict, **kwargs) -> Dict[str, Tracker]:
     return {
         group_name: _trackers_dict[group_name][group_dict["method"]](
-            group_dict["roi"], group_dict["params"]
+            group_dict["roi"], group_dict["params"], **kwargs
         )
         for group_name, group_dict in config_dict.items()
     }

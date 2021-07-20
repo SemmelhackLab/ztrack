@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
 from typing import Type
 
-from decord import VideoReader
 import numpy as np
 import pandas as pd
+from decord import VideoReader
+from tqdm import tqdm
 
 from ztrack.utils.variable import Rect
 
@@ -11,9 +12,10 @@ from .params import Params
 
 
 class Tracker(ABC):
-    def __init__(self, roi=None, params: dict = None):
+    def __init__(self, roi=None, params: dict = None, *, verbose=0):
         self._roi = Rect("", roi)
         self._params = self._Params(params)
+        self._verbose = verbose
 
     def __repr__(self):
         return f"{self.__class__.__name__}(roi={self._roi.value}, params={self.params.to_dict()})"
@@ -62,7 +64,9 @@ class Tracker(ABC):
 
     def _track_frame(self, frame: np.ndarray) -> pd.Series:
         results = self._track_img(frame[self.roi.to_slice()])
-        return self._results_to_series(self._transform_from_roi_to_frame(results))
+        return self._results_to_series(
+            self._transform_from_roi_to_frame(results)
+        )
 
     @classmethod
     @abstractmethod
@@ -79,5 +83,11 @@ class Tracker(ABC):
 
     def track_video(self, video_path):
         video_reader = VideoReader(str(video_path))
-        return pd.DataFrame([self._track_frame(video_reader[i].asnumpy())
-                             for i in range(len(video_reader))])
+        it = (
+            tqdm(range(len(video_reader)))
+            if self._verbose
+            else range(len(video_reader))
+        )
+        return pd.DataFrame(
+            [self._track_frame(video_reader[i].asnumpy()) for i in it]
+        )

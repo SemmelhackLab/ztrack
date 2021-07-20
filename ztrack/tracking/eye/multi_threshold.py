@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import pandas as pd
 
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
 from ztrack.utils.cv import is_in_contour
@@ -17,12 +16,12 @@ class MultiThresholdEyeTracker(EyeTracker):
             self.threshold_right_eye = UInt8("Right eye threshold", 127)
             self.threshold_swim_bladder = UInt8("Swim bladder threshold", 127)
 
+    def __init__(self, roi=None, params: dict = None, *, verbose=0):
+        super().__init__(roi, params, verbose=verbose)
+
     @property
     def _Params(self):
         return self.__Params
-
-    def __init__(self, roi=None, params: dict = None):
-        super().__init__(roi, params)
 
     @staticmethod
     def name():

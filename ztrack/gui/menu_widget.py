@@ -3,13 +3,16 @@ from typing import Optional
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
+from ztrack._run_tracking import run_tracking
 from ztrack.gui.create_config import CreateConfigWindow
+from ztrack.gui.utils.file import selectVideoDirectories
 from ztrack.metadata import homepage, version
 
 
 class MenuWidget(QtWidgets.QWidget):
-    def __init__(self, parent: QtWidgets.QWidget = None):
+    def __init__(self, parent: QtWidgets.QWidget = None, *, verbose=0):
         super().__init__(parent)
+        self._verbose = verbose
         self._createConfigWindow: Optional[CreateConfigWindow] = None
         self.resize(400, 300)
         self.gridLayout = QtWidgets.QGridLayout(self)
@@ -98,7 +101,6 @@ class MenuWidget(QtWidgets.QWidget):
         self.viewResultsPushButton.clicked.connect(
             self._onViewResultsPushButtonClicked
         )
-        print(homepage)
         self.helpPushButton.clicked.connect(lambda: webbrowser.open(homepage))
 
     @property
@@ -125,13 +127,21 @@ class MenuWidget(QtWidgets.QWidget):
         self.createConfigWindow = None
 
     def _onRunTrackingPushButtonClicked(self):
-        pass
+        inputs, (recursive, overwrite) = selectVideoDirectories(
+            (
+                (
+                    ("Include subdirectories", True),
+                    ("Overwrite tracking results", True),
+                )
+            )
+        )
+        run_tracking(inputs, recursive, overwrite, self._verbose)
 
     def _onViewResultsPushButtonClicked(self):
         pass
 
 
-def main():
+def main(**kwargs):
     from ztrack.gui.utils.launch import launch
 
-    launch(MenuWidget, windowState=QtCore.Qt.WindowNoState)
+    launch(MenuWidget, windowState=QtCore.Qt.WindowNoState, **kwargs)
