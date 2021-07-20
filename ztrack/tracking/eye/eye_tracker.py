@@ -108,4 +108,16 @@ class EyeTracker(Tracker, ABC):
 
     @classmethod
     def _results_to_series(cls, results: np.ndarray):
-        return pd.Series(results.ravel(), index=cls._index)
+        eyes_midpoint = results[:2, :2].mean(0)
+        swim_bladder_center = results[-1, :2]
+        midline = eyes_midpoint - swim_bladder_center
+        x2, x1 = midline
+        heading = np.rad2deg(np.arctan2(x1, x2))
+        theta_l, theta_r = results[:2, -1]
+        angle_l = wrap_degrees(theta_l - heading)
+        angle_r = wrap_degrees(heading - theta_l)
+        s = pd.Series(results.ravel(), index=cls._index)
+        s["left_eye", "angle"] = angle_l
+        s["right_eye", "angle"] = angle_r
+        s["heading"] = heading
+        return s
