@@ -53,6 +53,12 @@ class TrackingPlotWidget(pg.PlotWidget):
             for handle in roi.getHandles():
                 roi.removeHandle(handle)
 
+    def clearShapes(self):
+        for name, shapeGroups in self._shapeGroups.items():
+            for shapeGroup in shapeGroups:
+                for shape in shapeGroup.shapes:
+                    self.removeItem(shape)
+
     def addTrackerGroup(self, group_name: str, trackers: Iterable[Tracker]):
         roi = self.addRoi(group_name)
         self._shapeGroups[group_name] = [

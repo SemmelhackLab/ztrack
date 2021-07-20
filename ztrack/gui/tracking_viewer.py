@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 from typing import Dict, List
 
 import pandas as pd
@@ -8,7 +9,7 @@ from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.tracking import get_trackers_from_config
 from ztrack.tracking.tracker import Tracker
 from ztrack.utils.file import (get_config_path, get_paths_for_view_results,
-                               get_results_path)
+                               get_results_path, video_extensions)
 
 from ._main_window import MainWindow
 
@@ -28,7 +29,7 @@ class TrackingViewer(MainWindow):
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
         paths = [u.toLocalFile() for u in event.mimeData().urls()]
         for path in paths:
-            self.enqueue(path, first=True)
+            self.enqueue(str(path), first=True)
         self.updateVideo()
 
     def _onFrameChanged(self):
@@ -71,6 +72,7 @@ class TrackingViewer(MainWindow):
         self.updateVideo()
 
     def updateVideo(self):
+        self._trackingImageView.clearShapes()
         if self._currentVideoPath is not None:
             results_path = get_results_path(self._currentVideoPath)
             config_path = get_config_path(self._currentVideoPath)
@@ -87,3 +89,18 @@ class TrackingViewer(MainWindow):
                     self._trackingImageView.addTrackerGroup(name, [tracker])
                 store.close()
         super().updateVideo()
+
+    def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
+        if event.mimeData().hasUrls():
+            paths = [u.toLocalFile() for u in event.mimeData().urls()]
+            if all(
+                [
+                    Path(path).suffix in video_extensions and
+                    get_config_path(path).exists() and
+                    get_results_path(path).exists()
+                    for path in paths
+                ]
+            ):
+                event.accept()
+        else:
+            event.ignore()
