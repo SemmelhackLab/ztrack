@@ -75,6 +75,3 @@ class MultiThresholdEyeTracker(EyeTracker):
         ellipses = ellipses[[left_eye, right_eye, swim_bladder]]
 
         return self._correct_orientation(ellipses)
-
-    def _track_frame(self, frame: np.ndarray) -> pd.Series:
-        pass

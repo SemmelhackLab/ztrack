@@ -46,6 +46,7 @@ pyqtgraph = "^0.12.2"
 qtmodern = "^0.2.0"
 decord = "^0.6.0"
 click = "^8.0.1"
+tables = "^3.6.1"
 
 black = { version = "*", optional = true }
 isort = { version = "*", optional = true }

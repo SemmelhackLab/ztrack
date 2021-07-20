@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 import cv2
 import numpy as np
+import pandas as pd
 
 from ztrack.tracking.params import Params
 from ztrack.tracking.tracker import Tracker
@@ -15,6 +16,8 @@ class EyeParams(Params, ABC):
 
 
 class EyeTracker(Tracker, ABC):
+    _index = pd.MultiIndex.from_product((("left_eye", "right_eye", "swim_bladder"), ("cx", "cy", "a", "b", "theta")))
+
     def __init__(self, roi=None, params: dict = None):
         super().__init__(roi, params)
         self._left_eye = Ellipse(0, 0, 1, 1, 0, 4, "b")
@@ -94,3 +97,15 @@ class EyeTracker(Tracker, ABC):
         except AssertionError:
             for ellipse in ellipse_shapes:
                 ellipse.visible = False
+
+    def _track_img(self, img: np.ndarray) -> np.ndarray:
+        return self._track_ellipses(img)
+
+    def _transform_from_roi_to_frame(self, results: np.ndarray):
+        if self.roi.value is not None:
+            results[:, :2] += self.roi.value[:2]
+        return results
+
+    @classmethod
+    def _results_to_series(cls, results: np.ndarray):
+        return pd.Series(results.ravel(), index=cls._index)

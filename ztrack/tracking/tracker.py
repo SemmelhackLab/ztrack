@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Type
 
+from decord import VideoReader
 import numpy as np
 import pandas as pd
 
@@ -59,9 +60,24 @@ class Tracker(ABC):
     def display_name():
         pass
 
-    @abstractmethod
     def _track_frame(self, frame: np.ndarray) -> pd.Series:
+        results = self._track_img(frame[self.roi.to_slice()])
+        return self._results_to_series(self._transform_from_roi_to_frame(results))
+
+    @classmethod
+    @abstractmethod
+    def _results_to_series(cls, results):
         pass
 
-    def track_frames(self, frames: np.ndarray) -> pd.DataFrame:
-        return pd.DataFrame([self._track_frame(frame) for frame in frames])
+    @abstractmethod
+    def _transform_from_roi_to_frame(self, results):
+        pass
+
+    @abstractmethod
+    def _track_img(self, img: np.ndarray):
+        pass
+
+    def track_video(self, video_path):
+        video_reader = VideoReader(str(video_path))
+        return pd.DataFrame([self._track_frame(video_reader[i].asnumpy())
+                             for i in range(len(video_reader))])

@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import List, Tuple
 
+import pandas as pd
+
 from ztrack._settings import video_extensions
 from ztrack.tracking import get_trackers_from_config
 from ztrack.utils.file import (get_config_dict, get_config_path,
@@ -45,7 +47,9 @@ def run_tracking(
     videos = get_video_paths_from_inputs(
         inputs, recursive, overwrite, video_extensions
     )
-    print(videos)
     for video in videos:
         config = get_config_dict(video)
-        print(get_trackers_from_config(config))
+        trackers = get_trackers_from_config(config)
+        s = pd.HDFStore(get_results_path(video))
+        for key, tracker in trackers.items():
+            s[key] = tracker.track_video(video)

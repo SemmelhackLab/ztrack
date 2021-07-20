@@ -45,6 +45,3 @@ class BinaryEyeTracker(EyeTracker):
         ellipses = ellipses[list(self._sort_centers(centers))]
 
         return self._correct_orientation(ellipses)
-
-    def _track_frame(self, frame: np.ndarray) -> pd.Series:
-        pass
