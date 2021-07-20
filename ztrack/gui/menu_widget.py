@@ -2,129 +2,120 @@ import webbrowser
 from typing import Optional
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QSizePolicy, QSpacerItem
 
 from ztrack._run_tracking import run_tracking
 from ztrack.gui.create_config import CreateConfigWindow
 from ztrack.gui.utils.file import selectVideoDirectories
 from ztrack.metadata import homepage, version
+from ._main_window import MainWindow
+from .tracking_viewer import TrackingViewer
 
 
 class MenuWidget(QtWidgets.QWidget):
     def __init__(self, parent: QtWidgets.QWidget = None, *, verbose=0):
         super().__init__(parent)
         self._verbose = verbose
-        self._createConfigWindow: Optional[CreateConfigWindow] = None
+        self._window: Optional[MainWindow] = None
         self.resize(400, 300)
-        self.gridLayout = QtWidgets.QGridLayout(self)
-        spacerItem = QtWidgets.QSpacerItem(
-            40,
-            20,
-            QtWidgets.QSizePolicy.Expanding,
-            QtWidgets.QSizePolicy.Minimum,
+        self.setWindowTitle("ztrack")
+
+        spacerItem = QSpacerItem(
+            40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum
         )
-        self.gridLayout.addItem(spacerItem, 1, 0, 1, 1)
-        spacerItem1 = QtWidgets.QSpacerItem(
-            20,
-            40,
-            QtWidgets.QSizePolicy.Minimum,
-            QtWidgets.QSizePolicy.Expanding,
+        spacerItem1 = QSpacerItem(
+            20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
-        self.gridLayout.addItem(spacerItem1, 2, 1, 1, 1)
-        spacerItem2 = QtWidgets.QSpacerItem(
-            20,
-            40,
-            QtWidgets.QSizePolicy.Minimum,
-            QtWidgets.QSizePolicy.Expanding,
+        spacerItem2 = QSpacerItem(
+            20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
         )
-        self.gridLayout.addItem(spacerItem2, 0, 1, 1, 1)
-        self.verticalLayout = QtWidgets.QVBoxLayout()
-        self.zFishTrackLabel = QtWidgets.QLabel(self)
-        sizePolicy = QtWidgets.QSizePolicy(
-            QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred
+        spacerItem3 = QSpacerItem(
+            40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum
         )
+
+        label = QtWidgets.QLabel(self)
+        sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(
-            self.zFishTrackLabel.sizePolicy().hasHeightForWidth()
-        )
-        self.zFishTrackLabel.setSizePolicy(sizePolicy)
-        self.zFishTrackLabel.setMaximumSize(QtCore.QSize(16777215, 16777215))
+        sizePolicy.setHeightForWidth(label.sizePolicy().hasHeightForWidth())
+        label.setSizePolicy(sizePolicy)
+        label.setMaximumSize(QtCore.QSize(16777215, 16777215))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(36)
-        self.zFishTrackLabel.setFont(font)
-        self.zFishTrackLabel.setScaledContents(True)
-        self.zFishTrackLabel.setAlignment(QtCore.Qt.AlignCenter)
-        self.verticalLayout.addWidget(self.zFishTrackLabel)
-        self.versionLabel = QtWidgets.QLabel(self)
-        self.versionLabel.setText("")
-        self.versionLabel.setAlignment(
+        label.setFont(font)
+        label.setScaledContents(True)
+        label.setAlignment(QtCore.Qt.AlignCenter)
+        label.setText("ztrack")
+
+        versionLabel = QtWidgets.QLabel(self)
+        versionLabel.setText("")
+        versionLabel.setAlignment(
             QtCore.Qt.AlignRight  # type: ignore
             | QtCore.Qt.AlignTrailing
             | QtCore.Qt.AlignVCenter
         )
-        self.verticalLayout.addWidget(self.versionLabel)
-        self.createConfigPushButton = QtWidgets.QPushButton(self)
-        self.verticalLayout.addWidget(self.createConfigPushButton)
-        self.runTrackingPushButton = QtWidgets.QPushButton(self)
-        self.verticalLayout.addWidget(self.runTrackingPushButton)
-        self.viewResultsPushButton = QtWidgets.QPushButton(self)
-        self.verticalLayout.addWidget(self.viewResultsPushButton)
-        self.helpPushButton = QtWidgets.QPushButton(self)
-        self.verticalLayout.addWidget(self.helpPushButton)
-        self.gridLayout.addLayout(self.verticalLayout, 1, 1, 1, 1)
-        spacerItem3 = QtWidgets.QSpacerItem(
-            40,
-            20,
-            QtWidgets.QSizePolicy.Expanding,
-            QtWidgets.QSizePolicy.Minimum,
-        )
-        self.gridLayout.addItem(spacerItem3, 1, 2, 1, 1)
-        self.action_Help = QtWidgets.QAction(self)
 
-        self.setWindowTitle("ztrack")
-        self.zFishTrackLabel.setText("ztrack")
-        self.createConfigPushButton.setText("Create config")
-        self.runTrackingPushButton.setText("Run tracking")
-        self.viewResultsPushButton.setText("View results")
-        self.helpPushButton.setText("Help")
-        self.action_Help.setText("&Help")
+        createConfigPushButton = QtWidgets.QPushButton(self)
+        runTrackingPushButton = QtWidgets.QPushButton(self)
+        viewResultsPushButton = QtWidgets.QPushButton(self)
+        helpPushButton = QtWidgets.QPushButton(self)
 
-        self.versionLabel.setText(f"v{version}")
+        verticalLayout = QtWidgets.QVBoxLayout()
+        verticalLayout.addWidget(label)
+        verticalLayout.addWidget(versionLabel)
+        verticalLayout.addWidget(createConfigPushButton)
+        verticalLayout.addWidget(runTrackingPushButton)
+        verticalLayout.addWidget(viewResultsPushButton)
+        verticalLayout.addWidget(helpPushButton)
 
-        self.createConfigPushButton.clicked.connect(
+        gridLayout = QtWidgets.QGridLayout(self)
+        gridLayout.addItem(spacerItem, 1, 0, 1, 1)
+        gridLayout.addItem(spacerItem1, 2, 1, 1, 1)
+        gridLayout.addItem(spacerItem2, 0, 1, 1, 1)
+        gridLayout.addLayout(verticalLayout, 1, 1, 1, 1)
+        gridLayout.addItem(spacerItem3, 1, 2, 1, 1)
+
+        createConfigPushButton.setText("Create config")
+        runTrackingPushButton.setText("Run tracking")
+        viewResultsPushButton.setText("View results")
+        helpPushButton.setText("Help")
+
+        versionLabel.setText(f"v{version}")
+
+        createConfigPushButton.clicked.connect(
             self._onCreateConfigPushButtonClicked
         )
-        self.runTrackingPushButton.clicked.connect(
+        runTrackingPushButton.clicked.connect(
             self._onRunTrackingPushButtonClicked
         )
-        self.viewResultsPushButton.clicked.connect(
+        viewResultsPushButton.clicked.connect(
             self._onViewResultsPushButtonClicked
         )
-        self.helpPushButton.clicked.connect(lambda: webbrowser.open(homepage))
+        helpPushButton.clicked.connect(lambda: webbrowser.open(homepage))
 
     @property
-    def createConfigWindow(self) -> Optional[CreateConfigWindow]:
-        return self._createConfigWindow
+    def currentWindow(self) -> Optional[MainWindow]:
+        return self._window
 
-    @createConfigWindow.setter
-    def createConfigWindow(self, value: Optional[CreateConfigWindow]):
+    @currentWindow.setter
+    def currentWindow(self, value: Optional[MainWindow]):
         if value is None:
-            self._createConfigWindow = None
+            self._window = None
             self.setEnabled(True)
         else:
-            self._createConfigWindow = value
+            self._window = value
             self.setEnabled(False)
 
     def _onCreateConfigPushButtonClicked(self):
-        self.createConfigWindow = CreateConfigWindow()
-        self.createConfigWindow.closedSignal.connect(
-            self._onCreateConfigWindowClosed
+        self.currentWindow = CreateConfigWindow()
+        self.currentWindow.closedSignal.connect(
+            self._onWindowClosed
         )
-        self.createConfigWindow.showMaximized()
+        self.currentWindow.showMaximized()
 
-    def _onCreateConfigWindowClosed(self):
-        self.createConfigWindow = None
+    def _onWindowClosed(self):
+        self.currentWindow = None
 
     def _onRunTrackingPushButtonClicked(self):
         inputs, (recursive, overwrite) = selectVideoDirectories(
@@ -138,7 +129,11 @@ class MenuWidget(QtWidgets.QWidget):
         run_tracking(inputs, recursive, overwrite, self._verbose)
 
     def _onViewResultsPushButtonClicked(self):
-        pass
+        self.currentWindow = TrackingViewer()
+        self.currentWindow.closedSignal.connect(
+            self._onWindowClosed
+        )
+        self.currentWindow.showMaximized()
 
 
 def main(**kwargs):

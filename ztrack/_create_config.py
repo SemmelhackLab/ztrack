@@ -11,14 +11,7 @@ def create_config(
     overwrite,
     verbose,
 ):
-    video_paths, save_paths = get_paths_for_config_creation(
-        inputs,
-        recursive,
-        same_config,
-        overwrite,
-        config_extension,
-        video_extensions,
-    )
+    video_paths, save_paths = get_paths_for_config_creation(inputs, recursive, same_config, overwrite)
     launch(
         CreateConfigWindow,
         videoPaths=video_paths,
