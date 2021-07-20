@@ -40,14 +40,14 @@ class Tracker(ABC):
     def params(self) -> Params:
         pass
 
-    @property
+    @staticmethod
     @abstractmethod
-    def name(self):
+    def name():
         pass
 
-    @property
+    @staticmethod
     @abstractmethod
-    def display_name(self):
+    def display_name():
         pass
 
     @abstractmethod

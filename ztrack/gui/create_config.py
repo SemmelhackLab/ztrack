@@ -12,7 +12,7 @@ from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.gui.utils.frame_bar import FrameBar
 from ztrack.tracking import get_trackers
 from ztrack.tracking.tracker import Tracker
-from ztrack.utils.file import extract_video_paths
+from ztrack.utils.file import get_paths_for_config_creation, get_config_dict
 
 
 class CreateConfigWindow(QtWidgets.QMainWindow):
@@ -139,7 +139,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
                 self._controlWidget.getCurrentTrackerIndex(group_name)
             ]
             trackingConfig[group_name] = dict(
-                method=tracker.name,
+                method=tracker.name(),
                 roi=tracker.roi.value,
                 params=tracker.params.to_dict(),
             )
@@ -275,10 +275,8 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
 
     def updateVideo(self):
         if self._currentVideoPath is not None:
-            configPath = Path(self._currentVideoPath + config_extension)
-            if configPath.exists():
-                with open(configPath) as fp:
-                    trackingConfig = json.load(fp)
+            trackingConfig = get_config_dict(self._currentVideoPath)
+            if trackingConfig is not None:
                 self._setStateFromTrackingConfig(trackingConfig)
             self._videoReader = VideoReader(self._currentVideoPath)
             self._frameBar.maximum = len(self._videoReader) - 1
@@ -319,7 +317,7 @@ class CreateConfigWindow(QtWidgets.QMainWindow):
             sameConfig,
             overwrite,
         ) = selectVideoDirectories()
-        videoPaths, savePaths = extract_video_paths(
+        videoPaths, savePaths = get_paths_for_config_creation(
             directories,
             recursive,
             sameConfig,

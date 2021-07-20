@@ -9,6 +9,16 @@ _trackers: Dict[str, Iterable[Type[Tracker]]] = {
     # "Tail": tail_trackers
 }
 
+_trackers_dict: Dict[str, Dict[str, Type[Tracker]]] = {
+    group_name: {tracker.name(): tracker for tracker in trackers}
+    for group_name, trackers in _trackers.items()
+}
+
 
 def get_trackers() -> Dict[str, List[Tracker]]:
     return {key: [i() for i in value] for key, value in _trackers.items()}
+
+
+def get_trackers_from_config(config_dict) -> Dict[str, Type[Tracker]]:
+    return {group_name: _trackers_dict[group_name][group_dict["method"]]
+            for group_name, group_dict in config_dict.items()}

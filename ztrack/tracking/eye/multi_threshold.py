@@ -25,12 +25,12 @@ class MultiThresholdEyeTracker(EyeTracker):
     def params(self):
         return self._params
 
-    @property
-    def name(self):
+    @staticmethod
+    def name():
         return "multithreshold"
 
-    @property
-    def display_name(self):
+    @staticmethod
+    def display_name():
         return "Multi-threshold"
 
     def _track_ellipses(self, src: np.ndarray):

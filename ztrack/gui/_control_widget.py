@@ -74,10 +74,10 @@ class TrackingTab(QtWidgets.QWidget):
         self._paramsWidgets[index].setParams(params)
 
     def addTracker(self, tracker: Tracker):
-        self._trackerNames.append(tracker.name)
+        self._trackerNames.append(tracker.name())
         self._trackers.append(tracker)
         index = self._comboBox.count()
-        self._comboBox.addItem(tracker.display_name)
+        self._comboBox.addItem(tracker.display_name())
         widget = ParamsWidget(self, tracker=tracker)
         widget.paramsChanged.connect(
             lambda: self._parent.paramsChanged.emit(self._groupName, index)
