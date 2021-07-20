@@ -1,8 +1,9 @@
 import json
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
-from ztrack._settings import config_extension, results_extension, video_extensions
+from ztrack._settings import (config_extension, results_extension,
+                              video_extensions)
 
 
 def get_results_path(video):
@@ -48,7 +49,9 @@ def get_paths_for_view_results(inputs: List[str], recursive: bool):
     return videos
 
 
-def get_paths_for_config_creation(inputs: List[str], recursive: bool, same_config: bool, overwrite: bool):
+def get_paths_for_config_creation(
+    inputs: List[str], recursive: bool, same_config: bool, overwrite: bool
+):
     def _str(path: Path):
         return path.resolve().as_posix()
 
@@ -100,7 +103,9 @@ def get_paths_for_config_creation(inputs: List[str], recursive: bool, same_confi
     return video_paths, save_paths
 
 
-def get_video_paths_from_inputs(inputs: List[str], recursive: bool, overwrite: bool):
+def get_video_paths_from_inputs(
+    inputs: List[str], recursive: bool, overwrite: bool
+):
     videos = get_video_paths(inputs, recursive)
     videos = [file for file in videos if get_config_path(file).exists()]
 

@@ -5,9 +5,11 @@ import pandas as pd
 from PyQt5 import QtGui, QtWidgets
 
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
-from ztrack.utils.file import get_paths_for_view_results, get_results_path, get_config_path
-from ztrack.tracking.tracker import Tracker
 from ztrack.tracking import get_trackers_from_config
+from ztrack.tracking.tracker import Tracker
+from ztrack.utils.file import (get_config_path, get_paths_for_view_results,
+                               get_results_path)
+
 from ._main_window import MainWindow
 
 
@@ -34,7 +36,9 @@ class TrackingViewer(MainWindow):
         if img is not None:
             self._trackingImageView.setImage(img)
             for name, tracker in self._trackers.items():
-                tracker.annotate_from_series(self._results[name].iloc[self._frameBar.value])
+                tracker.annotate_from_series(
+                    self._results[name].iloc[self._frameBar.value]
+                )
                 self._trackingImageView.updateRoiGroups()
 
     def enqueue(self, videoPath: str, first=False):
@@ -56,9 +60,7 @@ class TrackingViewer(MainWindow):
 
     def _openFolders(self):
         directories, (recursive,) = selectVideoDirectories(
-            (
-                ("Include subdirectories", True),
-            )
+            (("Include subdirectories", True),)
         )
         videoPaths = get_paths_for_view_results(
             directories,
@@ -75,7 +77,9 @@ class TrackingViewer(MainWindow):
             if results_path.exists() and config_path.exists():
                 store = pd.HDFStore(results_path)
                 for key in store.keys():
-                    self._results[key.lstrip("/")] = pd.DataFrame(store.get(key))
+                    self._results[key.lstrip("/")] = pd.DataFrame(
+                        store.get(key)
+                    )
                 with open(config_path) as fp:
                     config_dict = json.load(fp)
                 self._trackers = get_trackers_from_config(config_dict)

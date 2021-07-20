@@ -5,15 +5,22 @@ from typing import List, Optional
 from decord import VideoReader
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from .utils.frame_bar import FrameBar
-from ._tracking_image_view import TrackingPlotWidget
 from ztrack.utils.file import video_extensions
+
+from ._tracking_image_view import TrackingPlotWidget
+from .utils.frame_bar import FrameBar
 
 
 class MainWindow(QtWidgets.QMainWindow):
     closedSignal = QtCore.pyqtSignal()
 
-    def __init__(self, parent: QtWidgets.QWidget = None, *, videoPaths=None, verbose=False):
+    def __init__(
+        self,
+        parent: QtWidgets.QWidget = None,
+        *,
+        videoPaths=None,
+        verbose=False,
+    ):
         super().__init__(parent)
         if videoPaths is None:
             videoPaths = []
@@ -180,7 +187,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
         if event.mimeData().hasUrls():
-            if all([Path(u.toLocalFile()).suffix in video_extensions for u in event.mimeData().urls()]):
+            if all(
+                [
+                    Path(u.toLocalFile()).suffix in video_extensions
+                    for u in event.mimeData().urls()
+                ]
+            ):
                 event.accept()
         else:
             event.ignore()

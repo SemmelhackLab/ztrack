@@ -9,6 +9,7 @@ from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.tracking import get_trackers
 from ztrack.tracking.tracker import Tracker
 from ztrack.utils.file import get_config_dict, get_paths_for_config_creation
+
 from ._main_window import MainWindow
 
 
@@ -173,7 +174,9 @@ class CreateConfigWindow(MainWindow):
                 ("Overwrite existing configuration files", True),
             )
         )
-        videoPaths, savePaths = get_paths_for_config_creation(directories, recursive, sameConfig, overwrite)
+        videoPaths, savePaths = get_paths_for_config_creation(
+            directories, recursive, sameConfig, overwrite
+        )
         for videoPath, savePath in zip(videoPaths, savePaths):
             self.enqueue(videoPath, savePath)
         self.updateVideo()

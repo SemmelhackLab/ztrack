@@ -8,6 +8,7 @@ from ztrack._run_tracking import run_tracking
 from ztrack.gui.create_config import CreateConfigWindow
 from ztrack.gui.utils.file import selectVideoDirectories
 from ztrack.metadata import homepage, version
+
 from ._main_window import MainWindow
 from .tracking_viewer import TrackingViewer
 
@@ -109,9 +110,7 @@ class MenuWidget(QtWidgets.QWidget):
 
     def _onCreateConfigPushButtonClicked(self):
         self.currentWindow = CreateConfigWindow()
-        self.currentWindow.closedSignal.connect(
-            self._onWindowClosed
-        )
+        self.currentWindow.closedSignal.connect(self._onWindowClosed)
         self.currentWindow.showMaximized()
 
     def _onWindowClosed(self):
@@ -130,9 +129,7 @@ class MenuWidget(QtWidgets.QWidget):
 
     def _onViewResultsPushButtonClicked(self):
         self.currentWindow = TrackingViewer()
-        self.currentWindow.closedSignal.connect(
-            self._onWindowClosed
-        )
+        self.currentWindow.closedSignal.connect(self._onWindowClosed)
         self.currentWindow.showMaximized()
 
 
