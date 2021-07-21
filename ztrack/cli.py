@@ -2,24 +2,11 @@ from functools import reduce
 
 import click
 
-common_parameters = (
-    click.argument("inputs", nargs=-1, type=click.Path(exists=True)),
-    click.option(
-        "-r",
-        "--recursive",
-        is_flag=True,
-        help="Look for files in subdirectories.",
-    ),
-    click.option(
-        "--overwrite/--no-overwrite", default=True, show_default=True
-    ),
-    click.option(
-        "-v",
-        "--verbose",
-        count=True,
-        help="Level of logging (default: WARNING; -v: INFO; -vv: DEBUG).",
-    ),
-)
+inputs = click.argument("inputs", nargs=-1, type=click.Path(exists=True))
+recursive = click.option("-r", "--recursive", is_flag=True, help="Look for files in subdirectories.")
+overwrite = click.option("--overwrite/--no-overwrite", default=True, show_default=True)
+verbose = click.option("-v", "--verbose", count=True, help="Verbosity.")
+common_parameters = (inputs, recursive, verbose)
 
 
 def my_command(f):
@@ -42,6 +29,7 @@ def main():
     help="Generate the same configuration file for all videos in the "
     "directory",
 )
+@overwrite
 def create_config(**kwargs):
     from ztrack._create_config import create_config
 
@@ -52,17 +40,24 @@ def create_config(**kwargs):
     short_help="Run tracking on videos with created tracking configurations."
 )
 @my_command
+@overwrite
 def run(**kwargs):
-    pass
+    from ztrack._run_tracking import run_tracking
+
+    run_tracking(**kwargs)
 
 
-@main.command(short_help="Plot tracking results.")
+@main.command(short_help="View tracking results.")
 @my_command
-def plot(**kwargs):
-    pass
+def view(**kwargs):
+    from ztrack._view_results import view_results
+    view_results(**kwargs)
 
 
 @main.command(short_help="Open GUI.")
+@verbose
 @click.option("--style", default="dark", show_default=True)
 def gui(**kwargs):
-    pass
+    from ztrack.gui.menu_widget import main as main_
+
+    main_(**kwargs)
