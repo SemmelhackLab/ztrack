@@ -6,3 +6,11 @@
 # ztrack
 
 Toolbox for zebrafish pose estimation.
+
+## Installation
+
+Use the package manager [pip](https://pip.pypa.io/en/stable/) to install StimPy.
+
+```bash
+pip install ztrack
+```
