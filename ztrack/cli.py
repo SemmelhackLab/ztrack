@@ -3,8 +3,12 @@ from functools import reduce
 import click
 
 inputs = click.argument("inputs", nargs=-1, type=click.Path(exists=True))
-recursive = click.option("-r", "--recursive", is_flag=True, help="Look for files in subdirectories.")
-overwrite = click.option("--overwrite/--no-overwrite", default=True, show_default=True)
+recursive = click.option(
+    "-r", "--recursive", is_flag=True, help="Look for files in subdirectories."
+)
+overwrite = click.option(
+    "--overwrite/--no-overwrite", default=True, show_default=True
+)
 verbose = click.option("-v", "--verbose", count=True, help="Verbosity.")
 common_parameters = (inputs, recursive, verbose)
 
@@ -51,6 +55,7 @@ def run(**kwargs):
 @my_command
 def view(**kwargs):
     from ztrack._view_results import view_results
+
     view_results(**kwargs)
 
 

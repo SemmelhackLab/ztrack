@@ -8,7 +8,9 @@ def view_results(
     recursive,
     verbose,
 ):
-    video_paths = [str(i) for i in get_paths_for_view_results(inputs, recursive)]
+    video_paths = [
+        str(i) for i in get_paths_for_view_results(inputs, recursive)
+    ]
     launch(
         TrackingViewer,
         videoPaths=video_paths,

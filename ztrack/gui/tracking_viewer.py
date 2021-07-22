@@ -95,9 +95,9 @@ class TrackingViewer(MainWindow):
             paths = [u.toLocalFile() for u in event.mimeData().urls()]
             if all(
                 [
-                    Path(path).suffix in video_extensions and
-                    get_config_path(path).exists() and
-                    get_results_path(path).exists()
+                    Path(path).suffix in video_extensions
+                    and get_config_path(path).exists()
+                    and get_results_path(path).exists()
                     for path in paths
                 ]
             ):
