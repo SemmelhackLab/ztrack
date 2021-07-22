@@ -32,7 +32,7 @@ class MultiThresholdEyeTracker(EyeTracker):
         return "Multi-threshold"
 
     def _track_ellipses(self, src: np.ndarray):
-        img = self._preprocess(src)
+        img = self._preprocess(src, self.params.sigma)
 
         contours_left_eye = self._binary_segmentation(
             img, self.params.threshold_left_eye

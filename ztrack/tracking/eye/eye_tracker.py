@@ -128,7 +128,7 @@ class EyeTracker(Tracker, ABC):
         heading = np.rad2deg(np.arctan2(x1, x2))
         theta_l, theta_r = results[:2, -1]
         angle_l = wrap_degrees(theta_l - heading)
-        angle_r = wrap_degrees(heading - theta_l)
+        angle_r = wrap_degrees(heading - theta_r)
         s = pd.Series(results.ravel(), index=cls._index)
         s["left_eye", "angle"] = angle_l
         s["right_eye", "angle"] = angle_r
