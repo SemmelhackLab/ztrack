@@ -42,14 +42,16 @@ class Tracker(ABC):
         pass
 
     def annotate(self, frame: np.ndarray) -> None:
-        return self._annotate_img(self._get_bbox_img(frame))
+        try:
+            img = self._get_bbox_img(frame)
+            results = self._results_to_series(self._track_img(img))
+            self.annotate_from_series(results)
+        except AssertionError:
+            for shape in self.shapes:
+                shape.visible = False
 
     @abstractmethod
     def annotate_from_series(self, s: pd.Series) -> None:
-        pass
-
-    @abstractmethod
-    def _annotate_img(self, img: np.ndarray) -> None:
         pass
 
     @property

@@ -1,8 +1,9 @@
 from abc import abstractmethod
+from traceback import print_stack
 
 from PyQt5 import QtCore, QtWidgets
 
-from ztrack.utils.variable import Float, Int, Variable
+from ztrack.utils.variable import Float, Int, Variable, Point
 
 
 class VariableWidget(QtWidgets.QWidget):
@@ -15,6 +16,8 @@ class VariableWidget(QtWidgets.QWidget):
             return IntWidget(parent, variable=variable)
         if isinstance(variable, Float):
             return FloatWidget(parent, variable=variable)
+        if isinstance(variable, Point):
+            return PointWidget(parent, variable=variable)
         raise NotImplementedError
 
     @abstractmethod
@@ -25,6 +28,40 @@ class VariableWidget(QtWidgets.QWidget):
     @abstractmethod
     def valueChanged(self) -> QtCore.pyqtBoundSignal:
         pass
+
+
+class PointWidget(VariableWidget):
+    _valueChanged = QtCore.pyqtSignal()
+
+    def setValue(self, value):
+        self._line_edit.setText(str(value))
+
+    def __init__(self, parent: QtWidgets.QWidget = None, *, variable: Point):
+        super().__init__(parent)
+        self._variable = variable
+        self._spinBoxX = QtWidgets.QSpinBox(self)
+        self._spinBoxY = QtWidgets.QSpinBox(self)
+        self._spinBoxX.setMaximum(1000)
+        self._spinBoxY.setMaximum(1000)
+        x, y = variable.value
+        self._spinBoxX.setValue(x)
+        self._spinBoxY.setValue(y)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.addWidget(self._spinBoxX)
+        layout.addWidget(self._spinBoxY)
+        self.setLayout(layout)
+
+        self._spinBoxX.valueChanged.connect(self._onValueChanged)
+        self._spinBoxY.valueChanged.connect(self._onValueChanged)
+
+    def _onValueChanged(self):
+        self._variable.value = (self._spinBoxX.value(), self._spinBoxY.value())
+        self._valueChanged.emit()
+
+    @property
+    def valueChanged(self) -> QtCore.pyqtBoundSignal:
+        return self._valueChanged
 
 
 class FloatWidget(VariableWidget):

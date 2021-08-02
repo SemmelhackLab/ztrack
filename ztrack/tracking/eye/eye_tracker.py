@@ -100,17 +100,6 @@ class EyeTracker(Tracker, ABC):
             s = series[j]
             i.cx, i.cy, i.a, i.b, i.theta = s.cx, s.cy, s.a, s.b, s.theta
 
-    def _annotate_img(self, img: np.ndarray):
-        ellipse_shapes = [self._left_eye, self._right_eye, self._swim_bladder]
-        try:
-            ellipses = self._track_ellipses(img)
-            for i, j in zip(ellipse_shapes, ellipses):
-                i.visible = True
-                i.cx, i.cy, i.a, i.b, i.theta = j
-        except AssertionError:
-            for ellipse in ellipse_shapes:
-                ellipse.visible = False
-
     def _track_img(self, img: np.ndarray) -> np.ndarray:
         return self._track_ellipses(img)
 

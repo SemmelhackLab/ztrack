@@ -52,3 +52,8 @@ class Ellipse(Shape):
     @cy.setter
     def cy(self, cy: float):
         self._cy = cy
+
+
+class Circle(Ellipse):
+    def __init__(self, cx: float, cy: float, r: float, lw, lc):
+        super().__init__(cx, cy, r, r, 0, lw, lc)

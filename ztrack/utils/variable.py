@@ -4,6 +4,7 @@ from typing import Optional, Tuple
 import numpy as np
 
 _rect = Optional[Tuple[int, int, int, int]]
+_point = Optional[Tuple[int, int]]
 
 
 class Variable(ABC):
@@ -22,6 +23,23 @@ class Variable(ABC):
     @value.setter
     def value(self, value):
         pass
+
+
+class Point(Variable):
+    def __init__(self, display_name: str, point=None):
+        super().__init__(display_name)
+        if point is not None:
+            x, y = point
+            point = x, y
+        self._value = point
+
+    @property
+    def value(self) -> _point:
+        return self._value
+
+    @value.setter
+    def value(self, value: _point):
+        self._value = value
 
 
 class Rect(Variable):

@@ -1,3 +1,3 @@
-from .binary import BinaryTailTracker
+from .default import DefaultTailTracker
 
-trackers = [BinaryTailTracker]
+trackers = [DefaultTailTracker]
