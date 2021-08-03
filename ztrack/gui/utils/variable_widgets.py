@@ -129,8 +129,13 @@ class PointWidget(VariableWidget):
 
     def setValue(self, value):
         x, y = value
-        self._label.setText(f"({x}, {y})")
         self._variable.value = value
+        self._pushButton.setText(self._display_str)
+
+    @property
+    def _display_str(self):
+        x, y = self._variable.value
+        return f"({x}, {y})"
 
     def __init__(self, parent: QtWidgets.QWidget = None, *, variable: Point):
         super().__init__(parent, variable=variable)
@@ -138,18 +143,11 @@ class PointWidget(VariableWidget):
         self._pointSelectionMode = False
 
         self._pushButton = QtWidgets.QPushButton(self)
-        self._pushButton.setText("Select point")
-
-        self._label = QtWidgets.QLabel(self)
-
-        if variable.value is not None:
-            x, y = variable.value
-            self._label.setText(f"({x}, {y})")
+        self._pushButton.setText(self._display_str)
 
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._pushButton)
-        layout.addWidget(self._label)
         self.setLayout(layout)
 
         self._pushButton.clicked.connect(self._onPushButtonClicked)
@@ -164,7 +162,7 @@ class PointWidget(VariableWidget):
         if self._pointSelectionMode:
             self._pushButton.setText("Cancel")
         else:
-            self._pushButton.setText("Select point")
+            self._pushButton.setText(self._display_str)
         self.pointSelectionModeChanged.emit(self._pointSelectionMode)
 
     def _onPushButtonClicked(self):
