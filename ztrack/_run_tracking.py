@@ -1,8 +1,11 @@
 import pandas as pd
 
 from ztrack.tracking import get_trackers_from_config
-from ztrack.utils.file import (get_config_dict, get_results_path,
-                               get_video_paths_from_inputs)
+from ztrack.utils.file import (
+    get_config_dict,
+    get_results_path,
+    get_video_paths_from_inputs,
+)
 
 
 def run_tracking(

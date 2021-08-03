@@ -37,7 +37,7 @@ class FrameBar(QtWidgets.QWidget):
         return int(1000 / fps)
 
     @property
-    def valueChanged(self) -> QtCore.pyqtBoundSignal:
+    def valueChanged(self):
         return self._slider.valueChanged
 
     @property

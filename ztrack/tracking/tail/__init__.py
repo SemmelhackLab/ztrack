@@ -1,3 +1,3 @@
-from .default import DefaultTailTracker
+from .embedded import EmbeddedTailTracker
 
-trackers = [DefaultTailTracker]
+trackers = [EmbeddedTailTracker]

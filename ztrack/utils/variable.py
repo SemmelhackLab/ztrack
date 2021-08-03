@@ -25,12 +25,46 @@ class Variable(ABC):
         pass
 
 
-class Point(Variable):
-    def __init__(self, display_name: str, point=None):
+class Angle(Variable, ABC):
+    pass
+
+
+class AngleDeg360(Angle):
+    def __init__(self, display_name: str, angle: float):
         super().__init__(display_name)
-        if point is not None:
-            x, y = point
-            point = x, y
+        self._value = 0
+        self.value = angle
+
+    @property
+    def value(self) -> float:
+        return self._value
+
+    @value.setter
+    def value(self, value: float):
+        self._value = int(value) % 360
+
+
+class AngleDeg180(Angle):
+    def __init__(self, display_name: str, angle: float):
+        super().__init__(display_name)
+        self._value = 0
+        self.value = angle
+
+    @property
+    def value(self) -> float:
+        return self._value
+
+    @value.setter
+    def value(self, value: float):
+        self._value = np.clip(value, 0, 180)
+
+
+class Point(Variable):
+    def __init__(self, display_name: str, point):
+        super().__init__(display_name)
+
+        x, y = point
+        point = x, y
         self._value = point
 
     @property

@@ -17,17 +17,27 @@ class TailParams(Params):
 
 
 class TailTracker(Tracker, ABC):
-    def __init__(self, roi=None, params: dict = None, *, verbose=0,
-                 cmap: Union[colors.Colormap, str] = "jet"):
+    def __init__(
+        self,
+        roi=None,
+        params: dict = None,
+        *,
+        verbose=0,
+        cmap: Union[colors.Colormap, str] = "jet",
+    ):
         super().__init__(roi, params, verbose=verbose)
         cmap = cm.get_cmap(cmap)
-        self._points = [Circle(0, 0, 1, 2, cmap(i, bytes=True))
-                        for i in np.linspace(0, 1, self.params.n_points)]
+        self._points = [
+            Circle(0, 0, 1, 2, cmap(i, bytes=True))
+            for i in np.linspace(0, 1, self.params.n_points)
+        ]
 
     @classmethod
     def _results_to_series(cls, results: np.ndarray):
         n_points = len(results)
-        idx = pd.MultiIndex.from_product(((f"point{i:02d}" for i in range(n_points)), ("x", "y")))
+        idx = pd.MultiIndex.from_product(
+            ((f"point{i:02d}" for i in range(n_points)), ("x", "y"))
+        )
         return pd.Series(results.ravel(), idx)
 
     @abstractmethod
