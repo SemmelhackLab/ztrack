@@ -3,8 +3,7 @@ from typing import Union
 
 import numpy as np
 import pandas as pd
-
-from matplotlib import colors, cm
+from matplotlib import cm, colors
 from scipy.interpolate import splev, splprep
 
 from ztrack.tracking.params import Params

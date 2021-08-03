@@ -13,6 +13,7 @@ pg.setConfigOptions(imageAxisOrder="row-major")
 
 class TrackingPlotWidget(pg.PlotWidget):
     roiChanged = QtCore.pyqtSignal(str)
+    pointSelected = QtCore.pyqtSignal(int, int)
 
     def __init__(self, parent: QtWidgets.QWidget = None):
         super().__init__(parent)
@@ -21,6 +22,7 @@ class TrackingPlotWidget(pg.PlotWidget):
         self._shapeGroups: Dict[str, List[ShapeGroup]] = {}
         self._currentShapeGroup: Dict[str, ShapeGroup] = {}
         self._currentTab: Optional[str] = None
+        self._pointSelectionModeEnabled = False
 
         self.addItem(self._imageItem)
         self.invertY(True)
@@ -28,6 +30,20 @@ class TrackingPlotWidget(pg.PlotWidget):
         self.hideAxis("left")
         self.hideAxis("bottom")
         self.setBackground(None)
+        self.scene().sigMouseClicked.connect(self._onMouseClicked)
+
+    def setPointSelectionModeEnabled(self, enabled):
+        self._pointSelectionModeEnabled = enabled
+        roi = self._rois[self._currentTab]
+        roi.resizable = roi.translatable = not enabled
+        self.setCursor(
+            QtCore.Qt.CrossCursor if enabled else QtCore.Qt.ArrowCursor
+        )
+
+    def _onMouseClicked(self, event):
+        if self._pointSelectionModeEnabled:
+            pos = event.currentItem.mapSceneToView(event.scenePos())
+            self.pointSelected.emit(int(pos.x()), int(pos.y()))
 
     def setStateFromTrackingConfig(self, trackingConfig: dict):
         for groupName, groupDict in trackingConfig.items():

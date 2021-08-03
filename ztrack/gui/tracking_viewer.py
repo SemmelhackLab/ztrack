@@ -8,12 +8,8 @@ from PyQt5 import QtGui, QtWidgets
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.tracking import get_trackers_from_config
 from ztrack.tracking.tracker import Tracker
-from ztrack.utils.file import (
-    get_config_path,
-    get_paths_for_view_results,
-    get_results_path,
-    video_extensions,
-)
+from ztrack.utils.file import (get_config_path, get_paths_for_view_results,
+                               get_results_path, video_extensions)
 
 from ._main_window import MainWindow
 
@@ -39,12 +35,12 @@ class TrackingViewer(MainWindow):
     def _onFrameChanged(self):
         img = self._currentFrame
         if img is not None:
-            self._trackingImageView.setImage(img)
+            self._trackingPlotWidget.setImage(img)
             for name, tracker in self._trackers.items():
                 tracker.annotate_from_series(
                     self._results[name].iloc[self._frameBar.value]
                 )
-                self._trackingImageView.updateRoiGroups()
+                self._trackingPlotWidget.updateRoiGroups()
 
     def enqueue(self, videoPath: str, first=False):
         if first:
@@ -76,7 +72,7 @@ class TrackingViewer(MainWindow):
         self.updateVideo()
 
     def updateVideo(self):
-        self._trackingImageView.clearShapes()
+        self._trackingPlotWidget.clearShapes()
         if self._currentVideoPath is not None:
             results_path = get_results_path(self._currentVideoPath)
             config_path = get_config_path(self._currentVideoPath)
@@ -90,7 +86,7 @@ class TrackingViewer(MainWindow):
                     config_dict = json.load(fp)
                 self._trackers = get_trackers_from_config(config_dict)
                 for name, tracker in self._trackers.items():
-                    self._trackingImageView.addTrackerGroup(name, [tracker])
+                    self._trackingPlotWidget.addTrackerGroup(name, [tracker])
                 store.close()
         super().updateVideo()
 

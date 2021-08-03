@@ -29,10 +29,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self._frameBar = FrameBar(self)
         self._useVideoFPS = True
         self._videoReader = None
-        self._trackingImageView = TrackingPlotWidget(self)
+        self._trackingPlotWidget = TrackingPlotWidget(self)
         self._hBoxLayout = QtWidgets.QHBoxLayout()
         self._hBoxLayout.setContentsMargins(0, 0, 0, 0)
-        self._hBoxLayout.addWidget(self._trackingImageView)
+        self._hBoxLayout.addWidget(self._trackingPlotWidget)
 
         self._layout = QtWidgets.QVBoxLayout()
         self._layout.addWidget(self._frameBar)
@@ -88,7 +88,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _setEnabled(self, b: bool):
         self.centralWidget().setEnabled(b)
-        self._trackingImageView.setEnabled(b)
+        self._trackingPlotWidget.setEnabled(b)
 
     @abstractmethod
     def dropEvent(self, a0: QtGui.QDropEvent) -> None:
@@ -174,9 +174,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 self._frameBar.fps = int(self._videoReader.get_avg_fps())
             self._onFrameChanged()
             h, w = self._videoReader[0].shape[:2]
-            self._trackingImageView.setRoiDefaultSize(w, h)
+            self._trackingPlotWidget.setRoiDefaultSize(w, h)
             rect = QtCore.QRectF(0, 0, w, h)
-            self._trackingImageView.setRoiMaxBounds(rect)
+            self._trackingPlotWidget.setRoiMaxBounds(rect)
             self._setEnabled(True)
         else:
             self._setEnabled(False)

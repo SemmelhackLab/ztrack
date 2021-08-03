@@ -43,12 +43,12 @@ class CreateConfigWindow(MainWindow):
 
         for k, v in self._trackerGroups.items():
             self._addTrackerGroup(k, v)
-        self._trackingImageView.setTrackerGroup(list(self._trackerGroups)[0])
+        self._trackingPlotWidget.setTrackerGroup(list(self._trackerGroups)[0])
 
         self._controlWidget.currentChanged.connect(self._onTabChanged)
         self._controlWidget.trackerChanged.connect(self._onTrackerChanged)
         self._controlWidget.paramsChanged.connect(self._onParamsChanged)
-        self._trackingImageView.roiChanged.connect(self._onRoiChanged)
+        self._trackingPlotWidget.roiChanged.connect(self._onRoiChanged)
 
         self._buttonBox.button(
             QtWidgets.QDialogButtonBox.Cancel
@@ -58,6 +58,10 @@ class CreateConfigWindow(MainWindow):
             self._onOkButtonClicked
         )
         self.updateVideo()
+
+    @property
+    def trackingPlotWidget(self):
+        return self._trackingPlotWidget
 
     @property
     def _currentSavePaths(self) -> Optional[List[str]]:
@@ -98,43 +102,43 @@ class CreateConfigWindow(MainWindow):
     def _onFrameChanged(self):
         img = self._currentFrame
         if img is not None:
-            self._trackingImageView.setImage(img)
+            self._trackingPlotWidget.setImage(img)
             for name, tracker in self._trackerGroups.items():
                 index = self._controlWidget.getCurrentTrackerIndex(name)
                 tracker[index].annotate(img)
-                self._trackingImageView.updateRoiGroups()
+                self._trackingPlotWidget.updateRoiGroups()
 
     def _onTrackerChanged(self, name: str, index: int):
-        self._trackingImageView.setTracker(name, index)
+        self._trackingPlotWidget.setTracker(name, index)
         img = self._currentFrame
         if img is not None:
             self._trackerGroups[name][index].annotate(self._currentFrame)
-            self._trackingImageView.updateRoiGroups()
+            self._trackingPlotWidget.updateRoiGroups()
 
     def _onRoiChanged(self, name: str):
         img = self._currentFrame
         if img is not None:
             index = self._controlWidget.getCurrentTrackerIndex(name)
             self._trackerGroups[name][index].annotate(img)
-            self._trackingImageView.updateRoiGroups()
+            self._trackingPlotWidget.updateRoiGroups()
 
     def _onTabChanged(self, index: int):
         name = list(self._trackerGroups)[index]
-        self._trackingImageView.setTrackerGroup(name)
+        self._trackingPlotWidget.setTrackerGroup(name)
 
     def _onParamsChanged(self, name: str, index: int):
         img = self._currentFrame
         if img is not None:
             self._trackerGroups[name][index].annotate(img)
-            self._trackingImageView.updateRoiGroups()
+            self._trackingPlotWidget.updateRoiGroups()
 
     def _addTrackerGroup(self, name: str, trackers: List[Tracker]):
         self._controlWidget.addTrackerGroup(name, trackers)
-        self._trackingImageView.addTrackerGroup(name, trackers)
+        self._trackingPlotWidget.addTrackerGroup(name, trackers)
 
     def _setStateFromTrackingConfig(self, trackingConfig: dict):
         self._controlWidget.setStateFromTrackingConfig(trackingConfig)
-        self._trackingImageView.setStateFromTrackingConfig(trackingConfig)
+        self._trackingPlotWidget.setStateFromTrackingConfig(trackingConfig)
 
     def updateVideo(self):
         if self._currentVideoPath is not None:

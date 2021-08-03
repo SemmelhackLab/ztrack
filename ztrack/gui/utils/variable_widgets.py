@@ -3,15 +3,8 @@ from typing import Type
 
 from PyQt5 import QtCore, QtWidgets
 
-from ztrack.utils.variable import (
-    Float,
-    Int,
-    Variable,
-    Point,
-    AngleDeg360,
-    AngleDeg180,
-    Angle,
-)
+from ztrack.utils.variable import (Angle, AngleDeg180, AngleDeg360, Float, Int,
+                                   Point, Variable)
 
 
 class VariableWidget(QtWidgets.QWidget):
@@ -46,8 +39,13 @@ class VariableWidget(QtWidgets.QWidget):
 
 
 class AngleWidget(VariableWidget):
-    def __init__(self, parent: QtWidgets.QWidget = None, *, variable: Angle,
-                 dial: Type[QtWidgets.QDial] = None):
+    def __init__(
+        self,
+        parent: QtWidgets.QWidget = None,
+        *,
+        variable: Angle,
+        dial: Type[QtWidgets.QDial] = None,
+    ):
         super().__init__(parent, variable=variable)
 
         self._qDial = QtWidgets.QDial(self) if dial is None else dial(self)
@@ -100,7 +98,9 @@ class Angle360Widget(AngleWidget):
 
 class Angle180Widget(AngleWidget):
     class MyDial(QtWidgets.QDial):
-        def sliderChange(self, change: QtWidgets.QAbstractSlider.SliderChange) -> None:
+        def sliderChange(
+            self, change: QtWidgets.QAbstractSlider.SliderChange
+        ) -> None:
             if change == QtWidgets.QAbstractSlider.SliderValueChange:
                 value = self.value()
                 if value > 180:
@@ -125,37 +125,50 @@ class Angle180Widget(AngleWidget):
 
 class PointWidget(VariableWidget):
     _valueChanged = QtCore.pyqtSignal()
+    pointSelectionModeChanged = QtCore.pyqtSignal(bool)
 
     def setValue(self, value):
         x, y = value
-        self._spinBoxX.setValue(x)
-        self._spinBoxY.setValue(y)
+        self._label.setText(f"({x}, {y})")
+        self._variable.value = value
 
     def __init__(self, parent: QtWidgets.QWidget = None, *, variable: Point):
         super().__init__(parent, variable=variable)
 
-        self._spinBoxX = QtWidgets.QSpinBox(self)
-        self._spinBoxY = QtWidgets.QSpinBox(self)
-        self._spinBoxX.setMaximum(1000)
-        self._spinBoxY.setMaximum(1000)
+        self._pointSelectionMode = False
+
+        self._pushButton = QtWidgets.QPushButton(self)
+        self._pushButton.setText("Select point")
+
+        self._label = QtWidgets.QLabel(self)
 
         if variable.value is not None:
             x, y = variable.value
-            self._spinBoxX.setValue(x)
-            self._spinBoxY.setValue(y)
+            self._label.setText(f"({x}, {y})")
 
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._spinBoxX)
-        layout.addWidget(self._spinBoxY)
+        layout.addWidget(self._pushButton)
+        layout.addWidget(self._label)
         self.setLayout(layout)
 
-        self._spinBoxX.valueChanged.connect(self._onValueChanged)
-        self._spinBoxY.valueChanged.connect(self._onValueChanged)
+        self._pushButton.clicked.connect(self._onPushButtonClicked)
 
-    def _onValueChanged(self):
-        self._variable.value = (self._spinBoxX.value(), self._spinBoxY.value())
+    def setPoint(self, x, y):
+        self.setValue((x, y))
+        self._setPointSelectionMode(False)
         self._valueChanged.emit()
+
+    def _setPointSelectionMode(self, b):
+        self._pointSelectionMode = b
+        if self._pointSelectionMode:
+            self._pushButton.setText("Cancel")
+        else:
+            self._pushButton.setText("Select point")
+        self.pointSelectionModeChanged.emit(self._pointSelectionMode)
+
+    def _onPushButtonClicked(self):
+        self._setPointSelectionMode(not self._pointSelectionMode)
 
     @property
     def valueChanged(self) -> QtCore.pyqtBoundSignal:

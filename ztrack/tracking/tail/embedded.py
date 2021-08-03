@@ -1,11 +1,10 @@
 import cv2
 import numpy as np
-
 from skimage.draw import circle_perimeter
 
-from ztrack.utils.variable import Float, Point, Int, AngleDeg360
 from ztrack.utils.geometry import angle_diff
 from ztrack.utils.math import split_int
+from ztrack.utils.variable import AngleDeg360, Float, Int, Point
 
 from .tail_tracker import TailParams, TailTracker
 
@@ -17,10 +16,10 @@ class EmbeddedTailTracker(TailTracker):
             self.sigma = Float("Sigma (px)", 0, 0, 100, 0.1)
             self.n_steps = Int("Number of steps", 10, 3, 20)
             self.n_points = Int("Number of points", 51, 0, 99)
-            self.tail_base = Point("Tail base (x, y)", (250, 120))
             self.length = Int("Tail length (px)", 200, 0, 1000)
             self.angle = AngleDeg360("Initial angle (°)", 90)
             self.theta = AngleDeg360("Search angle (°)", 60)
+            self.tail_base = Point("Tail base (x, y)", (250, 120))
 
     def __init__(self, roi=None, params: dict = None, *, verbose=0):
         super().__init__(roi, params, verbose=verbose)
