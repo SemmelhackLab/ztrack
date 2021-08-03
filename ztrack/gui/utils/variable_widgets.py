@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from typing import Type
 
 from PyQt5 import QtCore, QtWidgets
 
@@ -45,17 +46,17 @@ class VariableWidget(QtWidgets.QWidget):
 
 
 class AngleWidget(VariableWidget):
-    def __init__(self, parent: QtWidgets.QWidget = None, *, variable: Angle):
+    def __init__(self, parent: QtWidgets.QWidget = None, *, variable: Angle,
+                 dial: Type[QtWidgets.QDial] = None):
         super().__init__(parent, variable=variable)
 
-        self._qDial = QtWidgets.QDial(self)
+        self._qDial = QtWidgets.QDial(self) if dial is None else dial(self)
         self._qDial.setWrapping(True)
         self._qDial.setMinimum(0)
         self._qDial.setNotchesVisible(True)
         self._qDial.setNotchTarget(90)
 
         self._spinBox = QtWidgets.QSpinBox(self)
-        self._spinBox.setWrapping(True)
         self._spinBox.setMinimum(0)
 
         layout = QtWidgets.QHBoxLayout()
@@ -86,6 +87,7 @@ class Angle360Widget(AngleWidget):
 
         self._spinBox.setMaximum(359)
         self._spinBox.setValue(int(variable.value))
+        self._spinBox.setWrapping(True)
 
         self._qDial.valueChanged.connect(
             lambda x: self._spinBox.setValue((x + 90) % 360)
@@ -97,12 +99,20 @@ class Angle360Widget(AngleWidget):
 
 
 class Angle180Widget(AngleWidget):
+    class MyDial(QtWidgets.QDial):
+        def sliderChange(self, change: QtWidgets.QAbstractSlider.SliderChange) -> None:
+            if change == QtWidgets.QAbstractSlider.SliderValueChange:
+                value = self.value()
+                if value > 180:
+                    self.setValue(180)
+            super().sliderChange(change)
+
     def __init__(
         self, parent: QtWidgets.QWidget = None, *, variable: AngleDeg180
     ):
-        super().__init__(parent, variable=variable)
+        super().__init__(parent, variable=variable, dial=Angle180Widget.MyDial)
 
-        self._qDial.setMaximum(180)
+        self._qDial.setMaximum(360)
         self._qDial.setValue(int(variable.value))
 
         self._spinBox.setMaximum(180)
@@ -135,6 +145,7 @@ class PointWidget(VariableWidget):
             self._spinBoxY.setValue(y)
 
         layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self._spinBoxX)
         layout.addWidget(self._spinBoxY)
         self.setLayout(layout)
