@@ -4,7 +4,7 @@ from skimage.draw import circle_perimeter
 
 from ztrack.utils.geometry import angle_diff
 from ztrack.utils.math import split_int
-from ztrack.utils.variable import AngleDeg360, Float, Int, Point
+from ztrack.utils.variable import Angle, Float, Int, Point
 
 from .tail_tracker import TailParams, TailTracker
 
@@ -18,8 +18,8 @@ class EmbeddedTailTracker(TailTracker):
             self.n_points = Int("Number of points", 51, 0, 99)
             self.length = Int("Tail length (px)", 200, 0, 1000)
             self.tail_base = Point("Tail base (x, y)", (250, 120))
-            self.angle = AngleDeg360("Initial angle (°)", 90)
-            self.theta = AngleDeg360("Search angle (°)", 60)
+            self.angle = Angle("Initial angle (°)", 90)
+            self.theta = Angle("Search angle (°)", 60)
 
     def __init__(self, roi=None, params: dict = None, *, verbose=0):
         super().__init__(roi, params, verbose=verbose)

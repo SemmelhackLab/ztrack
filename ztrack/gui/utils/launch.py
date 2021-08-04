@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 import sys
 from pathlib import Path
-from typing import Type
+from typing import TYPE_CHECKING
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 import ztrack.gui
+
+if TYPE_CHECKING:
+    from typing import Type
 
 
 def launch(

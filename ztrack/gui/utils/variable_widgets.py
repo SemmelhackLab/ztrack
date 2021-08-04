@@ -1,13 +1,25 @@
-from abc import abstractmethod
-from typing import Type
+from __future__ import annotations
+
+from abc import ABC, ABCMeta, abstractmethod
+from typing import TYPE_CHECKING
 
 from PyQt5 import QtCore, QtWidgets
 
-from ztrack.utils.variable import (Angle, AngleDeg180, AngleDeg360, Float, Int,
-                                   Point, Variable)
+from ztrack.utils.variable import Angle, Float, Int, Point
+
+if TYPE_CHECKING:
+    from typing import Tuple
+    from ztrack.gui._tracking_plot_widget import TrackingPlotWidget
+    from ztrack.utils.variable import Variable
 
 
-class VariableWidget(QtWidgets.QWidget):
+class AbstractWidgetMeta(type(QtWidgets.QWidget), ABCMeta):  # type: ignore
+    pass
+
+
+class VariableWidget(QtWidgets.QWidget, ABC, metaclass=AbstractWidgetMeta):
+    valueChanged = QtCore.pyqtSignal()
+
     def __init__(
         self, parent: QtWidgets.QWidget = None, *, variable: Variable
     ):
@@ -16,189 +28,27 @@ class VariableWidget(QtWidgets.QWidget):
 
     @staticmethod
     def fromVariable(variable: Variable, parent: QtWidgets.QWidget = None):
-        if isinstance(variable, Int):
-            return IntWidget(parent, variable=variable)
+        if isinstance(variable, Angle):
+            return AngleWidget(parent, variable=variable)
         if isinstance(variable, Float):
             return FloatWidget(parent, variable=variable)
+        if isinstance(variable, Int):
+            return IntWidget(parent, variable=variable)
         if isinstance(variable, Point):
             return PointWidget(parent, variable=variable)
-        if isinstance(variable, AngleDeg360):
-            return Angle360Widget(parent, variable=variable)
-        if isinstance(variable, AngleDeg180):
-            return Angle180Widget(parent, variable=variable)
         raise NotImplementedError
 
+    def _setValue(self, value):
+        self._variable.value = value
+        self.valueChanged.emit()
+
     @abstractmethod
-    def setValue(self, value):
+    def _setGuiValue(self, value):
         pass
 
-    @property
-    @abstractmethod
-    def valueChanged(self):
-        pass
-
-
-class AngleWidget(VariableWidget):
-    def __init__(
-        self,
-        parent: QtWidgets.QWidget = None,
-        *,
-        variable: Angle,
-        dial: Type[QtWidgets.QDial] = None,
-    ):
-        super().__init__(parent, variable=variable)
-
-        self._qDial = QtWidgets.QDial(self) if dial is None else dial(self)
-        self._qDial.setWrapping(True)
-        self._qDial.setMinimum(0)
-        self._qDial.setNotchesVisible(True)
-        self._qDial.setNotchTarget(90)
-
-        self._spinBox = QtWidgets.QSpinBox(self)
-        self._spinBox.setMinimum(0)
-
-        layout = QtWidgets.QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._qDial)
-        layout.addWidget(self._spinBox)
-        self.setLayout(layout)
-
-    def _onValueChanged(self, value: int):
-        self._variable.value = value
-
     def setValue(self, value):
-        self._spinBox.setValue(value)
-
-    @property
-    def valueChanged(self):
-        return self._spinBox.valueChanged
-
-
-class Angle360Widget(AngleWidget):
-    def __init__(
-        self, parent: QtWidgets.QWidget = None, *, variable: AngleDeg360
-    ):
-        super().__init__(parent, variable=variable)
-
-        self._qDial.setMaximum(359)
-        self._qDial.setValue((int(variable.value) - 90) % 360)
-
-        self._spinBox.setMaximum(359)
-        self._spinBox.setValue(int(variable.value))
-        self._spinBox.setWrapping(True)
-
-        self._qDial.valueChanged.connect(
-            lambda x: self._spinBox.setValue((x + 90) % 360)
-        )
-        self._spinBox.valueChanged.connect(
-            lambda x: self._qDial.setValue((x - 90) % 360)
-        )
-        self._spinBox.valueChanged.connect(self._onValueChanged)
-
-
-class Angle180Widget(AngleWidget):
-    class MyDial(QtWidgets.QDial):
-        def sliderChange(
-            self, change: QtWidgets.QAbstractSlider.SliderChange
-        ) -> None:
-            if change == QtWidgets.QAbstractSlider.SliderValueChange:
-                value = self.value()
-                if value > 180:
-                    self.setValue(180)
-            super().sliderChange(change)
-
-    def __init__(
-        self, parent: QtWidgets.QWidget = None, *, variable: AngleDeg180
-    ):
-        super().__init__(parent, variable=variable, dial=Angle180Widget.MyDial)
-
-        self._qDial.setMaximum(360)
-        self._qDial.setValue(int(variable.value))
-
-        self._spinBox.setMaximum(180)
-        self._spinBox.setValue(int(variable.value))
-
-        self._qDial.valueChanged.connect(lambda x: self._spinBox.setValue(x))
-        self._spinBox.valueChanged.connect(lambda x: self._qDial.setValue(x))
-        self._spinBox.valueChanged.connect(self._onValueChanged)
-
-
-class PointWidget(VariableWidget):
-    _valueChanged = QtCore.pyqtSignal()
-    pointSelectionModeChanged = QtCore.pyqtSignal(bool)
-
-    def setValue(self, value):
-        x, y = value
-        self._variable.value = value
-        self._pushButton.setText(self._display_str)
-
-    @property
-    def _display_str(self):
-        x, y = self._variable.value
-        return f"({x}, {y})"
-
-    def __init__(self, parent: QtWidgets.QWidget = None, *, variable: Point):
-        super().__init__(parent, variable=variable)
-
-        self._pointSelectionMode = False
-
-        self._pushButton = QtWidgets.QPushButton(self)
-        self._pushButton.setText(self._display_str)
-
-        layout = QtWidgets.QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._pushButton)
-        self.setLayout(layout)
-
-        self._pushButton.clicked.connect(self._onPushButtonClicked)
-
-    def setPoint(self, x, y):
-        self.setValue((x, y))
-        self._setPointSelectionMode(False)
-        self._valueChanged.emit()
-
-    def _setPointSelectionMode(self, b):
-        self._pointSelectionMode = b
-        if self._pointSelectionMode:
-            self._pushButton.setText("Cancel")
-        else:
-            self._pushButton.setText(self._display_str)
-        self.pointSelectionModeChanged.emit(self._pointSelectionMode)
-
-    def _onPushButtonClicked(self):
-        self._setPointSelectionMode(not self._pointSelectionMode)
-
-    @property
-    def valueChanged(self) -> QtCore.pyqtBoundSignal:
-        return self._valueChanged
-
-
-class FloatWidget(VariableWidget):
-    def __init__(self, parent: QtWidgets.QWidget = None, *, variable: Float):
-        super().__init__(parent, variable=variable)
-
-        self._spinBox = QtWidgets.QDoubleSpinBox(self)
-        self._spinBox.setValue(variable.value)
-        self._spinBox.setMinimum(variable.minimum)
-        self._spinBox.setMaximum(variable.maximum)
-        self._spinBox.setSingleStep(variable.step)
-
-        layout = QtWidgets.QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self._spinBox)
-        self.setLayout(layout)
-
-        self._spinBox.valueChanged.connect(self._onValueChanged)
-
-    def _onValueChanged(self, value: float):
-        self._variable.value = value
-
-    def setValue(self, value: float):
-        self._spinBox.setValue(value)
-
-    @property
-    def valueChanged(self):
-        return self._spinBox.valueChanged
+        self._setValue(value)
+        self._setGuiValue(value)
 
 
 class IntWidget(VariableWidget):
@@ -223,14 +73,142 @@ class IntWidget(VariableWidget):
 
         self._slider.valueChanged.connect(self._spinBox.setValue)
         self._spinBox.valueChanged.connect(self._slider.setValue)
-        self._slider.valueChanged.connect(self._onValueChanged)
 
-    def setValue(self, value: int):
+        self._slider.valueChanged.connect(self._setValue)
+        self._spinBox.valueChanged.connect(self._setValue)
+
+    def _setGuiValue(self, value):
+        self._spinBox.setValue(value)
         self._slider.setValue(value)
 
-    @property
-    def valueChanged(self):
-        return self._slider.valueChanged
 
-    def _onValueChanged(self, value: int):
-        self._variable.value = value
+class FloatWidget(VariableWidget):
+    def __init__(self, parent: QtWidgets.QWidget = None, *, variable: Float):
+        super().__init__(parent, variable=variable)
+
+        self._spinBox = QtWidgets.QDoubleSpinBox(self)
+        self._spinBox.setValue(variable.value)
+        self._spinBox.setMinimum(variable.minimum)
+        self._spinBox.setMaximum(variable.maximum)
+        self._spinBox.setSingleStep(variable.step)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._spinBox)
+        self.setLayout(layout)
+
+        self._spinBox.valueChanged.connect(self._setValue)
+
+    def _setGuiValue(self, value):
+        self._spinBox.setValue(value)
+
+
+class AngleWidget(VariableWidget):
+    class CompassDial(QtWidgets.QDial):
+        _valueChanged = QtCore.pyqtSignal(int)
+
+        def __init__(self, parent: QtWidgets.QWidget = None, *, rotation=-90):
+            super().__init__(parent)
+
+            self._rotation = rotation
+            self.setMinimum(0)
+            self.setMaximum(359)
+            self.setWrapping(True)
+            self.setNotchesVisible(True)
+            self.setNotchTarget(90)
+
+            super().valueChanged.connect(
+                lambda x: self._valueChanged.emit((x - self._rotation) % 360)
+            )
+
+        @property
+        def valueChanged(self):
+            return self._valueChanged
+
+        def setValue(self, a0: int) -> None:
+            super().setValue((a0 + self._rotation) % 360)
+
+    def __init__(
+        self,
+        parent: QtWidgets.QWidget = None,
+        *,
+        variable: Angle,
+        rotation=-90,
+    ):
+        super().__init__(parent, variable=variable)
+
+        self._compassDial = AngleWidget.CompassDial(self, rotation=rotation)
+        self._spinBox = QtWidgets.QSpinBox(self)
+        self._spinBox.setMinimum(0)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._compassDial)
+        layout.addWidget(self._spinBox)
+        self.setLayout(layout)
+
+        self._compassDial.setValue(int(variable.value))
+        self._spinBox.setMaximum(359)
+        self._spinBox.setValue(int(variable.value))
+        self._spinBox.setWrapping(True)
+
+        self._compassDial.valueChanged.connect(self._spinBox.setValue)
+        self._spinBox.valueChanged.connect(self._compassDial.setValue)
+
+        self._compassDial.valueChanged.connect(self._setValue)
+        self._spinBox.valueChanged.connect(self._setValue)
+
+    def _setGuiValue(self, value):
+        self._spinBox.setValue(value)
+        self._compassDial.setValue(value)
+
+
+class PointWidget(VariableWidget):
+    _pointSelectionModeChanged = QtCore.pyqtSignal(bool)
+
+    def __init__(self, parent: QtWidgets.QWidget = None, *, variable: Point):
+        super().__init__(parent, variable=variable)
+
+        self._pointSelectionMode = False
+
+        self._pushButton = QtWidgets.QPushButton(self)
+        self._pushButton.setText(self._get_display_str(variable.value))
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._pushButton)
+        self.setLayout(layout)
+
+        self._pushButton.clicked.connect(
+            lambda: self._setPointSelectionMode(not self._pointSelectionMode)
+        )
+
+    def _setGuiValue(self, value: Tuple[int, int]):
+        self._pushButton.setText(self._get_display_str(value))
+
+    @staticmethod
+    def _get_display_str(value: Tuple[int, int]):
+        x, y = value
+        return f"({x}, {y})"
+
+    def _setPoint(self, x: int, y: int):
+        self._setValue((x, y))
+        self._setPointSelectionMode(False)
+
+    def _setPointSelectionMode(self, b: bool):
+        self._pointSelectionMode = b
+
+        if self._pointSelectionMode:
+            self._pushButton.setText("Cancel")
+        else:
+            self._pushButton.setText(
+                self._get_display_str(self._variable.value)
+            )
+
+        self._pointSelectionModeChanged.emit(self._pointSelectionMode)
+
+    def link(self, trackingPlotWidget: TrackingPlotWidget):
+        self._pointSelectionModeChanged.connect(
+            trackingPlotWidget.setPointSelectionModeEnabled
+        )
+        trackingPlotWidget.pointSelected.connect(self._setPoint)

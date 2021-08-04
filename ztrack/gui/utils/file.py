@@ -1,7 +1,12 @@
-from typing import Iterable, List, Tuple
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 from PyQt5 import QtCore, QtWidgets
 from PyQt5.QtWidgets import QAbstractItemView
+
+if TYPE_CHECKING:
+    from typing import Iterable, List, Tuple
 
 
 def selectFiles(filter_: str = None, native=False) -> List[str]:
@@ -33,8 +38,10 @@ def selectVideoDirectories(
     dialog.setMinimumSize(1280, 960)
 
     checkBoxes: List[QtWidgets.QCheckBox] = []
+
     if options is not None:
         vBoxLayout = QtWidgets.QVBoxLayout()
+
         for description, checked in options:
             checkBox = QtWidgets.QCheckBox(dialog)
             checkBox.setText(description)
@@ -47,6 +54,7 @@ def selectVideoDirectories(
         groupBox.setLayout(vBoxLayout)
 
         layout = dialog.layout()
+
         if isinstance(layout, QtWidgets.QGridLayout):
             layout.addWidget(groupBox, 4, 0, 1, 3)
         else:

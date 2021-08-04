@@ -38,7 +38,7 @@ class TrackingViewer(MainWindow):
             self._trackingPlotWidget.setImage(img)
             for name, tracker in self._trackers.items():
                 tracker.annotate_from_series(
-                    self._results[name].iloc[self._frameBar.value]
+                    self._results[name].iloc[self._frameBar.value()]
                 )
                 self._trackingPlotWidget.updateRoiGroups()
 

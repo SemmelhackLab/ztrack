@@ -1,14 +1,17 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Iterable, List
+from typing import TYPE_CHECKING
 
 from PyQt5 import QtCore, QtWidgets
 
 from ztrack.gui.utils.variable_widgets import PointWidget, VariableWidget
-from ztrack.tracking.tracker import Tracker
 
 if TYPE_CHECKING:
+    from typing import Dict, Iterable, List
+
     from ztrack.gui.create_config import CreateConfigWindow
+    from ztrack.tracking.tracker import Tracker
+    from ztrack.utils.typing import config_dict, params_dict
 
 
 class ControlWidget(QtWidgets.QTabWidget):
@@ -38,7 +41,7 @@ class ControlWidget(QtWidgets.QTabWidget):
     def getCurrentTrackerIndex(self, groupName: str):
         return self._tabs[groupName].currentIndex
 
-    def setStateFromTrackingConfig(self, trackingConfig: dict):
+    def setStateFromTrackingConfig(self, trackingConfig: config_dict):
         for groupName, groupDict in trackingConfig.items():
             self._tabs[groupName].setState(
                 groupDict["method"], groupDict["params"]
@@ -83,7 +86,7 @@ class TrackingTab(QtWidgets.QWidget):
     def setTracker(self, i: int):
         self._paramsStackWidget.setCurrentIndex(i)
 
-    def setState(self, methodName: str, params: dict):
+    def setState(self, methodName: str, params: params_dict):
         index = self._trackerNames.index(methodName)
         self._comboBox.setCurrentIndex(index)
         self._paramsWidgets[index].setParams(params)
@@ -102,7 +105,6 @@ class TrackingTab(QtWidgets.QWidget):
 
 
 class ParamsWidget(QtWidgets.QFrame):
-
     paramsChanged = QtCore.pyqtSignal()
 
     def __init__(self, parent: TrackingTab, *, tracker: Tracker):
@@ -120,15 +122,12 @@ class ParamsWidget(QtWidgets.QFrame):
             field = VariableWidget.fromVariable(param, self)
 
             if isinstance(field, PointWidget):
-                field.pointSelectionModeChanged.connect(
-                    self._trackingPlotWidget.setPointSelectionModeEnabled
-                )
-                self._trackingPlotWidget.pointSelected.connect(field.setPoint)
+                field.link(self._trackingPlotWidget)
 
             field.valueChanged.connect(self.paramsChanged.emit)
             self._fields[name] = field
             self._formLayout.addRow(label, field)
 
-    def setParams(self, params: dict):
+    def setParams(self, params: params_dict):
         for name, value in params.items():
             self._fields[name].setValue(value)

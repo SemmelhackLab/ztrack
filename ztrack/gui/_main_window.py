@@ -7,7 +7,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 from ztrack.utils.file import video_extensions
 
-from ._tracking_image_view import TrackingPlotWidget
+from ._tracking_plot_widget import TrackingPlotWidget
 from .utils.frame_bar import FrameBar
 
 
@@ -84,7 +84,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _currentFrame(self):
         if self._videoReader is None:
             return None
-        return self._videoReader[self._frameBar.value].asnumpy()
+        return self._videoReader[self._frameBar.value()].asnumpy()
 
     def _setEnabled(self, b: bool):
         self.centralWidget().setEnabled(b)
@@ -121,10 +121,10 @@ class MainWindow(QtWidgets.QMainWindow):
         def onAccepted():
             self._useVideoFPS = checkBox.isChecked()
             if not self._useVideoFPS:
-                self._frameBar.fps = spinBox.value()
+                self._frameBar.setFps(spinBox.value())
             else:
                 if self._videoReader is not None:
-                    self._frameBar.fps = int(self._videoReader.get_avg_fps())
+                    self._frameBar.setFps(int(self._videoReader.get_avg_fps()))
             dialog.close()
 
         def onRejected():
@@ -138,7 +138,7 @@ class MainWindow(QtWidgets.QMainWindow):
         spinBox = QtWidgets.QSpinBox(dialog)
         spinBox.setMinimum(0)
         spinBox.setMaximum(1000)
-        spinBox.setValue(self._frameBar.fps)
+        spinBox.setValue(self._frameBar.fps())
 
         formLayout = QtWidgets.QFormLayout()
         formLayout.addRow(label, spinBox)
@@ -169,9 +169,9 @@ class MainWindow(QtWidgets.QMainWindow):
     def updateVideo(self):
         if self._currentVideoPath is not None:
             self._videoReader = VideoReader(self._currentVideoPath)
-            self._frameBar.maximum = len(self._videoReader) - 1
+            self._frameBar.setMaximum(len(self._videoReader) - 1)
             if self._useVideoFPS:
-                self._frameBar.fps = int(self._videoReader.get_avg_fps())
+                self._frameBar.setFps(int(self._videoReader.get_avg_fps()))
             self._onFrameChanged()
             h, w = self._videoReader[0].shape[:2]
             self._trackingPlotWidget.setRoiDefaultSize(w, h)
