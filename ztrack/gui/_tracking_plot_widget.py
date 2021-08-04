@@ -17,6 +17,7 @@ class TrackingPlotWidget(pg.PlotWidget):
 
     def __init__(self, parent: QtWidgets.QWidget = None):
         super().__init__(parent)
+
         self._imageItem = pg.ImageItem()
         self._rois: Dict[str, Roi] = {}
         self._shapeGroups: Dict[str, List[ShapeGroup]] = {}
@@ -53,19 +54,24 @@ class TrackingPlotWidget(pg.PlotWidget):
         for shapeGroup in self._currentShapeGroup.values():
             for shape in shapeGroup.shapes:
                 shape.setVisible(b)
+
         if self._currentTab is not None:
             self._rois[self._currentTab].setVisible(b)
+
         self._imageItem.setVisible(b)
 
     def setTracker(self, group_name: str, index: int):
         for roi in self._currentShapeGroup[group_name].shapes:
             self.removeItem(roi)
+
         self._currentShapeGroup[group_name] = self._shapeGroups[group_name][
             index
         ]
+
         for roi in self._currentShapeGroup[group_name].shapes:
             self.addItem(roi)
             roi.setBBox(self._rois[group_name].bbox)
+
             for handle in roi.getHandles():
                 roi.removeHandle(handle)
 
@@ -80,8 +86,10 @@ class TrackingPlotWidget(pg.PlotWidget):
         self._shapeGroups[group_name] = [
             ShapeGroup.fromTracker(i) for i in trackers
         ]
+
         for tracker in trackers:
             tracker.roi = roi.bbox
+
         roi.sigRegionChanged.connect(lambda: self.roiChanged.emit(group_name))
         self._currentShapeGroup[group_name] = self._shapeGroups[group_name][0]
         self.setTracker(group_name, 0)
@@ -107,6 +115,7 @@ class TrackingPlotWidget(pg.PlotWidget):
     def _setCurrentRoi(self, name):
         if self._currentTab is not None:
             self._rois[self._currentTab].setVisible(False)
+
         self._rois[name].setVisible(True)
         self._currentTab = name
 
@@ -137,12 +146,14 @@ class Roi(pg.RectROI):
     def _pos(self):
         if self._bbox.value is None:
             return self._default_origin
+
         return self._bbox.value[:2]
 
     @property
     def _size(self):
         if self._bbox.value is None:
             return self._default_size
+
         return self._bbox.value[2:]
 
     def setDefaultSize(self, w, h):
@@ -190,6 +201,7 @@ class ShapeMixin:
 class EllipseRoi(pg.EllipseROI, ShapeMixin):
     def __init__(self, ellipse: Ellipse):
         self._ellipse = ellipse
+
         super().__init__(
             pos=(0, 0),
             size=(1, 1),
@@ -198,6 +210,7 @@ class EllipseRoi(pg.EllipseROI, ShapeMixin):
             resizable=False,
             rotatable=False,
         )
+
         self.refresh()
 
     def setBBox(self, bbox):

@@ -20,6 +20,7 @@ class ControlWidget(QtWidgets.QTabWidget):
 
     def __init__(self, parent: CreateConfigWindow):
         super().__init__(parent)
+
         self._trackingPlotWidget = parent.trackingPlotWidget
         self._tabs: Dict[str, TrackingTab] = {}
 
@@ -33,8 +34,10 @@ class ControlWidget(QtWidgets.QTabWidget):
         tab.trackerIndexChanged.connect(
             lambda index: self.trackerChanged.emit(groupName, index)
         )
+
         for tracker in trackers:
             tab.addTracker(tracker)
+
         self.addTab(tab, groupName.capitalize())
         self._tabs[groupName] = tab
 
@@ -51,6 +54,7 @@ class ControlWidget(QtWidgets.QTabWidget):
 class TrackingTab(QtWidgets.QWidget):
     def __init__(self, parent: ControlWidget, groupName: str):
         super().__init__(parent)
+
         self._trackingPlotWidget = parent.trackingPlotWidget
         self._parent = parent
         self._groupName = groupName
@@ -59,11 +63,14 @@ class TrackingTab(QtWidgets.QWidget):
         self._paramsWidgets: List[ParamsWidget] = []
         self._comboBox = QtWidgets.QComboBox(self)
         self._paramsStackWidget = QtWidgets.QStackedWidget(self)
+
         label = QtWidgets.QLabel(self)
         label.setText("Method")
+
         formLayout = QtWidgets.QFormLayout()
         formLayout.setContentsMargins(0, 0, 0, 0)
         formLayout.addRow(label, self._comboBox)
+
         layout = QtWidgets.QVBoxLayout()
         layout.addLayout(formLayout)
         layout.addWidget(self._paramsStackWidget)

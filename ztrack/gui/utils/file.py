@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtWidgets import QAbstractItemView
 
 if TYPE_CHECKING:
     from typing import Iterable, List, Tuple
@@ -65,7 +64,9 @@ def selectVideoDirectories(
 
     for view in (fileView, treeView):
         if view is not None:
-            view.setSelectionMode(QAbstractItemView.ExtendedSelection)
+            view.setSelectionMode(
+                QtWidgets.QAbstractItemView.ExtendedSelection
+            )
 
     return (dialog.selectedFiles() if dialog.exec() else []), [
         checkBox.isChecked() for checkBox in checkBoxes

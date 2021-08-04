@@ -22,6 +22,7 @@ class CreateConfigWindow(MainWindow):
         verbose=False,
     ):
         super().__init__(parent, videoPaths=videoPaths, verbose=verbose)
+
         if savePaths is None:
             savePaths = []
 
@@ -43,6 +44,7 @@ class CreateConfigWindow(MainWindow):
 
         for k, v in self._trackerGroups.items():
             self._addTrackerGroup(k, v)
+
         self._trackingPlotWidget.setTrackerGroup(list(self._trackerGroups)[0])
 
         self._controlWidget.currentChanged.connect(self._onTabChanged)
@@ -67,10 +69,12 @@ class CreateConfigWindow(MainWindow):
     def _currentSavePaths(self) -> Optional[List[str]]:
         if len(self._savePaths) > 0:
             return self._savePaths[0]
+
         return None
 
     def _saveTrackingConfig(self):
         trackingConfig = {}
+
         for group_name, trackers in self._trackerGroups.items():
             tracker = trackers[
                 self._controlWidget.getCurrentTrackerIndex(group_name)
@@ -80,6 +84,7 @@ class CreateConfigWindow(MainWindow):
                 roi=tracker.roi.value,
                 params=tracker.params.to_dict(),
             )
+
         for savePath in self._currentSavePaths:
             with open(savePath + config_extension, "w") as fp:
                 json.dump(trackingConfig, fp)
@@ -95,14 +100,18 @@ class CreateConfigWindow(MainWindow):
 
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
         paths = [u.toLocalFile() for u in event.mimeData().urls()]
+
         for path in paths:
             self.enqueue(path, [path], first=True)
+
         self.updateVideo()
 
     def _onFrameChanged(self):
         img = self._currentFrame
+
         if img is not None:
             self._trackingPlotWidget.setImage(img)
+
             for name, tracker in self._trackerGroups.items():
                 index = self._controlWidget.getCurrentTrackerIndex(name)
                 tracker[index].annotate(img)
@@ -111,12 +120,14 @@ class CreateConfigWindow(MainWindow):
     def _onTrackerChanged(self, name: str, index: int):
         self._trackingPlotWidget.setTracker(name, index)
         img = self._currentFrame
+
         if img is not None:
             self._trackerGroups[name][index].annotate(self._currentFrame)
             self._trackingPlotWidget.updateRoiGroups()
 
     def _onRoiChanged(self, name: str):
         img = self._currentFrame
+
         if img is not None:
             index = self._controlWidget.getCurrentTrackerIndex(name)
             self._trackerGroups[name][index].annotate(img)
@@ -128,6 +139,7 @@ class CreateConfigWindow(MainWindow):
 
     def _onParamsChanged(self, name: str, index: int):
         img = self._currentFrame
+
         if img is not None:
             self._trackerGroups[name][index].annotate(img)
             self._trackingPlotWidget.updateRoiGroups()
@@ -143,8 +155,10 @@ class CreateConfigWindow(MainWindow):
     def updateVideo(self):
         if self._currentVideoPath is not None:
             trackingConfig = get_config_dict(self._currentVideoPath)
+
             if trackingConfig is not None:
                 self._setStateFromTrackingConfig(trackingConfig)
+
         super().updateVideo()
 
     def enqueue(self, videoPath: str, savePaths: List[str], first=False):
@@ -162,8 +176,10 @@ class CreateConfigWindow(MainWindow):
 
     def _openFiles(self):
         videoPaths = selectVideoPaths(native=True)
+
         for videoPath in reversed(videoPaths):
             self.enqueue(videoPath, [videoPath], first=True)
+
         self.updateVideo()
 
     def _openFolders(self):
@@ -181,6 +197,8 @@ class CreateConfigWindow(MainWindow):
         videoPaths, savePaths = get_paths_for_config_creation(
             directories, recursive, sameConfig, overwrite
         )
+
         for videoPath, savePath in zip(videoPaths, savePaths):
             self.enqueue(videoPath, savePath)
+
         self.updateVideo()

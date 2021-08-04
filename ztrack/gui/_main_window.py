@@ -18,12 +18,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self,
         parent: QtWidgets.QWidget = None,
         *,
-        videoPaths=None,
+        videoPaths: List[str] = None,
         verbose=False,
     ):
         super().__init__(parent)
+
         if videoPaths is None:
             videoPaths = []
+
         self._videoPaths: List[str] = videoPaths
         self._verbose = verbose
         self._frameBar = FrameBar(self)
@@ -84,6 +86,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _currentFrame(self):
         if self._videoReader is None:
             return None
+
         return self._videoReader[self._frameBar.value()].asnumpy()
 
     def _setEnabled(self, b: bool):
@@ -98,6 +101,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def _currentVideoPath(self) -> Optional[str]:
         if len(self._videoPaths) > 0:
             return self._videoPaths[0]
+
         return None
 
     @abstractmethod
@@ -120,11 +124,13 @@ class MainWindow(QtWidgets.QMainWindow):
 
         def onAccepted():
             self._useVideoFPS = checkBox.isChecked()
+
             if not self._useVideoFPS:
                 self._frameBar.setFps(spinBox.value())
             else:
                 if self._videoReader is not None:
                     self._frameBar.setFps(int(self._videoReader.get_avg_fps()))
+
             dialog.close()
 
         def onRejected():
@@ -170,8 +176,10 @@ class MainWindow(QtWidgets.QMainWindow):
         if self._currentVideoPath is not None:
             self._videoReader = VideoReader(self._currentVideoPath)
             self._frameBar.setMaximum(len(self._videoReader) - 1)
+
             if self._useVideoFPS:
                 self._frameBar.setFps(int(self._videoReader.get_avg_fps()))
+
             self._onFrameChanged()
             h, w = self._videoReader[0].shape[:2]
             self._trackingPlotWidget.setRoiDefaultSize(w, h)

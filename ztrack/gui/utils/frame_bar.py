@@ -68,4 +68,6 @@ class FrameBar(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def _playTick(self):
-        self._slider.setValue((self._slider.value() + 1) % self._slider.maximum())
+        self._slider.setValue(
+            (self._slider.value() + 1) % self._slider.maximum()
+        )

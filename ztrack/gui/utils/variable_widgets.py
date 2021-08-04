@@ -8,8 +8,8 @@ from PyQt5 import QtCore, QtWidgets
 from ztrack.utils.variable import Angle, Float, Int, Point
 
 if TYPE_CHECKING:
-    from typing import Tuple
     from ztrack.gui._tracking_plot_widget import TrackingPlotWidget
+    from ztrack.utils.typing import point2d
     from ztrack.utils.variable import Variable
 
 
@@ -77,7 +77,7 @@ class IntWidget(VariableWidget):
         self._slider.valueChanged.connect(self._setValue)
         self._spinBox.valueChanged.connect(self._setValue)
 
-    def _setGuiValue(self, value):
+    def _setGuiValue(self, value: int):
         self._spinBox.setValue(value)
         self._slider.setValue(value)
 
@@ -99,7 +99,7 @@ class FloatWidget(VariableWidget):
 
         self._spinBox.valueChanged.connect(self._setValue)
 
-    def _setGuiValue(self, value):
+    def _setGuiValue(self, value: float):
         self._spinBox.setValue(value)
 
 
@@ -158,7 +158,7 @@ class AngleWidget(VariableWidget):
         self._compassDial.valueChanged.connect(self._setValue)
         self._spinBox.valueChanged.connect(self._setValue)
 
-    def _setGuiValue(self, value):
+    def _setGuiValue(self, value: int):
         self._spinBox.setValue(value)
         self._compassDial.setValue(value)
 
@@ -183,11 +183,11 @@ class PointWidget(VariableWidget):
             lambda: self._setPointSelectionMode(not self._pointSelectionMode)
         )
 
-    def _setGuiValue(self, value: Tuple[int, int]):
+    def _setGuiValue(self, value: point2d):
         self._pushButton.setText(self._get_display_str(value))
 
     @staticmethod
-    def _get_display_str(value: Tuple[int, int]):
+    def _get_display_str(value: point2d):
         x, y = value
         return f"({x}, {y})"
 
