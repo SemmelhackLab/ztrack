@@ -96,6 +96,11 @@ class TrackingPlotWidget(pg.PlotWidget):
 
     def setTrackerGroup(self, name: str):
         self._setCurrentRoi(name)
+        for shape_groups in self._shapeGroups.values():
+            for shape_group in shape_groups:
+                shape_group.setZValue(1)
+
+        self._currentShapeGroup[name].setZValue(2)
 
     def setRoiMaxBounds(self, rect):
         for roi in self._rois.values():
@@ -174,6 +179,10 @@ class ShapeGroup:
     def __init__(self, shapes: List[pg.ROI]):
         self._shapes = shapes
 
+    def setZValue(self, value):
+        for shape in self.shapes:
+            shape.setZValue(value)
+
     @property
     def shapes(self):
         return self._shapes
@@ -236,6 +245,14 @@ class EllipseRoi(pg.EllipseROI, ShapeMixin):
     def theta(self):
         return self._ellipse.theta
 
+    @property
+    def lc(self):
+        return self._ellipse.lc
+
+    @property
+    def lw(self):
+        return self._ellipse.lw
+
     def refresh(self):
         if self._ellipse.visible:
             self.setVisible(True)
@@ -243,5 +260,6 @@ class EllipseRoi(pg.EllipseROI, ShapeMixin):
             self.setPos((self.cx - self.a, self.cy - self.b))
             self.setSize((self.a * 2, self.b * 2))
             self.setRotation(self.theta)
+            self.setPen(pg.mkPen(self.lc, width=self.lw))
         else:
             self.setVisible(False)

@@ -3,6 +3,7 @@ import numpy as np
 
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
 from ztrack.utils.cv import is_in_contour
+from ztrack.utils.exception import TrackingError
 from ztrack.utils.variable import Float, UInt8
 
 
@@ -32,45 +33,50 @@ class MultiThresholdEyeTracker(EyeTracker):
         return "Multi-threshold"
 
     def _track_ellipses(self, src: np.ndarray):
-        img = self._preprocess(src, self.params.sigma)
+        try:
+            img = self._preprocess(src, self.params.sigma)
 
-        contours_left_eye = self._binary_segmentation(
-            img, self.params.threshold_left_eye
-        )
-        contours_right_eye = self._binary_segmentation(
-            img, self.params.threshold_right_eye
-        )
-        contours_swim_bladder = self._binary_segmentation(
-            img, self.params.threshold_swim_bladder
-        )
-        contours = self._binary_segmentation(
-            img, self.params.threshold_segmentation
-        )
+            contours_left_eye = self._binary_segmentation(
+                img, self.params.threshold_left_eye
+            )
+            contours_right_eye = self._binary_segmentation(
+                img, self.params.threshold_right_eye
+            )
+            contours_swim_bladder = self._binary_segmentation(
+                img, self.params.threshold_swim_bladder
+            )
+            contours = self._binary_segmentation(
+                img, self.params.threshold_segmentation
+            )
 
-        # get the 3 largest contours
-        largest3 = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
-        assert len(largest3) == 3
+            # get the 3 largest contours
+            largest3 = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
+            assert len(largest3) == 3
 
-        ellipses = self._fit_ellipses(largest3)
+            ellipses = self._fit_ellipses(largest3)
 
-        # identify contours
-        centers = ellipses[:, :2]
-        left_eye, right_eye, swim_bladder = self._sort_centers(centers)
+            # identify contours
+            centers = ellipses[:, :2]
+            left_eye, right_eye, swim_bladder = self._sort_centers(centers)
 
-        largest3[swim_bladder] = max(
-            contours_swim_bladder,
-            key=lambda cnt: is_in_contour(cnt, tuple(centers[swim_bladder])),
-        )
-        largest3[left_eye] = max(
-            contours_left_eye,
-            key=lambda cnt: is_in_contour(cnt, tuple(centers[left_eye])),
-        )
-        largest3[right_eye] = max(
-            contours_right_eye,
-            key=lambda cnt: is_in_contour(cnt, tuple(centers[right_eye])),
-        )
+            largest3[swim_bladder] = max(
+                contours_swim_bladder,
+                key=lambda cnt: is_in_contour(
+                    cnt, tuple(centers[swim_bladder])
+                ),
+            )
+            largest3[left_eye] = max(
+                contours_left_eye,
+                key=lambda cnt: is_in_contour(cnt, tuple(centers[left_eye])),
+            )
+            largest3[right_eye] = max(
+                contours_right_eye,
+                key=lambda cnt: is_in_contour(cnt, tuple(centers[right_eye])),
+            )
 
-        ellipses = self._fit_ellipses(largest3)
-        ellipses = ellipses[[left_eye, right_eye, swim_bladder]]
+            ellipses = self._fit_ellipses(largest3)
+            ellipses = ellipses[[left_eye, right_eye, swim_bladder]]
 
-        return self._correct_orientation(ellipses)
+            return self._correct_orientation(ellipses)
+        except (cv2.error, AssertionError):
+            raise TrackingError

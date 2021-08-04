@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
+from ztrack.utils.exception import TrackingError
 from ztrack.utils.variable import Float, UInt8
 
 
@@ -28,19 +29,22 @@ class BinaryEyeTracker(EyeTracker):
         return "Binary threshold"
 
     def _track_ellipses(self, src: np.ndarray):
-        img = self._preprocess(src, self.params.sigma)
+        try:
+            img = self._preprocess(src, self.params.sigma)
 
-        contours = self._binary_segmentation(img, self.params.threshold)
+            contours = self._binary_segmentation(img, self.params.threshold)
 
-        # get the 3 largest contours
-        largest3 = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
-        assert len(largest3) == 3
+            # get the 3 largest contours
+            largest3 = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
+            assert len(largest3) == 3
 
-        # fit ellipses (x, y, semi-major axis, semi-minor axis, theta in
-        # degrees)
-        ellipses = self._fit_ellipses(largest3)
+            # fit ellipses (x, y, semi-major axis, semi-minor axis, theta in
+            # degrees)
+            ellipses = self._fit_ellipses(largest3)
 
-        centers = ellipses[:, :2]
-        ellipses = ellipses[list(self._sort_centers(centers))]
+            centers = ellipses[:, :2]
+            ellipses = ellipses[list(self._sort_centers(centers))]
 
-        return self._correct_orientation(ellipses)
+            return self._correct_orientation(ellipses)
+        except (cv2.error, AssertionError):
+            raise TrackingError

@@ -16,6 +16,8 @@ class TailParams(Params):
 
 
 class TailTracker(Tracker, ABC):
+    max_n_points = 100
+
     def __init__(
         self,
         roi=None,
@@ -25,11 +27,17 @@ class TailTracker(Tracker, ABC):
         cmap: Union[colors.Colormap, str] = "jet",
     ):
         super().__init__(roi, params, verbose=verbose)
-        cmap = cm.get_cmap(cmap)
+
+        self._tail_cmap = cm.get_cmap(cmap)
         self._points = [
-            Circle(0, 0, 1, 2, cmap(i, bytes=True))
-            for i in np.linspace(0, 1, self.params.n_points)
+            Circle(0, 0, 1, 2, "k") for _ in range(self.max_n_points)
         ]
+
+        for p in self._points:
+            p.visible = False
+
+    def _palette(self, n):
+        return self._tail_cmap(np.linspace(0, 1, n), bytes=True)
 
     @classmethod
     def _results_to_series(cls, results: np.ndarray):
@@ -57,12 +65,16 @@ class TailTracker(Tracker, ABC):
         return self._points
 
     def annotate_from_series(self, s: pd.Series) -> None:
-        if len(self._points) * 2 != len(s):
-            pass
         tail = s.values.reshape(-1, 2)
-        for i, j in zip(self._points, tail):
-            i.visible = True
-            i.cx, i.cy = j
+
+        for p, (x, y), c in zip(self._points, tail, self._palette(len(tail))):
+            p.visible = True
+            p.cx = x
+            p.cy = y
+            p.lc = c
+
+        for p in self._points[len(tail) :]:
+            p.visible = False
 
     def _transform_from_roi_to_frame(self, results: np.ndarray):
         if self.roi.value is not None:

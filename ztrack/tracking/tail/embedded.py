@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from skimage.draw import circle_perimeter
 
+from ztrack.utils.exception import TrackingError
 from ztrack.utils.geometry import angle_diff
 from ztrack.utils.math import split_int
 from ztrack.utils.variable import Angle, Float, Int, Point
@@ -15,7 +16,9 @@ class EmbeddedTailTracker(TailTracker):
             super().__init__(params)
             self.sigma = Float("Sigma (px)", 0, 0, 100, 0.1)
             self.n_steps = Int("Number of steps", 10, 3, 20)
-            self.n_points = Int("Number of points", 51, 0, 99)
+            self.n_points = Int(
+                "Number of points", 51, 2, EmbeddedTailTracker.max_n_points
+            )
             self.length = Int("Tail length (px)", 200, 0, 1000)
             self.tail_base = Point("Tail base (x, y)", (250, 120))
             self.angle = Angle("Initial angle (°)", 90)
@@ -64,7 +67,12 @@ class EmbeddedTailTracker(TailTracker):
             idx = angle_diff(angles, angle) < theta
             points, angles = points[idx], angles[idx]
             x, y = points.T
-            argmax = img[y, x].argmax()
+
+            try:
+                argmax = img[y, x].argmax()
+            except ValueError:
+                raise TrackingError
+
             angle = angles[argmax]
             tail[i + 1] = point = points[argmax]
         return tail
