@@ -30,14 +30,11 @@ class TailTracker(Tracker, ABC):
 
         self._tail_cmap = cm.get_cmap(cmap)
         self._points = [
-            Circle(0, 0, 1, 2, "k") for _ in range(self.max_n_points)
+            Circle(0, 0, 1, 2, "m") for _ in range(self.max_n_points)
         ]
 
         for p in self._points:
             p.visible = False
-
-    def _palette(self, n):
-        return self._tail_cmap(np.linspace(0, 1, n), bytes=True)
 
     @classmethod
     def _results_to_series(cls, results: np.ndarray):
@@ -67,13 +64,12 @@ class TailTracker(Tracker, ABC):
     def annotate_from_series(self, s: pd.Series) -> None:
         tail = s.values.reshape(-1, 2)
 
-        for p, (x, y), c in zip(self._points, tail, self._palette(len(tail))):
+        for p, (x, y) in zip(self._points, tail):
             p.visible = True
             p.cx = x
             p.cy = y
-            p.lc = c
 
-        for p in self._points[len(tail) :]:
+        for i, p in enumerate(self._points[len(tail) :]):
             p.visible = False
 
     def _transform_from_roi_to_frame(self, results: np.ndarray):

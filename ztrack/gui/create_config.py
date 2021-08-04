@@ -60,6 +60,7 @@ class CreateConfigWindow(MainWindow):
             self._onOkButtonClicked
         )
         self.updateVideo()
+        self._trackingPlotWidget.updateRoiGroups()
 
     @property
     def trackingPlotWidget(self):

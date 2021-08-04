@@ -219,7 +219,6 @@ class EllipseRoi(pg.EllipseROI, ShapeMixin):
             resizable=False,
             rotatable=False,
         )
-
         self.refresh()
 
     def setBBox(self, bbox):
@@ -245,14 +244,6 @@ class EllipseRoi(pg.EllipseROI, ShapeMixin):
     def theta(self):
         return self._ellipse.theta
 
-    @property
-    def lc(self):
-        return self._ellipse.lc
-
-    @property
-    def lw(self):
-        return self._ellipse.lw
-
     def refresh(self):
         if self._ellipse.visible:
             self.setVisible(True)
@@ -260,6 +251,5 @@ class EllipseRoi(pg.EllipseROI, ShapeMixin):
             self.setPos((self.cx - self.a, self.cy - self.b))
             self.setSize((self.a * 2, self.b * 2))
             self.setRotation(self.theta)
-            self.setPen(pg.mkPen(self.lc, width=self.lw))
         else:
             self.setVisible(False)
