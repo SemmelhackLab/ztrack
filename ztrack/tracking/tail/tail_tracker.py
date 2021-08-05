@@ -16,7 +16,7 @@ class TailParams(Params):
 
 
 class TailTracker(Tracker, ABC):
-    max_n_points = 100
+    max_n_points = 99
 
     def __init__(
         self,
@@ -64,5 +64,5 @@ class TailTracker(Tracker, ABC):
     def _transform_from_roi_to_frame(self, results: np.ndarray):
         if self.roi.value is not None:
             x0, y0 = self.roi.value[:2]
-            results += (x0, y0) * self.params.n_points
+            results += (x0, y0)
         return results

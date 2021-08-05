@@ -16,6 +16,7 @@ from ._main_window import MainWindow
 
 if TYPE_CHECKING:
     from typing import Dict, List
+
     from ztrack.tracking.tracker import Tracker
 
 

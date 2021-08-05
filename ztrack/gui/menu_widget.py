@@ -15,6 +15,7 @@ from .tracking_viewer import TrackingViewer
 
 if TYPE_CHECKING:
     from typing import Optional
+
     from ._main_window import MainWindow
 
 
