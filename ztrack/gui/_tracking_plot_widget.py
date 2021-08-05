@@ -71,16 +71,17 @@ class TrackingPlotWidget(pg.PlotWidget):
         self._imageItem.setVisible(b)
 
     def setTracker(self, group_name: str, index: int):
-        for roi in self._currentShapeGroup[group_name].shapes:
-            self.removeItem(roi)
+        for shape in self._currentShapeGroup[group_name].shapes:
+            self.removeItem(shape)
 
         self._currentShapeGroup[group_name] = self._shapeGroups[group_name][
             index
         ]
 
-        for roi in self._currentShapeGroup[group_name].shapes:
-            self.addItem(roi)
-            roi.setBBox(self._rois[group_name].bbox)
+        for shape in self._currentShapeGroup[group_name].shapes:
+            self.addItem(shape)
+            shape.setVisible(False)
+            shape.setBBox(self._rois[group_name].bbox)
 
     def clearShapes(self):
         for name, shapeGroups in self._shapeGroups.items():
@@ -135,8 +136,8 @@ class TrackingPlotWidget(pg.PlotWidget):
         self._imageItem.setImage(img)
 
     def updateRoiGroups(self):
-        for roiGroup in self._currentShapeGroup.values():
-            roiGroup.update()
+        for shapeGroup in self._currentShapeGroup.values():
+            shapeGroup.update()
 
 
 class Roi(pg.RectROI):
