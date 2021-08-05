@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Dict, Iterable, List, Optional
 
 import pyqtgraph as pg
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 from ztrack.tracking.tracker import Tracker
 from ztrack.utils.shape import Ellipse, Points, Shape
@@ -32,6 +32,7 @@ class TrackingPlotWidget(pg.PlotWidget):
         self.hideAxis("bottom")
         self.setBackground(None)
         self.scene().sigMouseClicked.connect(self._onMouseClicked)
+        self.setRenderHints(QtGui.QPainter.Antialiasing)
 
     def setPointSelectionModeEnabled(self, enabled):
         self._pointSelectionModeEnabled = enabled
@@ -71,10 +72,6 @@ class TrackingPlotWidget(pg.PlotWidget):
         for roi in self._currentShapeGroup[group_name].shapes:
             self.addItem(roi)
             roi.setBBox(self._rois[group_name].bbox)
-
-            if hasattr(roi, "getHandles"):
-                for handle in roi.getHandles():
-                    roi.removeHandle(handle)
 
     def clearShapes(self):
         for name, shapeGroups in self._shapeGroups.items():
@@ -199,7 +196,7 @@ class ShapeGroup:
 
 def roiFromShape(shape: Shape):
     if isinstance(shape, Ellipse):
-        return EllipseRoi(shape)
+        return GuiEllipse(shape)
     elif isinstance(shape, Points):
         return PgPoints(shape)
     else:
@@ -235,50 +232,26 @@ class PgPoints(pg.ScatterPlotItem, ShapeMixin):
         self._points.set_bbox(bbox)
 
 
-class EllipseRoi(pg.EllipseROI, ShapeMixin):
+class GuiEllipse(QtWidgets.QGraphicsEllipseItem, ShapeMixin):
     def __init__(self, ellipse: Ellipse):
+        super().__init__()
         self._ellipse = ellipse
-
-        super().__init__(
-            pos=(0, 0),
-            size=(1, 1),
-            pen=pg.mkPen(ellipse.lc, width=ellipse.lw),
-            movable=False,
-            resizable=False,
-            rotatable=False,
-        )
-
+        self.setPen(pg.mkPen(color=ellipse.lc, width=ellipse.lw))
         self.refresh()
 
     def setBBox(self, bbox):
         self._ellipse.set_bbox(bbox)
 
-    @property
-    def cx(self):
-        return self._ellipse.cx
-
-    @property
-    def cy(self):
-        return self._ellipse.cy
-
-    @property
-    def a(self):
-        return self._ellipse.a
-
-    @property
-    def b(self):
-        return self._ellipse.b
-
-    @property
-    def theta(self):
-        return self._ellipse.theta
-
     def refresh(self):
         if self._ellipse.visible:
+            cx = self._ellipse.cx
+            cy = self._ellipse.cy
+            a = self._ellipse.a
+            b = self._ellipse.b
+            theta = self._ellipse.theta
             self.setVisible(True)
-            self.setTransformOriginPoint(self.a, self.b)
-            self.setPos((self.cx - self.a, self.cy - self.b))
-            self.setSize((self.a * 2, self.b * 2))
-            self.setRotation(self.theta)
+            self.setRect(cx - a, cy - b, a * 2, b * 2)
+            self.setTransformOriginPoint(cx, cy)
+            self.setRotation(theta)
         else:
             self.setVisible(False)
