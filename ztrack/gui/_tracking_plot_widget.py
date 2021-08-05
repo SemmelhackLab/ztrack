@@ -1,12 +1,21 @@
+from __future__ import annotations
+
 from abc import abstractmethod
-from typing import Dict, Iterable, List, Optional
+from typing import TYPE_CHECKING
 
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from ztrack.tracking.tracker import Tracker
-from ztrack.utils.shape import Ellipse, Points, Shape
+from ztrack.utils.shape import Ellipse, Points
 from ztrack.utils.variable import Rect
+
+if TYPE_CHECKING:
+    from typing import Dict, Iterable, List, Optional
+
+    from ztrack.tracking.tracker import Tracker
+    from ztrack.utils.shape import Shape
+    from ztrack.utils.typing import config_dict
+
 
 pg.setConfigOptions(imageAxisOrder="row-major")
 
@@ -47,7 +56,7 @@ class TrackingPlotWidget(pg.PlotWidget):
             pos = event.currentItem.mapSceneToView(event.scenePos())
             self.pointSelected.emit(int(pos.x()), int(pos.y()))
 
-    def setStateFromTrackingConfig(self, trackingConfig: dict):
+    def setStateFromTrackingConfig(self, trackingConfig: config_dict):
         for groupName, groupDict in trackingConfig.items():
             self._rois[groupName].setRect(groupDict["roi"])
 
@@ -198,7 +207,7 @@ def roiFromShape(shape: Shape):
     if isinstance(shape, Ellipse):
         return GuiEllipse(shape)
     elif isinstance(shape, Points):
-        return PgPoints(shape)
+        return GuiPoints(shape)
     else:
         raise NotImplementedError
 
@@ -213,7 +222,7 @@ class ShapeMixin:
         pass
 
 
-class PgPoints(pg.ScatterPlotItem, ShapeMixin):
+class GuiPoints(pg.ScatterPlotItem, ShapeMixin):
     def __init__(self, points: Points):
         super().__init__()
         self._points = points

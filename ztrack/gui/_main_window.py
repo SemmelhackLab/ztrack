@@ -1,14 +1,21 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 from pathlib import Path
-from typing import List, Optional
+from typing import TYPE_CHECKING
 
 from decord import VideoReader
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtCore, QtWidgets
 
 from ztrack.utils.file import video_extensions
 
 from ._tracking_plot_widget import TrackingPlotWidget
 from .utils.frame_bar import FrameBar
+
+if TYPE_CHECKING:
+    from typing import List, Optional
+
+    from PyQt5 import QtGui
 
 
 class MainWindow(QtWidgets.QMainWindow):

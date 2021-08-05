@@ -1,16 +1,24 @@
-import json
-from typing import List, Optional
+from __future__ import annotations
 
-from PyQt5 import QtGui, QtWidgets
+import json
+from typing import TYPE_CHECKING
+
+from PyQt5 import QtWidgets
 
 from ztrack._settings import config_extension
-from ztrack.gui._control_widget import ControlWidget
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.tracking import get_trackers
-from ztrack.tracking.tracker import Tracker
 from ztrack.utils.file import get_config_dict, get_paths_for_config_creation
 
+from ._control_widget import ControlWidget
 from ._main_window import MainWindow
+
+if TYPE_CHECKING:
+    from typing import List, Optional
+
+    from PyQt5 import QtGui
+
+    from ztrack.tracking.tracker import Tracker
 
 
 class CreateConfigWindow(MainWindow):

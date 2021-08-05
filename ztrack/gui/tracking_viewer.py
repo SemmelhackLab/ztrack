@@ -1,17 +1,22 @@
+from __future__ import annotations
+
 import json
 from pathlib import Path
-from typing import Dict, List
+from typing import TYPE_CHECKING
 
 import pandas as pd
 from PyQt5 import QtGui, QtWidgets
 
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.tracking import get_trackers_from_config
-from ztrack.tracking.tracker import Tracker
 from ztrack.utils.file import (get_config_path, get_paths_for_view_results,
                                get_results_path, video_extensions)
 
 from ._main_window import MainWindow
+
+if TYPE_CHECKING:
+    from typing import Dict, List
+    from ztrack.tracking.tracker import Tracker
 
 
 class TrackingViewer(MainWindow):
