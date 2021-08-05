@@ -9,7 +9,6 @@ class FrameBar(QtWidgets.QWidget):
         self, parent: QtWidgets.QWidget = None, *, fps=100, maximum=3000
     ):
         super().__init__(parent)
-
         self._fps = 0
         self._isPlaying = False
 

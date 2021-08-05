@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import webbrowser
 from abc import abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -7,6 +8,7 @@ from typing import TYPE_CHECKING
 from decord import VideoReader
 from PyQt5 import QtCore, QtWidgets
 
+from ztrack.metadata import homepage
 from ztrack.utils.file import video_extensions
 
 from ._tracking_plot_widget import TrackingPlotWidget
@@ -82,6 +84,9 @@ class MainWindow(QtWidgets.QMainWindow):
         actionOpenFiles.triggered.connect(self._openFiles)
         actionOpenFolders.triggered.connect(self._openFolders)
         actionSetFPS.triggered.connect(self._setFPS)
+        actionAbout.triggered.connect(lambda: webbrowser.open(homepage))
+        actionHelp.triggered.connect(lambda: webbrowser.open(homepage))
+
         self._frameBar.valueChanged.connect(self._onFrameChanged)
 
         self.setMenuBar(menuBar)

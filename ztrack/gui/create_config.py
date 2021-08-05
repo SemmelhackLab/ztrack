@@ -3,7 +3,8 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
-from PyQt5 import QtWidgets
+import numpy as np
+from PyQt5 import QtCore, QtWidgets
 
 from ztrack._settings import config_extension
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
@@ -19,6 +20,31 @@ if TYPE_CHECKING:
     from PyQt5 import QtGui
 
     from ztrack.tracking.tracker import Tracker
+
+
+pool = QtCore.QThreadPool.globalInstance()
+
+
+class AnnotateRunnable(QtCore.QRunnable):
+    def __init__(self, tracker: Tracker, img: np.ndarray, trackingPlotWidget):
+        super().__init__()
+        self._tracker = tracker
+        self._img = img
+        self._trackingPlotWidget = trackingPlotWidget
+
+    def run(self):
+        self._tracker.annotate(self._img)
+        self._trackingPlotWidget.updateRoiGroups()
+
+
+class SetImgRunnable(QtCore.QRunnable):
+    def __init__(self, trackingPlotWidget, img):
+        super().__init__()
+        self._img = img
+        self._trackingPlotWidget = trackingPlotWidget
+
+    def run(self):
+        self._trackingPlotWidget.setImage(self._img)
 
 
 class CreateConfigWindow(MainWindow):
@@ -119,12 +145,14 @@ class CreateConfigWindow(MainWindow):
         img = self._currentFrame
 
         if img is not None:
+            pool.start(SetImgRunnable(self._trackingPlotWidget, img))
             self._trackingPlotWidget.setImage(img)
-
             for name, tracker in self._trackerGroups.items():
                 index = self._controlWidget.getCurrentTrackerIndex(name)
-                tracker[index].annotate(img)
-                self._trackingPlotWidget.updateRoiGroups()
+                runnable = AnnotateRunnable(
+                    tracker[index], img, self._trackingPlotWidget
+                )
+                pool.start(runnable)
 
     def _onTrackerChanged(self, name: str, index: int):
         self._trackingPlotWidget.setTracker(name, index)
