@@ -1,26 +1,38 @@
+from __future__ import annotations
+
 from abc import abstractmethod
-from typing import Dict, Iterable, List, Optional
+from typing import TYPE_CHECKING
 
 import pyqtgraph as pg
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore, QtGui, QtWidgets
 
-from ztrack.tracking.tracker import Tracker
-from ztrack.utils.shape import Ellipse, Shape
+from ztrack.utils.shape import Ellipse, Points
 from ztrack.utils.variable import Rect
+
+if TYPE_CHECKING:
+    from typing import Dict, Iterable, List, Optional
+
+    from ztrack.tracking.tracker import Tracker
+    from ztrack.utils.shape import Shape
+    from ztrack.utils.typing import config_dict
+
 
 pg.setConfigOptions(imageAxisOrder="row-major")
 
 
 class TrackingPlotWidget(pg.PlotWidget):
     roiChanged = QtCore.pyqtSignal(str)
+    pointSelected = QtCore.pyqtSignal(int, int)
 
     def __init__(self, parent: QtWidgets.QWidget = None):
         super().__init__(parent)
+
         self._imageItem = pg.ImageItem()
         self._rois: Dict[str, Roi] = {}
         self._shapeGroups: Dict[str, List[ShapeGroup]] = {}
         self._currentShapeGroup: Dict[str, ShapeGroup] = {}
         self._currentTab: Optional[str] = None
+        self._pointSelectionModeEnabled = False
 
         self.addItem(self._imageItem)
         self.invertY(True)
@@ -28,8 +40,23 @@ class TrackingPlotWidget(pg.PlotWidget):
         self.hideAxis("left")
         self.hideAxis("bottom")
         self.setBackground(None)
+        self.scene().sigMouseClicked.connect(self._onMouseClicked)
+        self.setRenderHints(QtGui.QPainter.Antialiasing)
 
-    def setStateFromTrackingConfig(self, trackingConfig: dict):
+    def setPointSelectionModeEnabled(self, enabled):
+        self._pointSelectionModeEnabled = enabled
+        roi = self._rois[self._currentTab]
+        roi.resizable = roi.translatable = not enabled
+        self.setCursor(
+            QtCore.Qt.CrossCursor if enabled else QtCore.Qt.ArrowCursor
+        )
+
+    def _onMouseClicked(self, event):
+        if self._pointSelectionModeEnabled:
+            pos = event.currentItem.mapSceneToView(event.scenePos())
+            self.pointSelected.emit(int(pos.x()), int(pos.y()))
+
+    def setStateFromTrackingConfig(self, trackingConfig: config_dict):
         for groupName, groupDict in trackingConfig.items():
             self._rois[groupName].setRect(groupDict["roi"])
 
@@ -37,21 +64,24 @@ class TrackingPlotWidget(pg.PlotWidget):
         for shapeGroup in self._currentShapeGroup.values():
             for shape in shapeGroup.shapes:
                 shape.setVisible(b)
+
         if self._currentTab is not None:
             self._rois[self._currentTab].setVisible(b)
+
         self._imageItem.setVisible(b)
 
     def setTracker(self, group_name: str, index: int):
-        for roi in self._currentShapeGroup[group_name].shapes:
-            self.removeItem(roi)
+        for shape in self._currentShapeGroup[group_name].shapes:
+            self.removeItem(shape)
+
         self._currentShapeGroup[group_name] = self._shapeGroups[group_name][
             index
         ]
-        for roi in self._currentShapeGroup[group_name].shapes:
-            self.addItem(roi)
-            roi.setBBox(self._rois[group_name].bbox)
-            for handle in roi.getHandles():
-                roi.removeHandle(handle)
+
+        for shape in self._currentShapeGroup[group_name].shapes:
+            self.addItem(shape)
+            shape.setVisible(False)
+            shape.setBBox(self._rois[group_name].bbox)
 
     def clearShapes(self):
         for name, shapeGroups in self._shapeGroups.items():
@@ -64,14 +94,21 @@ class TrackingPlotWidget(pg.PlotWidget):
         self._shapeGroups[group_name] = [
             ShapeGroup.fromTracker(i) for i in trackers
         ]
+
         for tracker in trackers:
             tracker.roi = roi.bbox
+
         roi.sigRegionChanged.connect(lambda: self.roiChanged.emit(group_name))
         self._currentShapeGroup[group_name] = self._shapeGroups[group_name][0]
         self.setTracker(group_name, 0)
 
     def setTrackerGroup(self, name: str):
         self._setCurrentRoi(name)
+        for shape_groups in self._shapeGroups.values():
+            for shape_group in shape_groups:
+                shape_group.setZValue(1)
+
+        self._currentShapeGroup[name].setZValue(2)
 
     def setRoiMaxBounds(self, rect):
         for roi in self._rois.values():
@@ -91,6 +128,7 @@ class TrackingPlotWidget(pg.PlotWidget):
     def _setCurrentRoi(self, name):
         if self._currentTab is not None:
             self._rois[self._currentTab].setVisible(False)
+
         self._rois[name].setVisible(True)
         self._currentTab = name
 
@@ -98,8 +136,8 @@ class TrackingPlotWidget(pg.PlotWidget):
         self._imageItem.setImage(img)
 
     def updateRoiGroups(self):
-        for roiGroup in self._currentShapeGroup.values():
-            roiGroup.update()
+        for shapeGroup in self._currentShapeGroup.values():
+            shapeGroup.update()
 
 
 class Roi(pg.RectROI):
@@ -121,12 +159,14 @@ class Roi(pg.RectROI):
     def _pos(self):
         if self._bbox.value is None:
             return self._default_origin
+
         return self._bbox.value[:2]
 
     @property
     def _size(self):
         if self._bbox.value is None:
             return self._default_size
+
         return self._bbox.value[2:]
 
     def setDefaultSize(self, w, h):
@@ -147,6 +187,10 @@ class ShapeGroup:
     def __init__(self, shapes: List[pg.ROI]):
         self._shapes = shapes
 
+    def setZValue(self, value):
+        for shape in self.shapes:
+            shape.setZValue(value)
+
     @property
     def shapes(self):
         return self._shapes
@@ -162,7 +206,11 @@ class ShapeGroup:
 
 def roiFromShape(shape: Shape):
     if isinstance(shape, Ellipse):
-        return EllipseRoi(shape)
+        return GuiEllipse(shape)
+    elif isinstance(shape, Points):
+        return GuiPoints(shape)
+    else:
+        raise NotImplementedError
 
 
 class ShapeMixin:
@@ -170,49 +218,50 @@ class ShapeMixin:
     def refresh(self):
         pass
 
+    @abstractmethod
+    def setBBox(self, bbox):
+        pass
 
-class EllipseRoi(pg.EllipseROI, ShapeMixin):
+
+class GuiPoints(pg.ScatterPlotItem, ShapeMixin):
+    def __init__(self, points: Points):
+        super().__init__()
+        self._points = points
+        self.setPen(points.lc, width=points.lw)
+        self.setSymbol(points.symbol)
+        self.refresh()
+
+    def refresh(self):
+        if self._points.visible:
+            self.setVisible(True)
+            self.setData(pos=self._points.data)
+        else:
+            self.setVisible(False)
+
+    def setBBox(self, bbox):
+        self._points.set_bbox(bbox)
+
+
+class GuiEllipse(QtWidgets.QGraphicsEllipseItem, ShapeMixin):
     def __init__(self, ellipse: Ellipse):
+        super().__init__()
         self._ellipse = ellipse
-        super().__init__(
-            pos=(0, 0),
-            size=(1, 1),
-            pen=pg.mkPen(ellipse.lc, width=ellipse.lw),
-            movable=False,
-            resizable=False,
-            rotatable=False,
-        )
+        self.setPen(pg.mkPen(color=ellipse.lc, width=ellipse.lw))
         self.refresh()
 
     def setBBox(self, bbox):
         self._ellipse.set_bbox(bbox)
 
-    @property
-    def cx(self):
-        return self._ellipse.cx
-
-    @property
-    def cy(self):
-        return self._ellipse.cy
-
-    @property
-    def a(self):
-        return self._ellipse.a
-
-    @property
-    def b(self):
-        return self._ellipse.b
-
-    @property
-    def theta(self):
-        return self._ellipse.theta
-
     def refresh(self):
         if self._ellipse.visible:
+            cx = self._ellipse.cx
+            cy = self._ellipse.cy
+            a = self._ellipse.a
+            b = self._ellipse.b
+            theta = self._ellipse.theta
             self.setVisible(True)
-            self.setTransformOriginPoint(self.a, self.b)
-            self.setPos((self.cx - self.a, self.cy - self.b))
-            self.setSize((self.a * 2, self.b * 2))
-            self.setRotation(self.theta)
+            self.setRect(cx - a, cy - b, a * 2, b * 2)
+            self.setTransformOriginPoint(cx, cy)
+            self.setRotation(theta)
         else:
             self.setVisible(False)

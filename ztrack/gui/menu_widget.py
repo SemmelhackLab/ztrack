@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import webbrowser
-from typing import Optional
+from typing import TYPE_CHECKING
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QSizePolicy, QSpacerItem
@@ -9,8 +11,12 @@ from ztrack.gui.create_config import CreateConfigWindow
 from ztrack.gui.utils.file import selectVideoDirectories
 from ztrack.metadata import homepage, version
 
-from ._main_window import MainWindow
 from .tracking_viewer import TrackingViewer
+
+if TYPE_CHECKING:
+    from typing import Optional
+
+    from ._main_window import MainWindow
 
 
 class MenuWidget(QtWidgets.QWidget):

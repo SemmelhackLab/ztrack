@@ -1,3 +1,3 @@
-from .binary import BinaryTailTracker
+from .embedded import EmbeddedTailTracker
 
-trackers = [BinaryTailTracker]
+trackers = [EmbeddedTailTracker]

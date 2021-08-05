@@ -1,3 +1,3 @@
 video_extensions = (".avi",)
 config_extension = ".json"
-results_extension = ".hdf5"
+results_extension = ".h5"
