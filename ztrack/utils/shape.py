@@ -1,6 +1,12 @@
+from __future__ import annotations
+
 from abc import ABC
+from typing import TYPE_CHECKING
 
 from ztrack.utils.variable import Rect
+
+if TYPE_CHECKING:
+    from ztrack.utils.typing import point2d
 
 
 class Shape(ABC):
@@ -20,6 +26,27 @@ class Shape(ABC):
 
     def set_bbox(self, bbox):
         self._bbox = bbox
+
+    @property
+    def origin(self) -> point2d:
+        return 0, 0 if self._bbox.value is None else self._bbox.value[:2]
+
+
+class Points(Shape):
+    def __init__(self, data, lw, lc, symbol):
+        super().__init__(lw, lc)
+        self._data = data
+        self.symbol = symbol
+
+    @property
+    def data(self):
+        if self._bbox.value is None:
+            return self._data
+        return self._data + self._bbox.value[:2]
+
+    @data.setter
+    def data(self, data):
+        self._data = data
 
 
 class Ellipse(Shape):

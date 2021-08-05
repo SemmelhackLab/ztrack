@@ -5,7 +5,7 @@ import pyqtgraph as pg
 from PyQt5 import QtCore, QtWidgets
 
 from ztrack.tracking.tracker import Tracker
-from ztrack.utils.shape import Ellipse, Shape
+from ztrack.utils.shape import Ellipse, Points, Shape
 from ztrack.utils.variable import Rect
 
 pg.setConfigOptions(imageAxisOrder="row-major")
@@ -72,8 +72,9 @@ class TrackingPlotWidget(pg.PlotWidget):
             self.addItem(roi)
             roi.setBBox(self._rois[group_name].bbox)
 
-            for handle in roi.getHandles():
-                roi.removeHandle(handle)
+            if hasattr(roi, "getHandles"):
+                for handle in roi.getHandles():
+                    roi.removeHandle(handle)
 
     def clearShapes(self):
         for name, shapeGroups in self._shapeGroups.items():
@@ -199,12 +200,39 @@ class ShapeGroup:
 def roiFromShape(shape: Shape):
     if isinstance(shape, Ellipse):
         return EllipseRoi(shape)
+    elif isinstance(shape, Points):
+        return PgPoints(shape)
+    else:
+        raise NotImplementedError
 
 
 class ShapeMixin:
     @abstractmethod
     def refresh(self):
         pass
+
+    @abstractmethod
+    def setBBox(self, bbox):
+        pass
+
+
+class PgPoints(pg.ScatterPlotItem, ShapeMixin):
+    def __init__(self, points: Points):
+        super().__init__()
+        self._points = points
+        self.setPen(points.lc, width=points.lw)
+        self.setSymbol(points.symbol)
+        self.refresh()
+
+    def refresh(self):
+        if self._points.visible:
+            self.setVisible(True)
+            self.setData(pos=self._points.data)
+        else:
+            self.setVisible(False)
+
+    def setBBox(self, bbox):
+        self._points.set_bbox(bbox)
 
 
 class EllipseRoi(pg.EllipseROI, ShapeMixin):
@@ -219,6 +247,7 @@ class EllipseRoi(pg.EllipseROI, ShapeMixin):
             resizable=False,
             rotatable=False,
         )
+
         self.refresh()
 
     def setBBox(self, bbox):

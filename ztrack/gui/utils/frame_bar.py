@@ -47,7 +47,6 @@ class FrameBar(QtWidgets.QWidget):
 
     def setFps(self, fps: int):
         self._fps = fps
-        print(int(1000 / fps))
         self._timer.setInterval(int(1000 / fps))
 
     def setMaximum(self, value: int):

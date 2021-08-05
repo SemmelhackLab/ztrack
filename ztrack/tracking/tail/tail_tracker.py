@@ -8,7 +8,7 @@ from scipy.interpolate import splev, splprep
 
 from ztrack.tracking.params import Params
 from ztrack.tracking.tracker import Tracker
-from ztrack.utils.shape import Circle
+from ztrack.utils.shape import Points
 
 
 class TailParams(Params):
@@ -29,12 +29,7 @@ class TailTracker(Tracker, ABC):
         super().__init__(roi, params, verbose=verbose)
 
         self._tail_cmap = cm.get_cmap(cmap)
-        self._points = [
-            Circle(0, 0, 1, 2, "m") for _ in range(self.max_n_points)
-        ]
-
-        for p in self._points:
-            p.visible = False
+        self._points = Points(np.array([[0, 0]]), 1, "m", symbol="+")
 
     @classmethod
     def _results_to_series(cls, results: np.ndarray):
@@ -59,18 +54,12 @@ class TailTracker(Tracker, ABC):
 
     @property
     def shapes(self):
-        return self._points
+        return [self._points]
 
     def annotate_from_series(self, s: pd.Series) -> None:
         tail = s.values.reshape(-1, 2)
-
-        for p, (x, y) in zip(self._points, tail):
-            p.visible = True
-            p.cx = x
-            p.cy = y
-
-        for i, p in enumerate(self._points[len(tail) :]):
-            p.visible = False
+        self._points.visible = True
+        self._points.data = tail
 
     def _transform_from_roi_to_frame(self, results: np.ndarray):
         if self.roi.value is not None:
