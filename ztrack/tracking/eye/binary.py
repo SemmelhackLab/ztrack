@@ -13,7 +13,7 @@ class BinaryEyeTracker(EyeTracker):
     class __Params(EyeParams):
         def __init__(self, params: dict = None):
             super().__init__(params)
-            self.sigma = Float("Sigma (px)", 0, 0, 100, 0.1)
+            self.sigma = Float("Sigma (px)", 2, 0, 100, 0.1)
             self.threshold = UInt8("Threshold", 127)
 
     @property
