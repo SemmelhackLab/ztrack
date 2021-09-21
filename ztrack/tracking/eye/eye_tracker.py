@@ -109,7 +109,7 @@ class EyeTracker(Tracker, ABC):
         return results
 
     @classmethod
-    def _results_to_series(cls, results: np.ndarray):
+    def _results_to_series(cls, results):
         eyes_midpoint = results[:2, :2].mean(0)
         swim_bladder_center = results[-1, :2]
         midline = eyes_midpoint - swim_bladder_center
