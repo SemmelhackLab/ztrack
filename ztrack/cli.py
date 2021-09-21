@@ -53,6 +53,50 @@ def run(**kwargs):
 
 @main.command(short_help="View tracking results.")
 @my_command
+@click.option(
+    "--gui/--no-gui",
+    default=True,
+    show_default=True,
+    help="Whether to view results using GUI or generate a tracking video.",
+)
+@click.option(
+    "--codec",
+    default="mp4v",
+    show_default=True,
+    help="Codec to use for generating the tracking video.",
+)
+@click.option(
+    "--fps",
+    default=None,
+    show_default=True,
+    type=float,
+    help="Frames per second (default to the FPS of the original video).",
+)
+@click.option(
+    "--line-width",
+    default=2,
+    show_default=True,
+    help="Line width for annotating the body parts.",
+)
+@click.option(
+    "--frame-range",
+    default=None,
+    type=(int, int),
+    show_default=True,
+    help="Range to use for generating the tracking video (default to all frames).",
+)
+@click.option(
+    "--format",
+    default="mp4",
+    show_default=True,
+    help="Format to use for generating the tracking video.",
+)
+@click.option(
+    "--timer/--no-timer",
+    default=False,
+    show_default=True,
+    help="Whether to show timer in the tracking video.",
+)
 def view(**kwargs):
     from ztrack._view_results import view_results
 
