@@ -2,16 +2,19 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+import pandas as pd
 from decord import VideoReader
+from scipy.interpolate import splev, splprep
 from skimage.draw import circle_perimeter
 from tqdm import tqdm
 
+from ztrack.tracking.eye.eye_tracker import EyeTracker
 from ztrack.tracking.params import Params
-from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
 from ztrack.utils.cv import find_contours, is_in_contour
 from ztrack.utils.exception import TrackingError
-from ztrack.utils.geometry import angle_diff
+from ztrack.utils.geometry import angle_diff, wrap_degrees
 from ztrack.utils.math import split_int
+from ztrack.utils.shape import Points
 from ztrack.utils.variable import Angle, Float, Int, UInt8
 
 
@@ -29,21 +32,30 @@ class FreeSwimTracker(EyeTracker):
             self.threshold_swim_bladder = Int(
                 "Swim bladder threshold", 0, -128, 127
             )
-
-            self.n_steps = Int("Number of steps", 10, 3, 20)
+            self.n_steps = Int("Number of steps", 20, 3, 20)
             self.n_points = Int("Number of points", 51, 2, 100)
-            self.length = Int("Tail length (px)", 200, 0, 1000)
+            self.length = Int("Tail length (px)", 90, 0, 1000)
             self.theta = Angle("Search angle (°)", 60)
 
     @property
     def _Params(self):
         return self.__Params
 
+    @property
+    def shapes(self):
+        return [
+            self._left_eye,
+            self._right_eye,
+            self._swim_bladder,
+            self._points,
+        ]
+
     def __init__(self, roi=None, params: dict = None, *, verbose=0):
         super().__init__(roi, params, verbose=verbose)
         self._bg = None
         self._is_bg_bright = None
         self._video_path = None
+        self._points = Points(np.array([[0, 0]]), 1, "m", symbol="+")
         cv2.namedWindow("Test")
 
     @staticmethod
@@ -79,7 +91,7 @@ class FreeSwimTracker(EyeTracker):
 
         self._video_path = video_path
 
-    def _track_img(self, img: np.ndarray) -> np.ndarray:
+    def _track_img(self, img: np.ndarray):
         if self._bg is None:
             self._is_bg_bright, self._bg = self.calculate_background(
                 self._video_path
@@ -95,12 +107,62 @@ class FreeSwimTracker(EyeTracker):
 
         ellipses = self._track_ellipses(img)
 
-        swim_bladder_center = ellipses[-1, :2]
-        swim_bladder_angle = ellipses[-1, -1]
+        centers = ellipses[:, :2]
+        sb_center = centers[2]
+        midpoint = centers[:2].mean(0)
+        midline = sb_center - midpoint
+        opp_heading = np.arctan2(*midline[::-1])
+        sb_theta = np.deg2rad(ellipses[2, -1])
+        sb_posterior = sb_center - ellipses[2, 2] * np.array(
+            [np.cos(sb_theta), np.sin(sb_theta)]
+        )
 
-        # tail = self._track_tail(img, p)
+        cv2.imshow("Test", img)
+        try:
+            tail = self._track_tail(img, sb_posterior.astype(int), opp_heading)
+        except TrackingError:
+            tail = None
 
-        return ellipses
+        return ellipses, tail
+
+    @classmethod
+    def _results_to_series(cls, results):
+        eye, tail = results
+        eyes_midpoint = eye[:2, :2].mean(0)
+        swim_bladder_center = eye[-1, :2]
+        midline = eyes_midpoint - swim_bladder_center
+        x2, x1 = midline
+        heading = np.rad2deg(np.arctan2(x1, x2))
+        theta_l, theta_r = eye[:2, -1]
+        angle_l = wrap_degrees(theta_l - heading)
+        angle_r = wrap_degrees(heading - theta_r)
+        s = pd.Series(eye.ravel(), index=cls._index)
+        s["left_eye", "angle"] = angle_l
+        s["right_eye", "angle"] = angle_r
+        s["heading"] = heading
+
+        if tail is not None:
+            n_points = len(tail)
+            idx = pd.MultiIndex.from_product(
+                ((f"point{i:02d}" for i in range(n_points)), ("x", "y"))
+            )
+            s = pd.concat([s, pd.Series(tail.ravel(), idx)])
+
+        return s
+
+    def annotate_from_series(self, series: pd.Series) -> None:
+        ellipse_shapes = [self._left_eye, self._right_eye, self._swim_bladder]
+        body_parts = ["left_eye", "right_eye", "swim_bladder"]
+        for i, j in zip(ellipse_shapes, body_parts):
+            i.visible = True
+            s = series[j]
+            i.cx, i.cy, i.a, i.b, i.theta = s.cx, s.cy, s.a, s.b, s.theta
+
+        if "point00" in series:
+            idx = [f"point{i:02d}" for i in range(self.params.n_points)]
+            tail = series.loc[idx].values.reshape(-1, 2)
+            self._points.visible = True
+            self._points.data = tail
 
     def _track_tail(self, src, point, angle):
         theta = np.deg2rad(self.params.theta / 2)
@@ -133,7 +195,12 @@ class FreeSwimTracker(EyeTracker):
             angle = angles[argmax]
             tail[i + 1] = point = points[argmax]
 
-        return tail
+        return self._interpolate_tail(tail, self.params.n_points)
+
+    @staticmethod
+    def _interpolate_tail(tail: np.ndarray, n_points: int) -> np.ndarray:
+        tck = splprep(tail.T)[0]
+        return np.column_stack(splev(np.linspace(0, 1, n_points), tck))
 
     def _track_ellipses(self, src: np.ndarray):
         try:
