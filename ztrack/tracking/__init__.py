@@ -6,7 +6,7 @@ from .tracker import Tracker
 
 _trackers: Dict[str, Iterable[Type[Tracker]]] = {
     "eye": eye_trackers,
-    "tail": tail_trackers,
+    # "tail": tail_trackers,
 }
 
 _trackers_dict: Dict[str, Dict[str, Type[Tracker]]] = {

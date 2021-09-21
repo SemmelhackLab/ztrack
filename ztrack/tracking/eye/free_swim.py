@@ -8,7 +8,8 @@ from tqdm import tqdm
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
 from ztrack.utils.cv import is_in_contour
 from ztrack.utils.exception import TrackingError
-from ztrack.utils.variable import Float, UInt8
+from ztrack.utils.variable import Float, UInt8, Int
+from ztrack.utils.cv import find_contours, binary_threshold
 
 
 class FreeSwimTracker(EyeTracker):
@@ -16,10 +17,12 @@ class FreeSwimTracker(EyeTracker):
         def __init__(self, params: dict = None):
             super().__init__(params)
             self.sigma = Float("Sigma (px)", 0, 0, 100, 0.1)
-            self.threshold_segmentation = UInt8("Segmentation threshold", 127)
-            self.threshold_left_eye = UInt8("Left eye threshold", 127)
-            self.threshold_right_eye = UInt8("Right eye threshold", 127)
-            self.threshold_swim_bladder = UInt8("Swim bladder threshold", 127)
+            self.block_size = Int("Block size", 99, 3, 200)
+            self.c = Int("C", -5, -100, 100)
+            self.threshold_segmentation = UInt8("Segmentation threshold", 200)
+            self.threshold_left_eye = Int("Left eye threshold", 0, -128, 127)
+            self.threshold_right_eye = Int("Right eye threshold", 0, -128, 127)
+            self.threshold_swim_bladder = Int("Swim bladder threshold", 0, -128, 127)
 
     @property
     def _Params(self):
@@ -82,23 +85,46 @@ class FreeSwimTracker(EyeTracker):
         if self.params.sigma > 0:
             img = cv2.GaussianBlur(img, (0, 0), self.params.sigma)
 
-        cv2.imshow("Test", img)
-
         return self._track_ellipses(img)
 
-    def _track_ellipses(self, img: np.ndarray):
+    def _track_ellipses(self, src: np.ndarray):
         try:
+            block_size = self.params.block_size
+
+            if block_size % 2 == 0:
+                block_size += 1
+
+            img_thresh = cv2.adaptiveThreshold(
+                src,
+                255,
+                cv2.ADAPTIVE_THRESH_MEAN_C,
+                cv2.THRESH_BINARY,
+                block_size,
+                self.params.c,
+            )
+
+            contours = find_contours(img_thresh)
+            fish_contour = max(contours, key=cv2.contourArea)
+            fish_mask = np.zeros_like(src)
+            cv2.drawContours(fish_mask, [fish_contour], -1, 255, cv2.FILLED)
+
+            img_fish = src.copy()
+            img_fish[fish_mask == 0] = 0
+            img_fish = cv2.equalizeHist(img_fish)
+
+            t = self.params.threshold_segmentation
+
             contours_left_eye = self._binary_segmentation(
-                img, self.params.threshold_left_eye
+                img_fish, t + self.params.threshold_left_eye
             )
             contours_right_eye = self._binary_segmentation(
-                img, self.params.threshold_right_eye
+                img_fish, t + self.params.threshold_right_eye
             )
             contours_swim_bladder = self._binary_segmentation(
-                img, self.params.threshold_swim_bladder
+                img_fish, t + self.params.threshold_swim_bladder
             )
             contours = self._binary_segmentation(
-                img, self.params.threshold_segmentation
+                img_fish, self.params.threshold_segmentation
             )
 
             # get the 3 largest contours
@@ -128,6 +154,8 @@ class FreeSwimTracker(EyeTracker):
 
             ellipses = self._fit_ellipses(largest3)
             ellipses = ellipses[[left_eye, right_eye, swim_bladder]]
+
+            cv2.imshow("Test", src)
 
             return self._correct_orientation(ellipses)
         except (cv2.error, AssertionError):
