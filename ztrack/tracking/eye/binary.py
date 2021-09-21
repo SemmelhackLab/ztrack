@@ -28,11 +28,13 @@ class BinaryEyeTracker(EyeTracker):
     def display_name():
         return "Binary threshold"
 
+    def _track_img(self, img: np.ndarray) -> np.ndarray:
+        img = self._preprocess(img, self.params.sigma)
+        return self._track_ellipses(img)
+
     def _track_ellipses(self, src: np.ndarray):
         try:
-            img = self._preprocess(src, self.params.sigma)
-
-            contours = self._binary_segmentation(img, self.params.threshold)
+            contours = self._binary_segmentation(src, self.params.threshold)
 
             # get the 3 largest contours
             largest3 = sorted(contours, key=cv2.contourArea, reverse=True)[:3]

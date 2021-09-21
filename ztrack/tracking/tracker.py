@@ -89,6 +89,8 @@ class Tracker(ABC):
         pass
 
     def track_video(self, video_path):
+        self.set_video(video_path)
+
         video_reader = VideoReader(str(video_path))
         it = (
             tqdm(range(len(video_reader)))
@@ -98,3 +100,6 @@ class Tracker(ABC):
         return pd.DataFrame(
             [self._track_frame(video_reader[i].asnumpy()) for i in it]
         )
+
+    def set_video(self, video_path):
+        pass

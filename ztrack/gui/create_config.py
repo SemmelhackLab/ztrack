@@ -36,7 +36,7 @@ class CreateConfigWindow(MainWindow):
 
         self._savePaths: List[List[str]] = savePaths
 
-        self._trackerGroups = get_trackers()
+        self._trackerGroups = get_trackers(verbose=verbose)
         self._controlWidget = ControlWidget(self)
 
         self._buttonBox = QtWidgets.QDialogButtonBox(self)
@@ -166,6 +166,10 @@ class CreateConfigWindow(MainWindow):
 
             if trackingConfig is not None:
                 self._setStateFromTrackingConfig(trackingConfig)
+
+        for tracker_group in self._trackerGroups.values():
+            for tracker in tracker_group:
+                tracker.set_video(self._currentVideoPath)
 
         super().updateVideo()
 
