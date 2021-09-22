@@ -74,7 +74,7 @@ class FreeSwimTracker(EyeTracker):
         if self._verbose:
             vr = tqdm(vr)
         for frame in vr:
-            sub.apply(frame.asnumpy(), 0)
+            sub.apply(cv2.cvtColor(frame.asnumpy(), cv2.COLOR_RGB2GRAY))
 
         bg = sub.getBackgroundImage()
         cv2.imwrite(str(Path(video_path).with_suffix(".png")), bg)
@@ -84,12 +84,13 @@ class FreeSwimTracker(EyeTracker):
 
     def set_video(self, video_path):
         self._bg = None
-        bg_path = Path(video_path).with_suffix(".png")
-        if bg_path.exists():
-            self._bg = cv2.imread(str(bg_path), 0)
-            self._is_bg_bright = cv2.mean(self._bg)[0] > 127
-
         self._video_path = video_path
+
+        if video_path is not None:
+            bg_path = Path(video_path).with_suffix(".png")
+            if bg_path.exists():
+                self._bg = cv2.imread(str(bg_path), 0)
+                self._is_bg_bright = cv2.mean(self._bg)[0] > 127
 
     def _track_img(self, img: np.ndarray):
         if self._bg is None:
@@ -113,13 +114,13 @@ class FreeSwimTracker(EyeTracker):
         midline = sb_center - midpoint
         opp_heading = np.arctan2(*midline[::-1])
         sb_theta = np.deg2rad(ellipses[2, -1])
-        sb_posterior = sb_center - ellipses[2, 2] * np.array(
-            [np.cos(sb_theta), np.sin(sb_theta)]
-        )
+        sb_posterior = np.round(
+            sb_center
+            - ellipses[2, 2] * np.array([np.cos(sb_theta), np.sin(sb_theta)])
+        ).astype(int)
 
-        cv2.imshow("Test", img)
         try:
-            tail = self._track_tail(img, sb_posterior.astype(int), opp_heading)
+            tail = self._track_tail(img, sb_posterior, opp_heading)
         except TrackingError:
             tail = None
 
@@ -163,6 +164,8 @@ class FreeSwimTracker(EyeTracker):
             tail = series.loc[idx].values.reshape(-1, 2)
             self._points.visible = True
             self._points.data = tail
+        else:
+            self._points.visible = False
 
     def _track_tail(self, src, point, angle):
         theta = np.deg2rad(self.params.theta / 2)
