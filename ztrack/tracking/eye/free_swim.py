@@ -10,7 +10,8 @@ from tqdm import tqdm
 
 from ztrack.tracking.eye.eye_tracker import EyeTracker
 from ztrack.tracking.params import Params
-from ztrack.utils.cv import find_contours, is_in_contour
+from ztrack.utils.cv import (binary_threshold, contour_center, find_contours,
+                             is_in_contour)
 from ztrack.utils.exception import TrackingError
 from ztrack.utils.geometry import angle_diff, wrap_degrees
 from ztrack.utils.math import split_int
@@ -24,14 +25,10 @@ class FreeSwimTracker(EyeTracker):
             super().__init__(params)
             self.sigma_eye = Float("Eye sigma (px)", 0, 0, 100, 0.1)
             self.sigma_tail = Float("Tail sigma (px)", 0, 0, 100, 0.1)
-            self.block_size = Int("Block size", 99, 3, 200)
-            self.c = Int("C", -5, -100, 100)
-            self.threshold_segmentation = UInt8("Segmentation threshold", 200)
-            self.threshold_left_eye = Int("Left eye threshold", 0, -128, 127)
-            self.threshold_right_eye = Int("Right eye threshold", 0, -128, 127)
-            self.threshold_swim_bladder = Int(
-                "Swim bladder threshold", 0, -128, 127
-            )
+            self.threshold = UInt8("Segmentation threshold", 70)
+            self.threshold_left_eye = UInt8("Left eye threshold", 70)
+            self.threshold_right_eye = UInt8("Right eye threshold", 70)
+            self.threshold_swim_bladder = UInt8("Swim bladder threshold", 70)
             self.n_steps = Int("Number of steps", 20, 3, 20)
             self.n_points = Int("Number of points", 51, 2, 100)
             self.length = Int("Tail length (px)", 90, 0, 1000)
@@ -56,7 +53,10 @@ class FreeSwimTracker(EyeTracker):
         self._is_bg_bright = None
         self._video_path = None
         self._points = Points(np.array([[0, 0]]), 1, "m", symbol="+")
-        cv2.namedWindow("Test")
+        cv2.namedWindow("win0")
+        cv2.namedWindow("win1")
+        cv2.namedWindow("win2")
+        cv2.namedWindow("win3")
 
     @staticmethod
     def name():
@@ -71,10 +71,11 @@ class FreeSwimTracker(EyeTracker):
             print("Calculating background...")
         sub = cv2.createBackgroundSubtractorMOG2()
         vr = VideoReader(video_path)
+        range_ = range(0, len(vr), 20)
         if self._verbose:
-            vr = tqdm(vr)
-        for frame in vr:
-            sub.apply(cv2.cvtColor(frame.asnumpy(), cv2.COLOR_RGB2GRAY))
+            range_ = tqdm(range_)
+        for i in range_:
+            sub.apply(cv2.cvtColor(vr[i].asnumpy(), cv2.COLOR_RGB2GRAY))
 
         bg = sub.getBackgroundImage()
         cv2.imwrite(str(Path(video_path).with_suffix(".png")), bg)
@@ -106,8 +107,9 @@ class FreeSwimTracker(EyeTracker):
         else:
             img = cv2.subtract(img, bg)
 
-        ellipses = self._track_ellipses(img)
+        cv2.imshow("win0", img)
 
+        ellipses = self._track_ellipses(img)
         centers = ellipses[:, :2]
         sb_center = centers[2]
         midpoint = centers[:2].mean(0)
@@ -193,7 +195,7 @@ class FreeSwimTracker(EyeTracker):
             try:
                 argmax = img[y, x].argmax()
             except ValueError:
-                raise TrackingError
+                raise TrackingError("Tail tracking failed")
 
             angle = angles[argmax]
             tail[i + 1] = point = points[argmax]
@@ -206,77 +208,71 @@ class FreeSwimTracker(EyeTracker):
         return np.column_stack(splev(np.linspace(0, 1, n_points), tck))
 
     def _track_ellipses(self, src: np.ndarray):
-        try:
-            if self.params.sigma_eye > 0:
-                img = cv2.GaussianBlur(src, (0, 0), self.params.sigma_eye)
-            else:
-                img = src.copy()
+        if self.params.sigma_eye > 0:
+            img = cv2.GaussianBlur(src, (0, 0), self.params.sigma_eye)
+        else:
+            img = src.copy()
 
-            block_size = self.params.block_size
+        threshold = self.params.threshold
 
-            if block_size % 2 == 0:
-                block_size += 1
+        img_thresh2 = binary_threshold(img, threshold)
+        contours = find_contours(img_thresh2)
+        cv2.imshow("win2", img_thresh2)
 
-            img_thresh = cv2.adaptiveThreshold(
-                img,
-                255,
-                cv2.ADAPTIVE_THRESH_MEAN_C,
-                cv2.THRESH_BINARY,
-                block_size,
-                self.params.c,
+        if len(contours) < 3:
+            raise TrackingError("Less than 3 contours detected")
+
+        # get the 3 largest contours
+        largest3 = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
+        centers = np.array([contour_center(c) for c in largest3])
+        left_eye, right_eye, swim_bladder = self._sort_centers(centers)
+
+        contours_left_eye = self._binary_segmentation(
+            img, self.params.threshold_left_eye
+        )
+        contours_right_eye = self._binary_segmentation(
+            img, self.params.threshold_right_eye
+        )
+        contours_swim_bladder = self._binary_segmentation(
+            img, self.params.threshold_swim_bladder
+        )
+
+        largest3[swim_bladder] = max(
+            contours_swim_bladder,
+            key=lambda cnt: is_in_contour(cnt, tuple(centers[swim_bladder])),
+        )
+        largest3[left_eye] = max(
+            contours_left_eye,
+            key=lambda cnt: is_in_contour(cnt, tuple(centers[left_eye])),
+        )
+        largest3[right_eye] = max(
+            contours_right_eye,
+            key=lambda cnt: is_in_contour(cnt, tuple(centers[right_eye])),
+        )
+
+        ellipses = self._fit_ellipses(largest3)
+        ellipses = ellipses[[left_eye, right_eye, swim_bladder]]
+
+        colors = (255, 0, 0), (0, 0, 255), (0, 255, 0)
+
+        im3 = np.zeros_like(img)
+        cv2.drawContours(im3, largest3, -1, 255, -1)
+        im3 = cv2.cvtColor(im3, cv2.COLOR_GRAY2BGR)
+
+        for i, ellipse in enumerate(ellipses):
+            x, y, a, b, theta = ellipse
+            center = round(x), round(y)
+            axes = round(a), round(b)
+            cv2.ellipse(
+                im3, center, axes, theta, 0, 360, colors[i], 1, cv2.LINE_AA
             )
 
-            contours = find_contours(img_thresh)
-            fish_contour = max(contours, key=cv2.contourArea)
-            fish_mask = np.zeros_like(src)
-            cv2.drawContours(fish_mask, [fish_contour], -1, 255, cv2.FILLED)
+        cv2.drawContours(
+            im3,
+            largest3,
+            -1,
+            255,
+        )
+        cv2.imshow("win3", im3)
 
-            img[fish_mask == 0] = 0
-            img = cv2.equalizeHist(img)
-
-            t = self.params.threshold_segmentation
-
-            contours_left_eye = self._binary_segmentation(
-                img, t + self.params.threshold_left_eye
-            )
-            contours_right_eye = self._binary_segmentation(
-                img, t + self.params.threshold_right_eye
-            )
-            contours_swim_bladder = self._binary_segmentation(
-                img, t + self.params.threshold_swim_bladder
-            )
-            contours = self._binary_segmentation(
-                img, self.params.threshold_segmentation
-            )
-
-            # get the 3 largest contours
-            largest3 = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
-            assert len(largest3) == 3
-
-            ellipses = self._fit_ellipses(largest3)
-
-            # identify contours
-            centers = ellipses[:, :2]
-            left_eye, right_eye, swim_bladder = self._sort_centers(centers)
-
-            largest3[swim_bladder] = max(
-                contours_swim_bladder,
-                key=lambda cnt: is_in_contour(
-                    cnt, tuple(centers[swim_bladder])
-                ),
-            )
-            largest3[left_eye] = max(
-                contours_left_eye,
-                key=lambda cnt: is_in_contour(cnt, tuple(centers[left_eye])),
-            )
-            largest3[right_eye] = max(
-                contours_right_eye,
-                key=lambda cnt: is_in_contour(cnt, tuple(centers[right_eye])),
-            )
-
-            ellipses = self._fit_ellipses(largest3)
-            ellipses = ellipses[[left_eye, right_eye, swim_bladder]]
-
-            return self._correct_orientation(ellipses)
-        except (cv2.error, AssertionError):
-            raise TrackingError
+        return self._correct_orientation(ellipses)

@@ -7,8 +7,15 @@ def binary_threshold(img: np.ndarray, threshold: int) -> np.ndarray:
 
 
 def find_contours(img: np.ndarray) -> list:
-    return cv2.findContours(img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)[0]
+    return cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
 
 
 def is_in_contour(contour: list, point: tuple):
     return cv2.pointPolygonTest(cv2.convexHull(contour), point, False) >= 0
+
+
+def contour_center(c):
+    m = cv2.moments(c)
+    x = m["m10"] / m["m00"]
+    y = m["m01"] / m["m00"]
+    return x, y

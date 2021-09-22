@@ -67,16 +67,15 @@ class EyeTracker(Tracker, ABC):
 
     @staticmethod
     def _fit_ellipses(contours):
-        ellipses = np.array(
-            [
-                (x, y, b / 2, a / 2, theta - 90)
-                for (x, y), (a, b), theta in map(
-                    cv2.fitEllipse, map(cv2.convexHull, contours)
-                )
-            ]
-        )
+        ellipses = []
+        for contour in contours:
+            hull = cv2.convexHull(contour)
+            if len(hull) < 5:
+                hull = contour
+            (x, y), (a, b), theta = cv2.fitEllipse(hull)
+            ellipses.append((x, y, b / 2, a / 2, theta - 90))
 
-        return ellipses
+        return np.array(ellipses)
 
     @staticmethod
     def _sort_centers(centers):

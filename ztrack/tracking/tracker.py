@@ -1,3 +1,4 @@
+import traceback
 from abc import ABC, abstractmethod
 from typing import Type
 
@@ -47,6 +48,7 @@ class Tracker(ABC):
             results = self._results_to_series(self._track_img(img))
             self.annotate_from_series(results)
         except:
+            print(traceback.format_exc())
             for shape in self.shapes:
                 shape.visible = False
 
