@@ -2,8 +2,11 @@ import json
 from pathlib import Path
 from typing import List, Optional
 
-from ztrack._settings import (config_extension, results_extension,
-                              video_extensions)
+from ztrack._settings import (
+    config_extension,
+    results_extension,
+    video_extensions,
+)
 
 
 def get_results_path(video):

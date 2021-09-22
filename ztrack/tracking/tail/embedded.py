@@ -71,7 +71,7 @@ class EmbeddedTailTracker(TailTracker):
             try:
                 argmax = img[y, x].argmax()
             except ValueError:
-                raise TrackingError
+                raise TrackingError("Tail tracking failed")
 
             angle = angles[argmax]
             tail[i + 1] = point = points[argmax]

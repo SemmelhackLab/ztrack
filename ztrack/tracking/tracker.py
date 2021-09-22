@@ -6,7 +6,6 @@ import pandas as pd
 from decord import VideoReader
 from tqdm import tqdm
 
-from ztrack.utils.exception import TrackingError
 from ztrack.utils.variable import Rect
 
 from .params import Params
@@ -47,7 +46,7 @@ class Tracker(ABC):
             img = self._get_bbox_img(frame)
             results = self._results_to_series(self._track_img(img))
             self.annotate_from_series(results)
-        except TrackingError:
+        except:
             for shape in self.shapes:
                 shape.visible = False
 
