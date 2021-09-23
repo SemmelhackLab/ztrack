@@ -2,6 +2,8 @@ from typing import Tuple
 
 import cv2
 import numpy as np
+from decord import VideoReader
+from tqdm import tqdm
 
 
 def binary_threshold(img: np.ndarray, threshold: int) -> np.ndarray:
@@ -40,3 +42,21 @@ def fit_ellipse(contour) -> Tuple[float, float, float, float, float]:
         hull = contour
     (x, y), (a, b), theta = cv2.fitEllipse(hull)
     return x, y, b / 2, a / 2, theta - 90
+
+
+def rgb2gray(img: np.ndarray) -> np.ndarray:
+    return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+
+
+def video_median(
+    video_path: str, n_frames_for_bg=300, verbose=False
+) -> np.ndarray:
+    vr = VideoReader(video_path)
+    n_frames = len(vr)
+    n_frames_for_bg = min(n_frames, n_frames_for_bg)
+    idx = np.linspace(0, n_frames - 1, n_frames_for_bg).astype(int)
+    frames = [
+        rgb2gray(vr[i].asnumpy()) for i in (tqdm(idx) if verbose else idx)
+    ]
+
+    return np.median(frames, axis=0).astype(np.uint8)

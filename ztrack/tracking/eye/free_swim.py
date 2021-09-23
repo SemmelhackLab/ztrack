@@ -64,15 +64,8 @@ class FreeSwimTracker(EyeTracker):
     def calculate_background(self, video_path):
         if self._verbose:
             print("Calculating background...")
-        sub = cv2.createBackgroundSubtractorMOG2()
-        vr = VideoReader(video_path)
-        range_ = range(0, len(vr))
-        if self._verbose:
-            range_ = tqdm(range_)
-        for i in range_:
-            sub.apply(cv2.cvtColor(vr[i].asnumpy(), cv2.COLOR_RGB2GRAY))
 
-        bg = sub.getBackgroundImage()
+        bg = zcv.video_median(video_path, verbose=self._verbose)
         cv2.imwrite(str(Path(video_path).with_suffix(".png")), bg)
         is_bg_bright = cv2.mean(bg)[0] > 127
 
@@ -84,6 +77,7 @@ class FreeSwimTracker(EyeTracker):
 
         if video_path is not None:
             bg_path = Path(video_path).with_suffix(".png")
+
             if bg_path.exists():
                 self._bg = cv2.imread(str(bg_path), 0)
                 self._is_bg_bright = cv2.mean(self._bg)[0] > 127
