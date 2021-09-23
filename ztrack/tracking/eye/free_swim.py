@@ -3,10 +3,8 @@ from pathlib import Path
 import cv2
 import numpy as np
 import pandas as pd
-from decord import VideoReader
 from scipy.interpolate import splev, splprep
 from skimage.draw import circle_perimeter
-from tqdm import tqdm
 
 import ztrack.utils.cv as zcv
 from ztrack.tracking.eye.eye_tracker import EyeTracker
