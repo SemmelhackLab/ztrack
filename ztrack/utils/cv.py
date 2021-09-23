@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import cv2
 import numpy as np
 
@@ -10,12 +12,23 @@ def find_contours(img: np.ndarray) -> list:
     return cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
 
 
-def contour_distance(contour: list, point: tuple):
+def contour_distance(contour, point: tuple):
     return cv2.pointPolygonTest(cv2.convexHull(contour), point, True)
 
 
-def contour_center(c):
-    m = cv2.moments(c)
+def contour_center(contour) -> Tuple[float, float]:
+    m = cv2.moments(contour)
     x = m["m10"] / m["m00"]
     y = m["m01"] / m["m00"]
     return x, y
+
+
+def gaussian_blur(img: np.ndarray, sigma: float):
+    if sigma > 0:
+        return cv2.GaussianBlur(img, (0, 0), sigma)
+    else:
+        return img.copy()
+
+
+def nearest_contour(contours, point):
+    return max(contours, key=lambda contour: contour_distance(contour, point))

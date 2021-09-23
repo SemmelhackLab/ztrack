@@ -8,10 +8,9 @@ from scipy.interpolate import splev, splprep
 from skimage.draw import circle_perimeter
 from tqdm import tqdm
 
+import ztrack.utils.cv as zcv
 from ztrack.tracking.eye.eye_tracker import EyeTracker
 from ztrack.tracking.params import Params
-from ztrack.utils.cv import (binary_threshold, contour_center,
-                             contour_distance, find_contours)
 from ztrack.utils.exception import TrackingError
 from ztrack.utils.geometry import angle_diff, wrap_degrees
 from ztrack.utils.math import split_int
@@ -25,7 +24,7 @@ class FreeSwimTracker(EyeTracker):
             super().__init__(params)
             self.sigma_eye = Float("Eye sigma (px)", 0, 0, 100, 0.1)
             self.sigma_tail = Float("Tail sigma (px)", 0, 0, 100, 0.1)
-            self.threshold = UInt8("Segmentation threshold", 70)
+            self.threshold_segmentation = UInt8("Segmentation threshold", 70)
             self.threshold_left_eye = UInt8("Left eye threshold", 70)
             self.threshold_right_eye = UInt8("Right eye threshold", 70)
             self.threshold_swim_bladder = UInt8("Swim bladder threshold", 70)
@@ -202,71 +201,38 @@ class FreeSwimTracker(EyeTracker):
         return np.column_stack(splev(np.linspace(0, 1, n_points), tck))
 
     def _track_ellipses(self, src: np.ndarray):
-        if self.params.sigma_eye > 0:
-            img = cv2.GaussianBlur(src, (0, 0), self.params.sigma_eye)
-        else:
-            img = src.copy()
+        p = self.params
 
-        threshold = self.params.threshold
+        # preprocess
+        img = zcv.gaussian_blur(src, p.sigma_eye)
 
-        img_thresh2 = binary_threshold(img, threshold)
-        contours = find_contours(img_thresh2)
+        # segment the image with binary threshold
+        contours = self._binary_segmentation(img, p.threshold_segmentation)
 
+        # get the 3 largest contours
         if len(contours) < 3:
             raise TrackingError("Less than 3 contours detected")
 
-        # get the 3 largest contours
         largest3 = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
-        centers = np.array([contour_center(c) for c in largest3])
+
+        # calculate the contour centers
+        centers = np.array([zcv.contour_center(c) for c in largest3])
         left_eye, right_eye, swim_bladder = self._sort_centers(centers)
 
-        contours_left_eye = self._binary_segmentation(
-            img, self.params.threshold_left_eye
-        )
-        contours_right_eye = self._binary_segmentation(
-            img, self.params.threshold_right_eye
-        )
-        contours_swim_bladder = self._binary_segmentation(
-            img, self.params.threshold_swim_bladder
-        )
+        thresholds = {
+            left_eye: p.threshold_left_eye,
+            right_eye: p.threshold_right_eye,
+            swim_bladder: p.threshold_swim_bladder,
+        }
 
-        largest3[swim_bladder] = max(
-            contours_swim_bladder,
-            key=lambda cnt: contour_distance(
-                cnt, tuple(centers[swim_bladder])
-            ),
-        )
-        largest3[left_eye] = max(
-            contours_left_eye,
-            key=lambda cnt: contour_distance(cnt, tuple(centers[left_eye])),
-        )
-        largest3[right_eye] = max(
-            contours_right_eye,
-            key=lambda cnt: contour_distance(cnt, tuple(centers[right_eye])),
-        )
+        contours = {
+            k: self._binary_segmentation(img, v) for k, v in thresholds.items()
+        }
+
+        for k, v in contours.items():
+            largest3[k] = zcv.nearest_contour(v, tuple(centers[k]))
 
         ellipses = self._fit_ellipses(largest3)
         ellipses = ellipses[[left_eye, right_eye, swim_bladder]]
-
-        colors = (255, 0, 0), (0, 0, 255), (0, 255, 0)
-
-        im3 = np.zeros_like(img)
-        cv2.drawContours(im3, largest3, -1, 255, -1)
-        im3 = cv2.cvtColor(im3, cv2.COLOR_GRAY2BGR)
-
-        for i, ellipse in enumerate(ellipses):
-            x, y, a, b, theta = ellipse
-            center = round(x), round(y)
-            axes = round(a), round(b)
-            cv2.ellipse(
-                im3, center, axes, theta, 0, 360, colors[i], 1, cv2.LINE_AA
-            )
-
-        cv2.drawContours(
-            im3,
-            largest3,
-            -1,
-            255,
-        )
 
         return self._correct_orientation(ellipses)
