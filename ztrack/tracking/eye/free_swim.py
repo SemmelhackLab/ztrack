@@ -66,7 +66,7 @@ class FreeSwimTracker(EyeTracker):
             print("Calculating background...")
         sub = cv2.createBackgroundSubtractorMOG2()
         vr = VideoReader(video_path)
-        range_ = range(0, len(vr), 20)
+        range_ = range(0, len(vr))
         if self._verbose:
             range_ = tqdm(range_)
         for i in range_:
@@ -217,22 +217,30 @@ class FreeSwimTracker(EyeTracker):
 
         # calculate the contour centers
         centers = np.array([zcv.contour_center(c) for c in largest3])
-        left_eye, right_eye, swim_bladder = self._sort_centers(centers)
 
-        thresholds = {
-            left_eye: p.threshold_left_eye,
-            right_eye: p.threshold_right_eye,
-            swim_bladder: p.threshold_swim_bladder,
-        }
+        # sort contours (0: left eye, 1: right eye, 2: swim bladder)
+        centers = centers[list(self._sort_centers(centers))]
 
-        contours = {
-            k: self._binary_segmentation(img, v) for k, v in thresholds.items()
-        }
+        # apply binary threshold for each body part and get the contour closest to its center
+        thresholds = [
+            p.threshold_left_eye,
+            p.threshold_right_eye,
+            p.threshold_swim_bladder,
+        ]
 
-        for k, v in contours.items():
-            largest3[k] = zcv.nearest_contour(v, tuple(centers[k]))
+        ellipses = np.zeros((3, 5))
 
-        ellipses = self._fit_ellipses(largest3)
-        ellipses = ellipses[[left_eye, right_eye, swim_bladder]]
+        for i, (threshold, center) in enumerate(zip(thresholds, centers)):
+            # segment the image with binary threshold of the body part
+            contours = self._binary_segmentation(img, threshold)
 
-        return self._correct_orientation(ellipses)
+            # get the contour closest to the body part's center
+            contour = zcv.nearest_contour(contours, tuple(center))
+
+            # fit ellipse
+            ellipses[i] = zcv.fit_ellipse(contour)
+
+        # fix orientation
+        ellipses = self._correct_orientation(ellipses)
+
+        return ellipses

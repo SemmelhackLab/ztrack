@@ -32,3 +32,11 @@ def gaussian_blur(img: np.ndarray, sigma: float):
 
 def nearest_contour(contours, point):
     return max(contours, key=lambda contour: contour_distance(contour, point))
+
+
+def fit_ellipse(contour) -> Tuple[float, float, float, float, float]:
+    hull = cv2.convexHull(contour)
+    if len(hull) < 5:
+        hull = contour
+    (x, y), (a, b), theta = cv2.fitEllipse(hull)
+    return x, y, b / 2, a / 2, theta - 90
