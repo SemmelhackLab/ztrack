@@ -10,8 +10,8 @@ def find_contours(img: np.ndarray) -> list:
     return cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
 
 
-def is_in_contour(contour: list, point: tuple):
-    return cv2.pointPolygonTest(cv2.convexHull(contour), point, False) >= 0
+def contour_distance(contour: list, point: tuple):
+    return cv2.pointPolygonTest(cv2.convexHull(contour), point, True)
 
 
 def contour_center(c):

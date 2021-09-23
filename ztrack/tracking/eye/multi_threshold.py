@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
-from ztrack.utils.cv import is_in_contour
+from ztrack.utils.cv import contour_distance
 from ztrack.utils.exception import TrackingError
 from ztrack.utils.variable import Float, UInt8
 
@@ -63,17 +63,21 @@ class MultiThresholdEyeTracker(EyeTracker):
 
             largest3[swim_bladder] = max(
                 contours_swim_bladder,
-                key=lambda cnt: is_in_contour(
+                key=lambda cnt: contour_distance(
                     cnt, tuple(centers[swim_bladder])
                 ),
             )
             largest3[left_eye] = max(
                 contours_left_eye,
-                key=lambda cnt: is_in_contour(cnt, tuple(centers[left_eye])),
+                key=lambda cnt: contour_distance(
+                    cnt, tuple(centers[left_eye])
+                ),
             )
             largest3[right_eye] = max(
                 contours_right_eye,
-                key=lambda cnt: is_in_contour(cnt, tuple(centers[right_eye])),
+                key=lambda cnt: contour_distance(
+                    cnt, tuple(centers[right_eye])
+                ),
             )
 
             ellipses = self._fit_ellipses(largest3)

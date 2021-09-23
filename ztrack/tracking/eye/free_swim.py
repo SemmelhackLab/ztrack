@@ -10,8 +10,8 @@ from tqdm import tqdm
 
 from ztrack.tracking.eye.eye_tracker import EyeTracker
 from ztrack.tracking.params import Params
-from ztrack.utils.cv import (binary_threshold, contour_center, find_contours,
-                             is_in_contour)
+from ztrack.utils.cv import (binary_threshold, contour_center,
+                             contour_distance, find_contours)
 from ztrack.utils.exception import TrackingError
 from ztrack.utils.geometry import angle_diff, wrap_degrees
 from ztrack.utils.math import split_int
@@ -53,10 +53,6 @@ class FreeSwimTracker(EyeTracker):
         self._is_bg_bright = None
         self._video_path = None
         self._points = Points(np.array([[0, 0]]), 1, "m", symbol="+")
-        cv2.namedWindow("win0")
-        cv2.namedWindow("win1")
-        cv2.namedWindow("win2")
-        cv2.namedWindow("win3")
 
     @staticmethod
     def name():
@@ -106,8 +102,6 @@ class FreeSwimTracker(EyeTracker):
             img = cv2.subtract(bg, img)
         else:
             img = cv2.subtract(img, bg)
-
-        cv2.imshow("win0", img)
 
         ellipses = self._track_ellipses(img)
         centers = ellipses[:, :2]
@@ -217,7 +211,6 @@ class FreeSwimTracker(EyeTracker):
 
         img_thresh2 = binary_threshold(img, threshold)
         contours = find_contours(img_thresh2)
-        cv2.imshow("win2", img_thresh2)
 
         if len(contours) < 3:
             raise TrackingError("Less than 3 contours detected")
@@ -239,15 +232,17 @@ class FreeSwimTracker(EyeTracker):
 
         largest3[swim_bladder] = max(
             contours_swim_bladder,
-            key=lambda cnt: is_in_contour(cnt, tuple(centers[swim_bladder])),
+            key=lambda cnt: contour_distance(
+                cnt, tuple(centers[swim_bladder])
+            ),
         )
         largest3[left_eye] = max(
             contours_left_eye,
-            key=lambda cnt: is_in_contour(cnt, tuple(centers[left_eye])),
+            key=lambda cnt: contour_distance(cnt, tuple(centers[left_eye])),
         )
         largest3[right_eye] = max(
             contours_right_eye,
-            key=lambda cnt: is_in_contour(cnt, tuple(centers[right_eye])),
+            key=lambda cnt: contour_distance(cnt, tuple(centers[right_eye])),
         )
 
         ellipses = self._fit_ellipses(largest3)
@@ -273,6 +268,5 @@ class FreeSwimTracker(EyeTracker):
             -1,
             255,
         )
-        cv2.imshow("win3", im3)
 
         return self._correct_orientation(ellipses)
