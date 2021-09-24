@@ -115,7 +115,9 @@ class BaseFreeSwimTracker(MultiThresholdEyeTracker, ABC):
         else:
             img = cv2.subtract(img, bg)
 
-        ellipses = self._track_ellipses(img)
+        contours = self._track_contours(img)
+        ellipses = self._fit_ellipses(contours)
+
         centers = ellipses[:, :2]
         sb_center = centers[2]
         midpoint = centers[:2].mean(0)

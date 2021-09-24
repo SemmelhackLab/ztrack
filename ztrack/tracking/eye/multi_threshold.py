@@ -32,7 +32,7 @@ class MultiThresholdEyeTracker(EyeTracker):
     def display_name():
         return "Multi-threshold"
 
-    def _track_ellipses(self, img: np.ndarray):
+    def _track_contours(self, img: np.ndarray):
         p = self.params
 
         # segment the image with binary threshold
@@ -57,19 +57,13 @@ class MultiThresholdEyeTracker(EyeTracker):
             p.threshold_swim_bladder,
         ]
 
-        ellipses = np.zeros((3, 5))
+        results = []
 
         for i, (threshold, center) in enumerate(zip(thresholds, centers)):
             # segment the image with binary threshold of the body part
             contours = self._binary_segmentation(img, threshold)
 
             # get the contour closest to the body part's center
-            contour = zcv.nearest_contour(contours, tuple(center))
+            results.append(zcv.nearest_contour(contours, tuple(center)))
 
-            # fit ellipse
-            ellipses[i] = zcv.fit_ellipse(contour)
-
-        # fix orientation
-        ellipses = self._correct_orientation(ellipses)
-
-        return ellipses
+        return results

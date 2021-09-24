@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
+import ztrack.utils.cv as zcv
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
-from ztrack.utils.exception import TrackingError
 from ztrack.utils.variable import Float, UInt8
 
 
@@ -28,21 +28,16 @@ class BinaryEyeTracker(EyeTracker):
     def display_name():
         return "Binary threshold"
 
-    def _track_ellipses(self, src: np.ndarray):
-        try:
-            contours = self._binary_segmentation(src, self.params.threshold)
+    def _track_contours(self, img: np.ndarray):
+        contours = self._binary_segmentation(img, self.params.threshold)
 
-            # get the 3 largest contours
-            largest3 = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
-            assert len(largest3) == 3
+        # get the 3 largest contours
+        contours = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
+        assert len(contours) == 3
 
-            # fit ellipses (x, y, semi-major axis, semi-minor axis, theta in
-            # degrees)
-            ellipses = self._fit_ellipses(largest3)
+        centers = np.array(
+            [zcv.contour_center(contour) for contour in contours]
+        )
+        left_eye, right_eye, swim_bladder = self._sort_centers(centers)
 
-            centers = ellipses[:, :2]
-            ellipses = ellipses[list(self._sort_centers(centers))]
-
-            return self._correct_orientation(ellipses)
-        except (cv2.error, AssertionError):
-            raise TrackingError
+        return contours[left_eye], contours[right_eye], contours[swim_bladder]

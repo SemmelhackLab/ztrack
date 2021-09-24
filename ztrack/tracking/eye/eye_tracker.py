@@ -33,10 +33,6 @@ class EyeTracker(Tracker, ABC):
     def shapes(self):
         return [self._left_eye, self._right_eye, self._swim_bladder]
 
-    @abstractmethod
-    def _track_ellipses(self, src: np.ndarray) -> np.ndarray:
-        pass
-
     @staticmethod
     def _preprocess(img, sigma=0):
         img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -65,9 +61,9 @@ class EyeTracker(Tracker, ABC):
         )
         return ellipses
 
-    @staticmethod
-    def _fit_ellipses(contours):
-        return np.array([zcv.fit_ellipse(contour) for contour in contours])
+    def _fit_ellipses(self, contours):
+        ellipses = np.array([zcv.fit_ellipse(contour) for contour in contours])
+        return self._correct_orientation(ellipses)
 
     @staticmethod
     def _sort_centers(centers):
@@ -91,9 +87,14 @@ class EyeTracker(Tracker, ABC):
             s = series[j]
             i.cx, i.cy, i.a, i.b, i.theta = s.cx, s.cy, s.a, s.b, s.theta
 
+    @abstractmethod
+    def _track_contours(self, img: np.ndarray):
+        pass
+
     def _track_img(self, img: np.ndarray) -> np.ndarray:
         img = self._preprocess(img, self.params.sigma)
-        return self._track_ellipses(img)
+        contours = self._track_contours(img)
+        return self._fit_ellipses(contours)
 
     def _transform_from_roi_to_frame(self, results: np.ndarray):
         if self.roi.value is not None:
