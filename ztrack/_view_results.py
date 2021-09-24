@@ -6,6 +6,7 @@ import pandas as pd
 from decord import VideoReader
 from tqdm import tqdm
 
+import ztrack.utils.cv as zcv
 from ztrack.gui.tracking_viewer import TrackingViewer
 from ztrack.gui.utils.launch import launch
 from ztrack.utils.file import get_paths_for_view_results
@@ -112,8 +113,12 @@ def generate_tracking_video(
     if fps is None:
         fps = int(cap.get(cv2.CAP_PROP_FPS))
 
-    w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    if egocentric:
+        w = width
+        h = front + behind
+    else:
+        w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+        h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
     writer = cv2.VideoWriter(save_path, fourcc, fps, (w, h), True)
 
@@ -135,23 +140,40 @@ def generate_tracking_video(
         if df_eye is not None:
             row_eye = df_eye.iloc[i]
 
-            for blob in ("left_eye", "right_eye", "swim_bladder"):
-                cx, cy, a, b, angle, *_ = row_eye[blob]
-                center = (round(cx), round(cy))
-                axes = (round(a), round(b))
-                cv2.ellipse(
-                    img,
-                    center,
-                    axes,
-                    angle,
-                    0,
-                    360,
-                    colors[blob],
-                    line_width,
-                    line_type,
+            if egocentric:
+                midpoint = (
+                    np.array(
+                        [
+                            row_eye["left_eye", "cx"]
+                            + row_eye["right_eye", "cx"],
+                            row_eye["left_eye", "cy"]
+                            + row_eye["right_eye", "cy"],
+                        ]
+                    )
+                    / 2
                 )
+                heading = row_eye["heading"].item()
+                img = zcv.warp_img(
+                    img, midpoint, heading, width, front, behind
+                )
+            else:
+                for blob in ("left_eye", "right_eye", "swim_bladder"):
+                    cx, cy, a, b, angle, *_ = row_eye[blob]
+                    center = (round(cx), round(cy))
+                    axes = (round(a), round(b))
+                    cv2.ellipse(
+                        img,
+                        center,
+                        axes,
+                        angle,
+                        0,
+                        360,
+                        colors[blob],
+                        line_width,
+                        line_type,
+                    )
 
-        if df_tail is not None:
+        if df_tail is not None and not egocentric:
             row_tail = df_tail.iloc[i]
 
             pts = np.round(row_tail.values.reshape(-1, 2)[:, None, :]).astype(
