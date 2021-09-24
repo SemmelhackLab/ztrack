@@ -4,9 +4,9 @@ import cv2
 import numpy as np
 import pandas as pd
 
+import ztrack.utils.cv as zcv
 from ztrack.tracking.params import Params
 from ztrack.tracking.tracker import Tracker
-from ztrack.utils.cv import binary_threshold, find_contours
 from ztrack.utils.geometry import wrap_degrees
 from ztrack.utils.shape import Ellipse
 
@@ -51,7 +51,7 @@ class EyeTracker(Tracker, ABC):
 
     @staticmethod
     def _binary_segmentation(img, threshold):
-        return find_contours(binary_threshold(img, threshold))
+        return zcv.find_contours(zcv.binary_threshold(img, threshold))
 
     @staticmethod
     def _correct_orientation(ellipses):
@@ -67,15 +67,7 @@ class EyeTracker(Tracker, ABC):
 
     @staticmethod
     def _fit_ellipses(contours):
-        ellipses = []
-        for contour in contours:
-            hull = cv2.convexHull(contour)
-            if len(hull) < 5:
-                hull = contour
-            (x, y), (a, b), theta = cv2.fitEllipse(hull)
-            ellipses.append((x, y, b / 2, a / 2, theta - 90))
-
-        return np.array(ellipses)
+        return np.array([zcv.fit_ellipse(contour) for contour in contours])
 
     @staticmethod
     def _sort_centers(centers):
@@ -100,6 +92,7 @@ class EyeTracker(Tracker, ABC):
             i.cx, i.cy, i.a, i.b, i.theta = s.cx, s.cy, s.a, s.b, s.theta
 
     def _track_img(self, img: np.ndarray) -> np.ndarray:
+        img = self._preprocess(img, self.params.sigma_eye)
         return self._track_ellipses(img)
 
     def _transform_from_roi_to_frame(self, results: np.ndarray):
