@@ -113,9 +113,25 @@ def generate_tracking_video(
     if fps is None:
         fps = int(cap.get(cv2.CAP_PROP_FPS))
 
+    if df_eye is None:
+        egocentric = False
+
+    midpoints = None
+
     if egocentric:
         w = width
         h = front + behind
+
+        midpoints = (
+            np.column_stack(
+                [
+                    df_eye[("left_eye", "cx")] + df_eye[("right_eye", "cx")],
+                    df_eye[("left_eye", "cy")] + df_eye[("right_eye", "cy")],
+                ]
+            )
+            / 2
+        )
+
     else:
         w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -141,20 +157,9 @@ def generate_tracking_video(
             row_eye = df_eye.iloc[i]
 
             if egocentric:
-                midpoint = (
-                    np.array(
-                        [
-                            row_eye["left_eye", "cx"]
-                            + row_eye["right_eye", "cx"],
-                            row_eye["left_eye", "cy"]
-                            + row_eye["right_eye", "cy"],
-                        ]
-                    )
-                    / 2
-                )
                 heading = row_eye["heading"].item()
                 img = zcv.warp_img(
-                    img, midpoint, heading, width, front, behind
+                    img, midpoints[i], heading, width, front, behind
                 )
             else:
                 for blob in ("left_eye", "right_eye", "swim_bladder"):
