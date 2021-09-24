@@ -10,14 +10,14 @@ from ztrack.utils.variable import Angle, Float, Int, Point
 from .tail_tracker import TailParams, TailTracker
 
 
-class EmbeddedTailTracker(TailTracker):
+class SequentialTailTracker(TailTracker):
     class __Params(TailParams):
         def __init__(self, params: dict = None):
             super().__init__(params)
             self.sigma = Float("Sigma (px)", 2, 0, 100, 0.1)
             self.n_steps = Int("Number of steps", 10, 3, 20)
             self.n_points = Int(
-                "Number of points", 51, 2, EmbeddedTailTracker.max_n_points
+                "Number of points", 51, 2, SequentialTailTracker.max_n_points
             )
             self.length = Int("Tail length (px)", 200, 0, 1000)
             self.tail_base = Point("Tail base (x, y)", (250, 120))
@@ -79,8 +79,8 @@ class EmbeddedTailTracker(TailTracker):
 
     @staticmethod
     def name():
-        return "embedded"
+        return "sequential"
 
     @staticmethod
     def display_name():
-        return "Embedded"
+        return "Sequential"

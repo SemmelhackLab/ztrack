@@ -1,4 +1,4 @@
 from ..tracker import NoneTracker
-from .embedded import EmbeddedTailTracker
+from .sequential import SequentialTailTracker
 
-trackers = [NoneTracker, EmbeddedTailTracker]
+trackers = [NoneTracker, SequentialTailTracker]
