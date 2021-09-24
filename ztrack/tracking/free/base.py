@@ -9,7 +9,6 @@ from scipy.interpolate import splev, splprep
 import ztrack.utils.cv as zcv
 from ztrack.tracking.eye.multi_threshold import MultiThresholdEyeTracker
 from ztrack.utils.exception import TrackingError
-from ztrack.utils.geometry import wrap_degrees
 from ztrack.utils.shape import Points
 
 
@@ -59,18 +58,7 @@ class BaseFreeSwimTracker(MultiThresholdEyeTracker, ABC):
     @classmethod
     def _results_to_series(cls, results):
         eye, tail = results
-        eyes_midpoint = eye[:2, :2].mean(0)
-        swim_bladder_center = eye[-1, :2]
-        midline = eyes_midpoint - swim_bladder_center
-        x2, x1 = midline
-        heading = np.rad2deg(np.arctan2(x1, x2))
-        theta_l, theta_r = eye[:2, -1]
-        angle_l = wrap_degrees(theta_l - heading)
-        angle_r = wrap_degrees(heading - theta_r)
-        s = pd.Series(eye.ravel(), index=cls._index)
-        s["left_eye", "angle"] = angle_l
-        s["right_eye", "angle"] = angle_r
-        s["heading"] = heading
+        s = super()._results_to_series(eye)
 
         if tail is not None:
             n_points = len(tail)
@@ -82,12 +70,7 @@ class BaseFreeSwimTracker(MultiThresholdEyeTracker, ABC):
         return s
 
     def annotate_from_series(self, series: pd.Series) -> None:
-        ellipse_shapes = [self._left_eye, self._right_eye, self._swim_bladder]
-        body_parts = ["left_eye", "right_eye", "swim_bladder"]
-        for i, j in zip(ellipse_shapes, body_parts):
-            i.visible = True
-            s = series[j]
-            i.cx, i.cy, i.a, i.b, i.theta = s.cx, s.cy, s.a, s.b, s.theta
+        super().annotate_from_series(series)
 
         if "point00" in series:
             idx = [f"point{i:02d}" for i in range(self.params.n_points)]
