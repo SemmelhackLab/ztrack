@@ -8,6 +8,7 @@ from PyQt5 import QtWidgets
 from ztrack._settings import config_extension
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.tracking import get_trackers
+from ztrack.tracking.tracker import NoneTracker
 from ztrack.utils.file import get_config_dict, get_paths_for_config_creation
 
 from ._control_widget import ControlWidget
@@ -87,11 +88,12 @@ class CreateConfigWindow(MainWindow):
             tracker = trackers[
                 self._controlWidget.getCurrentTrackerIndex(group_name)
             ]
-            trackingConfig[group_name] = dict(
-                method=tracker.name(),
-                roi=tracker.roi.value,
-                params=tracker.params.to_dict(),
-            )
+            if not isinstance(tracker, NoneTracker):
+                trackingConfig[group_name] = dict(
+                    method=tracker.name(),
+                    roi=tracker.roi.value,
+                    params=tracker.params.to_dict(),
+                )
 
         for savePath in self._currentSavePaths:
             with open(savePath + config_extension, "w") as fp:

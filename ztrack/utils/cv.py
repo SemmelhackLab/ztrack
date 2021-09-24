@@ -108,3 +108,22 @@ def rgb2gray_dark_bg_blur(img, sigma=0):
         img = cv2.GaussianBlur(img, (0, 0), sigma)
 
     return img
+
+
+def warp_img(
+    img: np.ndarray, midpoint, heading: float, w: float, f: float, b: float
+) -> np.ndarray:
+    heading_rad = np.deg2rad(heading)
+    v = np.array([np.cos(heading_rad), np.sin(heading_rad)])
+    bbox_midpoint = midpoint + (f - b) * v
+    h = f + b
+    rect = (bbox_midpoint, (w, h), heading + 90)
+    box = np.int0(cv2.boxPoints(rect))
+    src_pts = box.astype("float32")
+    dst_pts = np.array(
+        [[0, h - 1], [0, 0], [w - 1, 0], [w - 1, h - 1]], dtype="float32"
+    )
+
+    T = cv2.getPerspectiveTransform(src_pts, dst_pts)
+
+    return cv2.warpPerspective(img, T, (int(w), int(h)))

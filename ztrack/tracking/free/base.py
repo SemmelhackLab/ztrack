@@ -66,6 +66,16 @@ class BaseFreeSwimTracker(
         else:
             self._points.visible = False
 
+    def _transform_from_roi_to_frame(self, results):
+        eye, tail = results
+        eye = super()._transform_from_roi_to_frame(eye)
+
+        if self.roi.value is not None:
+            x0, y0 = self.roi.value[:2]
+            tail += (x0, y0)
+
+        return eye, tail
+
     @abstractmethod
     def _track_tail(self, src, point, angle):
         pass

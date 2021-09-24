@@ -21,6 +21,10 @@ def view_results(
     frame_range,
     format,
     timer,
+    egocentric,
+    width,
+    front,
+    behind,
     verbose,
 ):
     video_paths = [
@@ -44,6 +48,10 @@ def view_results(
                 verbose=verbose,
                 format=format,
                 timer=timer,
+                egocentric=egocentric,
+                width=width,
+                front=front,
+                behind=behind,
             )
 
 
@@ -58,6 +66,10 @@ def generate_tracking_video(
     line_width=2,
     frame_range=None,
     timer,
+    egocentric,
+    width,
+    front,
+    behind,
     verbose=0,
 ):
     colors = dict(
@@ -75,8 +87,24 @@ def generate_tracking_video(
     if save_path is None:
         save_path = str(video_path) + "." + format
 
-    df_eye = pd.read_hdf(results_path, key="eye")
-    df_tail = pd.read_hdf(results_path, key="tail")
+    store = pd.HDFStore(results_path)
+
+    df_eye = None
+    df_tail = None
+
+    if "free" in store:
+        try:
+            df = store["free"]
+            df_eye = df[["left_eye", "right_eye", "swim_bladder", "heading"]]
+            tail_columns = [j for j in df.columns if "point" in j[0]]
+            df_tail = df.loc[:, tail_columns]
+        except KeyError:
+            pass
+
+    if df_eye is None and "eye" in store:
+        df_eye = store["eye"]
+    if df_tail is None and "tail" in store:
+        df_tail = store["tail"]
 
     cap = cv2.VideoCapture(video_path)
     fourcc = cv2.VideoWriter_fourcc(*codec)
@@ -102,28 +130,36 @@ def generate_tracking_video(
     vr = VideoReader(video_path)
 
     for i in frame_range:
-        row_eye = df_eye.iloc[i]
-        row_tail = df_tail.iloc[i]
         img = vr[i].asnumpy()
 
-        for blob in ("left_eye", "right_eye", "swim_bladder"):
-            cx, cy, a, b, angle, *_ = row_eye[blob]
-            center = (round(cx), round(cy))
-            axes = (round(a), round(b))
-            cv2.ellipse(
-                img,
-                center,
-                axes,
-                angle,
-                0,
-                360,
-                colors[blob],
-                line_width,
-                line_type,
-            )
+        if df_eye is not None:
+            row_eye = df_eye.iloc[i]
 
-        pts = np.round(row_tail.values.reshape(-1, 2)[:, None, :]).astype(int)
-        cv2.polylines(img, [pts], False, colors["tail"], line_width, line_type)
+            for blob in ("left_eye", "right_eye", "swim_bladder"):
+                cx, cy, a, b, angle, *_ = row_eye[blob]
+                center = (round(cx), round(cy))
+                axes = (round(a), round(b))
+                cv2.ellipse(
+                    img,
+                    center,
+                    axes,
+                    angle,
+                    0,
+                    360,
+                    colors[blob],
+                    line_width,
+                    line_type,
+                )
+
+        if df_tail is not None:
+            row_tail = df_tail.iloc[i]
+
+            pts = np.round(row_tail.values.reshape(-1, 2)[:, None, :]).astype(
+                int
+            )
+            cv2.polylines(
+                img, [pts], False, colors["tail"], line_width, line_type
+            )
 
         if timer:
             t = i / fps
@@ -143,3 +179,4 @@ def generate_tracking_video(
         writer.write(img)
 
     writer.release()
+    store.close()

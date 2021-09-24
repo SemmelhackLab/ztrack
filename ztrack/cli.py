@@ -92,6 +92,29 @@ def run(**kwargs):
     help="Format to use for generating the tracking video.",
 )
 @click.option(
+    "--egocentric",
+    is_flag=True,
+    help="Whether to view video in egocentric coordinates.",
+)
+@click.option(
+    "--width",
+    default=200,
+    show_default=True,
+    help="Width of video (for egocentric view)",
+)
+@click.option(
+    "--front",
+    default=80,
+    show_default=True,
+    help="Number of pixels in front of midpoint of eyes (for egocentric view)",
+)
+@click.option(
+    "--behind",
+    default=120,
+    show_default=True,
+    help="Number of pixels behind midpoint of eyes (for egocentric view)",
+)
+@click.option(
     "--timer/--no-timer",
     default=False,
     show_default=True,
