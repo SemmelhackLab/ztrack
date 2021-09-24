@@ -13,7 +13,7 @@ class BinaryEyeTracker(EyeTracker):
     class __Params(EyeParams):
         def __init__(self, params: dict = None):
             super().__init__(params)
-            self.sigma_eye = Float("Sigma (px)", 2, 0, 100, 0.1)
+            self.sigma = Float("Sigma (px)", 2, 0, 100, 0.1)
             self.threshold = UInt8("Threshold", 127)
 
     @property
@@ -27,10 +27,6 @@ class BinaryEyeTracker(EyeTracker):
     @staticmethod
     def display_name():
         return "Binary threshold"
-
-    def _track_img(self, img: np.ndarray) -> np.ndarray:
-        img = self._preprocess(img, self.params.sigma)
-        return self._track_ellipses(img)
 
     def _track_ellipses(self, src: np.ndarray):
         try:

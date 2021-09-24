@@ -92,7 +92,7 @@ class EyeTracker(Tracker, ABC):
             i.cx, i.cy, i.a, i.b, i.theta = s.cx, s.cy, s.a, s.b, s.theta
 
     def _track_img(self, img: np.ndarray) -> np.ndarray:
-        img = self._preprocess(img, self.params.sigma_eye)
+        img = self._preprocess(img, self.params.sigma)
         return self._track_ellipses(img)
 
     def _transform_from_roi_to_frame(self, results: np.ndarray):

@@ -11,7 +11,7 @@ class MultiThresholdEyeTracker(EyeTracker):
     class __Params(EyeParams):
         def __init__(self, params: dict = None):
             super().__init__(params)
-            self.sigma_eye = Float("Sigma (px)", 2, 0, 100, 0.1)
+            self.sigma = Float("Sigma (px)", 2, 0, 100, 0.1)
             self.threshold_segmentation = UInt8("Segmentation threshold", 127)
             self.threshold_left_eye = UInt8("Left eye threshold", 127)
             self.threshold_right_eye = UInt8("Right eye threshold", 127)
@@ -32,11 +32,8 @@ class MultiThresholdEyeTracker(EyeTracker):
     def display_name():
         return "Multi-threshold"
 
-    def _track_ellipses(self, src: np.ndarray):
+    def _track_ellipses(self, img: np.ndarray):
         p = self.params
-
-        # preprocess
-        img = zcv.gaussian_blur(src, p.sigma_eye)
 
         # segment the image with binary threshold
         contours = self._binary_segmentation(img, p.threshold_segmentation)
