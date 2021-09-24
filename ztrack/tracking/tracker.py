@@ -104,3 +104,37 @@ class Tracker(ABC):
 
     def set_video(self, video_path):
         pass
+
+
+class NoneTracker(Tracker):
+    class __Params(Params):
+        pass
+
+    @property
+    def shapes(self):
+        return []
+
+    def annotate_from_series(self, s: pd.Series) -> None:
+        pass
+
+    @staticmethod
+    def name():
+        return "none"
+
+    @staticmethod
+    def display_name():
+        return "None"
+
+    @classmethod
+    def _results_to_series(cls, results):
+        return pd.Series([])
+
+    def _transform_from_roi_to_frame(self, results):
+        return results
+
+    def _track_img(self, img: np.ndarray):
+        return None
+
+    @property
+    def _Params(self) -> Type[Params]:
+        return self.__Params

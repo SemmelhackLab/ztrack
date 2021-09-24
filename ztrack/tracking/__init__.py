@@ -1,12 +1,12 @@
-from typing import Dict, Iterable, List, Type
+from typing import Dict, Iterable, List, Optional, Type
 
 from .eye import trackers as eye_trackers
 from .tail import trackers as tail_trackers
-from .tracker import Tracker
+from .tracker import NoneTracker, Tracker
 
-_trackers: Dict[str, Iterable[Type[Tracker]]] = {
-    "eye": eye_trackers,
-    # "tail": tail_trackers,
+_trackers: Dict[str, Iterable[Optional[Type[Tracker]]]] = {
+    "eye": [NoneTracker] + eye_trackers,
+    "tail": [NoneTracker] + tail_trackers,
 }
 
 _trackers_dict: Dict[str, Dict[str, Type[Tracker]]] = {
