@@ -3,7 +3,13 @@ from typing import Tuple
 import cv2
 import numpy as np
 from decord import VideoReader
+from scipy.interpolate import splev, splprep
+from skimage.draw import circle_perimeter
 from tqdm import tqdm
+
+from .exception import TrackingError
+from .geometry import angle_diff
+from .math import split_int
 
 
 def binary_threshold(img: np.ndarray, threshold: int) -> np.ndarray:
@@ -60,3 +66,45 @@ def video_median(
     ]
 
     return np.median(frames, axis=0).astype(np.uint8)
+
+
+def interpolate_tail(tail: np.ndarray, n_points: int) -> np.ndarray:
+    tck = splprep(tail.T)[0]
+    return np.column_stack(splev(np.linspace(0, 1, n_points), tck))
+
+
+def sequential_track_tail(img, point, angle, theta, n_steps, length, n_points):
+    h, w = img.shape
+    tail = np.zeros((n_steps + 1, 2), dtype=int)
+    tail[0] = point
+    step_lengths = split_int(round(length), n_steps)
+    for i in range(n_steps):
+        points = np.column_stack(
+            circle_perimeter(*point, step_lengths[i], shape=(w, h))
+        )
+        angles = np.arctan2(*reversed((points - point).T))
+        idx = angle_diff(angles, angle) < theta
+        points, angles = points[idx], angles[idx]
+        x, y = points.T
+
+        try:
+            argmax = img[y, x].argmax()
+        except ValueError:
+            raise TrackingError("Tail tracking failed")
+
+        angle = angles[argmax]
+        tail[i + 1] = point = points[argmax]
+
+    return interpolate_tail(tail, n_points)
+
+
+def rgb2gray_dark_bg_blur(img, sigma=0):
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+
+    if cv2.mean(img)[0] > 127:
+        img = cv2.bitwise_not(img)
+
+    if sigma > 0:
+        img = cv2.GaussianBlur(img, (0, 0), sigma)
+
+    return img

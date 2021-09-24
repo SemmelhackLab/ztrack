@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 
-import cv2
 import numpy as np
 import pandas as pd
 
@@ -32,18 +31,6 @@ class EyeTracker(Tracker, ABC):
     @property
     def shapes(self):
         return [self._left_eye, self._right_eye, self._swim_bladder]
-
-    @staticmethod
-    def _preprocess(img, sigma=0):
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-
-        if cv2.mean(img)[0] > 127:
-            img = cv2.bitwise_not(img)
-
-        if sigma > 0:
-            img = cv2.GaussianBlur(img, (0, 0), sigma)
-
-        return img
 
     @staticmethod
     def _binary_segmentation(img, threshold):
@@ -92,7 +79,7 @@ class EyeTracker(Tracker, ABC):
         pass
 
     def _track_img(self, img: np.ndarray) -> np.ndarray:
-        img = self._preprocess(img, self.params.sigma)
+        img = zcv.rgb2gray_dark_bg_blur(img, self.params.sigma)
         contours = self._track_contours(img)
         return self._fit_ellipses(contours)
 

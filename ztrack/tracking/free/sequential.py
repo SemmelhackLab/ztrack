@@ -1,11 +1,7 @@
-import cv2
 import numpy as np
-from skimage.draw import circle_perimeter
 
+import ztrack.utils.cv as zcv
 from ztrack.tracking.params import Params
-from ztrack.utils.exception import TrackingError
-from ztrack.utils.geometry import angle_diff
-from ztrack.utils.math import split_int
 from ztrack.utils.variable import Angle, Float, Int, UInt8
 
 from .base import BaseFreeSwimTracker
@@ -39,34 +35,11 @@ class SequentialFreeSwimTracker(BaseFreeSwimTracker):
         return "Sequential"
 
     def _track_tail(self, src, point, angle):
-        theta = np.deg2rad(self.params.theta / 2)
-
-        if self.params.sigma_eye > 0:
-            img = cv2.GaussianBlur(src, (0, 0), self.params.sigma_eye)
-        else:
-            img = src
-
-        h, w = img.shape
-        tail = np.zeros((self.params.n_steps + 1, 2), dtype=int)
-        tail[0] = point
-        step_lengths = split_int(
-            round(self.params.length), self.params.n_steps
+        p = self.params
+        theta = np.deg2rad(p.theta / 2)
+        img = zcv.gaussian_blur(src, p.sigma_tail)
+        tail = zcv.sequential_track_tail(
+            img, point, angle, theta, p.n_steps, p.length, p.n_points
         )
-        for i in range(self.params.n_steps):
-            points = np.column_stack(
-                circle_perimeter(*point, step_lengths[i], shape=(w, h))
-            )
-            angles = np.arctan2(*reversed((points - point).T))
-            idx = angle_diff(angles, angle) < theta
-            points, angles = points[idx], angles[idx]
-            x, y = points.T
 
-            try:
-                argmax = img[y, x].argmax()
-            except ValueError:
-                raise TrackingError("Tail tracking failed")
-
-            angle = angles[argmax]
-            tail[i + 1] = point = points[argmax]
-
-        return self._interpolate_tail(tail, self.params.n_points)
+        return tail

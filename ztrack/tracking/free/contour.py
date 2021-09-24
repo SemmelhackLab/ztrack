@@ -77,4 +77,4 @@ class ContourFreeSwimTracker(BaseFreeSwimTracker):
         img_ske = skeletonize(fish_mask != 0)
         tail = self._find_path(img_ske, point)
 
-        return self._interpolate_tail(tail, self.params.n_points)
+        return zcv.interpolate_tail(tail, self.params.n_points)

@@ -22,14 +22,3 @@ class BackgroundSubtractionMixin:
         is_bg_bright = cv2.mean(bg)[0] > 127
 
         return is_bg_bright, bg
-
-    def set_video(self, video_path):
-        self._bg = None
-        self._video_path = video_path
-
-        if video_path is not None:
-            bg_path = Path(video_path).with_suffix(".png")
-
-            if bg_path.exists():
-                self._bg = cv2.imread(str(bg_path), 0)
-                self._is_bg_bright = cv2.mean(self._bg)[0] > 127

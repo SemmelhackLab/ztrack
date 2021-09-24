@@ -4,7 +4,6 @@ from typing import Union
 import numpy as np
 import pandas as pd
 from matplotlib import cm, colors
-from scipy.interpolate import splev, splprep
 
 from ztrack.tracking.params import Params
 from ztrack.tracking.tracker import Tracker
@@ -43,14 +42,9 @@ class TailTracker(Tracker, ABC):
     def _track_tail(self, img: np.ndarray):
         pass
 
-    @staticmethod
-    def _interpolate_tail(tail: np.ndarray, n_points: int) -> np.ndarray:
-        tck = splprep(tail.T)[0]
-        return np.column_stack(splev(np.linspace(0, 1, n_points), tck))
-
     def _track_img(self, img: np.ndarray):
         tail = self._track_tail(img)
-        return self._interpolate_tail(tail, self.params.n_points)
+        return tail
 
     @property
     def shapes(self):

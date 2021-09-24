@@ -6,7 +6,7 @@ from .paramecia import trackers as paramecia_trackers
 from .tail import trackers as tail_trackers
 from .tracker import NoneTracker, Tracker
 
-_trackers: Dict[str, Iterable[Optional[Type[Tracker]]]] = {
+_trackers: Dict[str, Iterable[Type[Tracker]]] = {
     "eye": eye_trackers,
     "tail": tail_trackers,
     "free": free_trackers,

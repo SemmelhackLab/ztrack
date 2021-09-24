@@ -4,15 +4,16 @@ from pathlib import Path
 import cv2
 import numpy as np
 import pandas as pd
-from scipy.interpolate import splev, splprep
 
-import ztrack.utils.cv as zcv
 from ztrack.tracking.eye.multi_threshold import MultiThresholdEyeTracker
+from ztrack.tracking.mixins.background import BackgroundSubtractionMixin
 from ztrack.utils.exception import TrackingError
 from ztrack.utils.shape import Points
 
 
-class BaseFreeSwimTracker(MultiThresholdEyeTracker, ABC):
+class BaseFreeSwimTracker(
+    MultiThresholdEyeTracker, BackgroundSubtractionMixin, ABC
+):
     @property
     def shapes(self):
         return [
@@ -23,21 +24,11 @@ class BaseFreeSwimTracker(MultiThresholdEyeTracker, ABC):
         ]
 
     def __init__(self, roi=None, params: dict = None, *, verbose=0):
-        super().__init__(roi, params, verbose=verbose)
+        MultiThresholdEyeTracker.__init__(self, roi, params, verbose=verbose)
         self._bg = None
-        self._is_bg_bright = None
+        self._is_bg_bright = False
         self._video_path = None
         self._points = Points(np.array([[0, 0]]), 1, "m", symbol="+")
-
-    def calculate_background(self, video_path):
-        if self._verbose:
-            print("Calculating background...")
-
-        bg = zcv.video_median(video_path, verbose=self._verbose)
-        cv2.imwrite(str(Path(video_path).with_suffix(".png")), bg)
-        is_bg_bright = cv2.mean(bg)[0] > 127
-
-        return is_bg_bright, bg
 
     def set_video(self, video_path):
         self._bg = None
@@ -49,11 +40,6 @@ class BaseFreeSwimTracker(MultiThresholdEyeTracker, ABC):
             if bg_path.exists():
                 self._bg = cv2.imread(str(bg_path), 0)
                 self._is_bg_bright = cv2.mean(self._bg)[0] > 127
-
-    @staticmethod
-    def _interpolate_tail(tail: np.ndarray, n_points: int) -> np.ndarray:
-        tck = splprep(tail.T)[0]
-        return np.column_stack(splev(np.linspace(0, 1, n_points), tck))
 
     @classmethod
     def _results_to_series(cls, results):

@@ -47,7 +47,7 @@ class Tracker(ABC):
             img = self._get_bbox_img(frame)
             results = self._results_to_series(self._track_img(img))
             self.annotate_from_series(results)
-        except:
+        except Exception:
             print(traceback.format_exc())
             for shape in self.shapes:
                 shape.visible = False
