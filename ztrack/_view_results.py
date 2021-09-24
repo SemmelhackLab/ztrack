@@ -26,6 +26,7 @@ def view_results(
     width,
     front,
     behind,
+    label,
     verbose,
 ):
     video_paths = [
@@ -53,6 +54,7 @@ def view_results(
                 width=width,
                 front=front,
                 behind=behind,
+                label=label,
             )
 
 
@@ -71,6 +73,7 @@ def generate_tracking_video(
     width,
     front,
     behind,
+    label,
     verbose=0,
 ):
     colors = dict(
@@ -153,32 +156,26 @@ def generate_tracking_video(
     for i in frame_range:
         img = vr[i].asnumpy()
 
-        if df_eye is not None:
+        if label and df_eye is not None:
             row_eye = df_eye.iloc[i]
 
-            if egocentric:
-                heading = row_eye["heading"].item()
-                img = zcv.warp_img(
-                    img, midpoints[i], heading, width, front, behind
+            for blob in ("left_eye", "right_eye", "swim_bladder"):
+                cx, cy, a, b, angle, *_ = row_eye[blob]
+                center = (round(cx), round(cy))
+                axes = (round(a), round(b))
+                cv2.ellipse(
+                    img,
+                    center,
+                    axes,
+                    angle,
+                    0,
+                    360,
+                    colors[blob],
+                    line_width,
+                    line_type,
                 )
-            else:
-                for blob in ("left_eye", "right_eye", "swim_bladder"):
-                    cx, cy, a, b, angle, *_ = row_eye[blob]
-                    center = (round(cx), round(cy))
-                    axes = (round(a), round(b))
-                    cv2.ellipse(
-                        img,
-                        center,
-                        axes,
-                        angle,
-                        0,
-                        360,
-                        colors[blob],
-                        line_width,
-                        line_type,
-                    )
 
-        if df_tail is not None and not egocentric:
+        if label and df_tail is not None:
             row_tail = df_tail.iloc[i]
 
             pts = np.round(row_tail.values.reshape(-1, 2)[:, None, :]).astype(
@@ -186,6 +183,13 @@ def generate_tracking_video(
             )
             cv2.polylines(
                 img, [pts], False, colors["tail"], line_width, line_type
+            )
+
+        if egocentric:
+            row_eye = df_eye.iloc[i]
+            heading = row_eye["heading"].item()
+            img = zcv.warp_img(
+                img, midpoints[i], heading, width, front, behind
             )
 
         if timer:

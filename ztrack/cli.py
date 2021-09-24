@@ -115,10 +115,15 @@ def run(**kwargs):
     help="Number of pixels behind midpoint of eyes (for egocentric view)",
 )
 @click.option(
-    "--timer/--no-timer",
-    default=False,
+    "--label/--no-label",
+    default=True,
     show_default=True,
-    help="Whether to show timer in the tracking video.",
+    help="Whether to label body parts.",
+)
+@click.option(
+    "--timer",
+    is_flag=True,
+    help="Show timer in the tracking video.",
 )
 def view(**kwargs):
     from ztrack._view_results import view_results
