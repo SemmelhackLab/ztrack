@@ -7,7 +7,7 @@ from scipy.interpolate import splev, splprep
 from skimage.draw import circle_perimeter
 
 import ztrack.utils.cv as zcv
-from ztrack.tracking.eye.eye_tracker import EyeTracker
+from ztrack.tracking.eye.multi_threshold import MultiThresholdEyeTracker
 from ztrack.tracking.params import Params
 from ztrack.utils.exception import TrackingError
 from ztrack.utils.geometry import angle_diff, wrap_degrees
@@ -16,7 +16,7 @@ from ztrack.utils.shape import Points
 from ztrack.utils.variable import Angle, Float, Int, UInt8
 
 
-class SequentialTracker(EyeTracker):
+class SequentialTracker(MultiThresholdEyeTracker):
     class __Params(Params):
         def __init__(self, params: dict = None):
             super().__init__(params)
@@ -191,48 +191,3 @@ class SequentialTracker(EyeTracker):
     def _interpolate_tail(tail: np.ndarray, n_points: int) -> np.ndarray:
         tck = splprep(tail.T)[0]
         return np.column_stack(splev(np.linspace(0, 1, n_points), tck))
-
-    def _track_ellipses(self, src: np.ndarray):
-        p = self.params
-
-        # preprocess
-        img = zcv.gaussian_blur(src, p.sigma_eye)
-
-        # segment the image with binary threshold
-        contours = self._binary_segmentation(img, p.threshold_segmentation)
-
-        # get the 3 largest contours
-        if len(contours) < 3:
-            raise TrackingError("Less than 3 contours detected")
-
-        largest3 = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
-
-        # calculate the contour centers
-        centers = np.array([zcv.contour_center(c) for c in largest3])
-
-        # sort contours (0: left eye, 1: right eye, 2: swim bladder)
-        centers = centers[list(self._sort_centers(centers))]
-
-        # apply binary threshold for each body part and get the contour closest to its center
-        thresholds = [
-            p.threshold_left_eye,
-            p.threshold_right_eye,
-            p.threshold_swim_bladder,
-        ]
-
-        ellipses = np.zeros((3, 5))
-
-        for i, (threshold, center) in enumerate(zip(thresholds, centers)):
-            # segment the image with binary threshold of the body part
-            contours = self._binary_segmentation(img, threshold)
-
-            # get the contour closest to the body part's center
-            contour = zcv.nearest_contour(contours, tuple(center))
-
-            # fit ellipse
-            ellipses[i] = zcv.fit_ellipse(contour)
-
-        # fix orientation
-        ellipses = self._correct_orientation(ellipses)
-
-        return ellipses

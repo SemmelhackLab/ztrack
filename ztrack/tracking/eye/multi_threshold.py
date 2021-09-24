@@ -1,8 +1,8 @@
 import cv2
 import numpy as np
 
+import ztrack.utils.cv as zcv
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
-from ztrack.utils.cv import contour_distance
 from ztrack.utils.exception import TrackingError
 from ztrack.utils.variable import Float, UInt8
 
@@ -36,53 +36,47 @@ class MultiThresholdEyeTracker(EyeTracker):
         img = self._preprocess(img, self.params.sigma)
         return self._track_ellipses(img)
 
-    def _track_ellipses(self, img: np.ndarray):
-        try:
-            contours_left_eye = self._binary_segmentation(
-                img, self.params.threshold_left_eye
-            )
-            contours_right_eye = self._binary_segmentation(
-                img, self.params.threshold_right_eye
-            )
-            contours_swim_bladder = self._binary_segmentation(
-                img, self.params.threshold_swim_bladder
-            )
-            contours = self._binary_segmentation(
-                img, self.params.threshold_segmentation
-            )
+    def _track_ellipses(self, src: np.ndarray):
+        p = self.params
 
-            # get the 3 largest contours
-            largest3 = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
-            assert len(largest3) == 3
+        # preprocess
+        img = zcv.gaussian_blur(src, p.sigma_eye)
 
-            ellipses = self._fit_ellipses(largest3)
+        # segment the image with binary threshold
+        contours = self._binary_segmentation(img, p.threshold_segmentation)
 
-            # identify contours
-            centers = ellipses[:, :2]
-            left_eye, right_eye, swim_bladder = self._sort_centers(centers)
+        # get the 3 largest contours
+        if len(contours) < 3:
+            raise TrackingError("Less than 3 contours detected")
 
-            largest3[swim_bladder] = max(
-                contours_swim_bladder,
-                key=lambda cnt: contour_distance(
-                    cnt, tuple(centers[swim_bladder])
-                ),
-            )
-            largest3[left_eye] = max(
-                contours_left_eye,
-                key=lambda cnt: contour_distance(
-                    cnt, tuple(centers[left_eye])
-                ),
-            )
-            largest3[right_eye] = max(
-                contours_right_eye,
-                key=lambda cnt: contour_distance(
-                    cnt, tuple(centers[right_eye])
-                ),
-            )
+        largest3 = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
 
-            ellipses = self._fit_ellipses(largest3)
-            ellipses = ellipses[[left_eye, right_eye, swim_bladder]]
+        # calculate the contour centers
+        centers = np.array([zcv.contour_center(c) for c in largest3])
 
-            return self._correct_orientation(ellipses)
-        except (cv2.error, AssertionError):
-            raise TrackingError
+        # sort contours (0: left eye, 1: right eye, 2: swim bladder)
+        centers = centers[list(self._sort_centers(centers))]
+
+        # apply binary threshold for each body part and get the contour closest to its center
+        thresholds = [
+            p.threshold_left_eye,
+            p.threshold_right_eye,
+            p.threshold_swim_bladder,
+        ]
+
+        ellipses = np.zeros((3, 5))
+
+        for i, (threshold, center) in enumerate(zip(thresholds, centers)):
+            # segment the image with binary threshold of the body part
+            contours = self._binary_segmentation(img, threshold)
+
+            # get the contour closest to the body part's center
+            contour = zcv.nearest_contour(contours, tuple(center))
+
+            # fit ellipse
+            ellipses[i] = zcv.fit_ellipse(contour)
+
+        # fix orientation
+        ellipses = self._correct_orientation(ellipses)
+
+        return ellipses
