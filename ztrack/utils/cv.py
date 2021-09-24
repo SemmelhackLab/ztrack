@@ -127,3 +127,8 @@ def warp_img(
     T = cv2.getPerspectiveTransform(src_pts, dst_pts)
 
     return cv2.warpPerspective(img, T, (int(w), int(h)))
+
+
+def orientation(src):
+    moments = cv2.moments(src)
+    return np.rad2deg(np.arctan2(2 * moments["mu11"], (moments["mu20"] - moments["mu02"])) / 2)

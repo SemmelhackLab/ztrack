@@ -95,7 +95,7 @@ class BaseFreeSwimTracker(
             img = cv2.subtract(img, bg)
 
         contours = self._track_contours(img)
-        ellipses = self._fit_ellipses(contours)
+        ellipses = self._fit_ellipses(img, contours)
 
         centers = ellipses[:, :2]
         sb_center = centers[2]
