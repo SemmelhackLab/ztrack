@@ -11,7 +11,7 @@ from ztrack.utils.variable import Angle, Float, Int, UInt8
 from .base import BaseFreeSwimTracker
 
 
-class SequentialTracker(BaseFreeSwimTracker):
+class SequentialFreeSwimTracker(BaseFreeSwimTracker):
     class __Params(Params):
         def __init__(self, params: dict = None):
             super().__init__(params)
