@@ -2,8 +2,8 @@ from typing import Dict, Iterable, List, Optional, Type
 
 from .eye import trackers as eye_trackers
 from .free import trackers as free_trackers
-from .tail import trackers as tail_trackers
 from .paramecia import trackers as paramecia_trackers
+from .tail import trackers as tail_trackers
 from .tracker import NoneTracker, Tracker
 
 _trackers: Dict[str, Iterable[Optional[Type[Tracker]]]] = {
