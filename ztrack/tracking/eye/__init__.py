@@ -1,5 +1,5 @@
+from ..tracker import NoneTracker
 from .binary import BinaryEyeTracker
-from .free_swim import FreeSwimTracker
 from .multi_threshold import MultiThresholdEyeTracker
 
-trackers = [FreeSwimTracker, BinaryEyeTracker, MultiThresholdEyeTracker]
+trackers = [NoneTracker, BinaryEyeTracker, MultiThresholdEyeTracker]

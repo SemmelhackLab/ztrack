@@ -16,7 +16,7 @@ from ztrack.utils.shape import Points
 from ztrack.utils.variable import Angle, Float, Int, UInt8
 
 
-class FreeSwimTracker(EyeTracker):
+class SequentialTracker(EyeTracker):
     class __Params(Params):
         def __init__(self, params: dict = None):
             super().__init__(params)
@@ -53,11 +53,11 @@ class FreeSwimTracker(EyeTracker):
 
     @staticmethod
     def name():
-        return "freeswim"
+        return "sequential"
 
     @staticmethod
     def display_name():
-        return "Free swim"
+        return "Sequential"
 
     def calculate_background(self, video_path):
         if self._verbose:
