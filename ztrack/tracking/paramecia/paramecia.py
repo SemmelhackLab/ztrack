@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from ztrack.tracking.mixins.background import BackgroundSubtractionMixin
-from ztrack.utils.variable import UInt8
+from ztrack.utils.variable import Float, Int, UInt8
 
 from ..params import Params
 from ..tracker import Tracker
@@ -14,7 +14,11 @@ class ParameciaTracker(Tracker, BackgroundSubtractionMixin):
     class __Params(Params):
         def __init__(self, params: dict = None):
             super().__init__(params=params)
-            self.threshold = UInt8("Threshold", 127)
+            self.sigma = Float("Sigma (px)", 0, 0, 100, 0.1)
+            self.block_size = Int("Block size", 99, 3, 200)
+            self.c = Int("C", -5, -100, 100)
+            self.min_area = Int("Min area", 0, 0, 100)
+            self.max_area = Int("Max area", 0, 20, 100)
 
     def __init__(self, roi=None, params: dict = None, *, verbose=0):
         super().__init__(roi=roi, params=params, verbose=verbose)

@@ -145,3 +145,19 @@ def fit_ellipse_moments(contour):
     theta = np.rad2deg(np.arctan2(2 * m["mu11"], (m["mu20"] - m["mu02"])) / 2)
 
     return cx, cy, a / 2, b / 2, theta
+
+
+def adaptive_threshold(src: np.ndarray, block_size: int, c: int):
+    if block_size % 2 == 0:
+        block_size += 1
+
+    img = cv2.adaptiveThreshold(
+        src,
+        255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY,
+        block_size,
+        c,
+    )
+
+    return img

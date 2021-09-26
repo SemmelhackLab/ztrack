@@ -51,25 +51,9 @@ class ContourFreeSwimTracker(BaseFreeSwimTracker):
         return np.array(path)[:, ::-1]
 
     def _track_tail(self, src, point, angle):
-        if self.params.sigma_eye > 0:
-            img = cv2.GaussianBlur(src, (0, 0), self.params.sigma_eye)
-        else:
-            img = src
-
-        block_size = self.params.block_size
-
-        if block_size % 2 == 0:
-            block_size += 1
-
-        img_thresh = cv2.adaptiveThreshold(
-            img,
-            255,
-            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-            cv2.THRESH_BINARY,
-            block_size,
-            self.params.c,
-        )
-
+        p = self.params
+        img = zcv.gaussian_blur(src, p.sigma_tail)
+        img_thresh = zcv.adaptive_threshold(img, p.block_size, p.c)
         contours = zcv.find_contours(img_thresh)
         fish_contour = max(contours, key=cv2.contourArea)
         fish_mask = np.zeros_like(src)
