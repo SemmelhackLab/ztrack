@@ -58,11 +58,9 @@ class MultiThresholdEyeTracker(EyeTracker):
         ]
 
         results = []
-
         for i, (threshold, center) in enumerate(zip(thresholds, centers)):
             # segment the image with binary threshold of the body part
             contours = self._binary_segmentation(img, threshold)
-
             # get the contour closest to the body part's center
             results.append(zcv.nearest_contour(contours, tuple(center)))
 

@@ -127,3 +127,21 @@ def warp_img(
     T = cv2.getPerspectiveTransform(src_pts, dst_pts)
 
     return cv2.warpPerspective(img, T, (int(w), int(h)))
+
+
+def orientation(src):
+    moments = cv2.moments(src)
+    return np.rad2deg(
+        np.arctan2(2 * moments["mu11"], (moments["mu20"] - moments["mu02"]))
+        / 2
+    )
+
+
+def fit_ellipse_moments(contour):
+    m = cv2.moments(contour)
+    cx = m["m10"] / m["m00"]
+    cy = m["m01"] / m["m00"]
+    b, a = cv2.fitEllipse(contour)[1]
+    theta = np.rad2deg(np.arctan2(2 * m["mu11"], (m["mu20"] - m["mu02"])) / 2)
+
+    return cx, cy, a / 2, b / 2, theta

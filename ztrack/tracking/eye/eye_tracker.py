@@ -42,14 +42,17 @@ class EyeTracker(Tracker, ABC):
         midpoint = centers[:2].mean(0)
         midline = midpoint - centers[2]
         heading = np.rad2deg(np.arctan2(*midline[::-1]))
-        is_opposite = abs(wrap_degrees(heading - ellipses[:, -1])) > 90
-        ellipses[is_opposite, -1] = wrap_degrees(
-            ellipses[is_opposite, -1] - 180
-        )
+        for i in range(4, ellipses.shape[1]):
+            is_opposite = abs(wrap_degrees(heading - ellipses[:, i])) > 90
+            ellipses[is_opposite, i] = wrap_degrees(
+                ellipses[is_opposite, i] - 180
+            )
         return ellipses
 
     def _fit_ellipses(self, contours):
-        ellipses = np.array([zcv.fit_ellipse(contour) for contour in contours])
+        ellipses = np.array(
+            [zcv.fit_ellipse_moments(contour) for contour in contours]
+        )
         return self._correct_orientation(ellipses)
 
     @staticmethod

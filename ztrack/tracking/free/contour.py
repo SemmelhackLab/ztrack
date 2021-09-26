@@ -64,7 +64,7 @@ class ContourFreeSwimTracker(BaseFreeSwimTracker):
         img_thresh = cv2.adaptiveThreshold(
             img,
             255,
-            cv2.ADAPTIVE_THRESH_MEAN_C,
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
             cv2.THRESH_BINARY,
             block_size,
             self.params.c,

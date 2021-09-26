@@ -1,4 +1,4 @@
-from typing import Dict, Iterable, List, Optional, Type
+from typing import Dict, Iterable, List, Type
 
 from .eye import trackers as eye_trackers
 from .free import trackers as free_trackers
