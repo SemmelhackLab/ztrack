@@ -1,7 +1,9 @@
+import warnings
+
 import pandas as pd
 
 from ztrack.tracking import get_trackers_from_config
-from ztrack.utils.exception import TrackingError
+from ztrack.utils.exception import VideoTrackingError
 from ztrack.utils.file import (get_config_dict, get_results_path,
                                get_video_paths_from_inputs)
 
@@ -11,6 +13,7 @@ def run_tracking(
     recursive,
     overwrite,
     verbose,
+    ignore_errors,
 ):
     videos = get_video_paths_from_inputs(inputs, recursive, overwrite)
     for video in videos:
@@ -18,9 +21,15 @@ def run_tracking(
         trackers = get_trackers_from_config(config, verbose=verbose)
         s = pd.HDFStore(get_results_path(video))
         for key, tracker in trackers.items():
-            print(f"Tracking {video}")
+
+            if verbose:
+                print(f"Tracking {video}")
+
             try:
-                s[key] = tracker.track_video(video)
-            except TrackingError:
-                print(f"Tracking error for {video}")
+                s[key] = tracker.track_video(video, ignore_errors)
+            except VideoTrackingError as e:
+                warnings.warn(
+                    f"Tracker {key} failed for {video} at frame {e.frame}."
+                )
+
         s.close()

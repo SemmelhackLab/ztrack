@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 
-import cv2
 import numpy as np
 import pandas as pd
 
@@ -19,7 +18,7 @@ class EyeTracker(Tracker, ABC):
     _index = pd.MultiIndex.from_product(
         (
             ("left_eye", "right_eye", "swim_bladder"),
-            ("cx", "cy", "a", "b", "theta", "theta1", "theta2", "theta3"),
+            ("cx", "cy", "a", "b", "theta"),
         )
     )
 
@@ -50,13 +49,11 @@ class EyeTracker(Tracker, ABC):
             )
         return ellipses
 
-    def _fit_ellipses(self, img, contours):
-        ellipses = np.array([zcv.fit_ellipse(contour) for contour in contours])
-        o1 = [zcv.orientation(contour) for contour in contours]
-        img_cnts = [cv2.drawContours(np.zeros_like(img), contours, i, 255, -1) for i in range(3)]
-        o2 = [zcv.orientation(img_cnt) for img_cnt in img_cnts]
-        o3 = [zcv.orientation(img_cnt & img) for img_cnt in img_cnts]
-        return self._correct_orientation(np.column_stack([ellipses, o1, o2, o3]))
+    def _fit_ellipses(self, contours):
+        ellipses = np.array(
+            [zcv.fit_ellipse_moments(contour) for contour in contours]
+        )
+        return self._correct_orientation(ellipses)
 
     @staticmethod
     def _sort_centers(centers):
@@ -87,7 +84,7 @@ class EyeTracker(Tracker, ABC):
     def _track_img(self, img: np.ndarray) -> np.ndarray:
         img = zcv.rgb2gray_dark_bg_blur(img, self.params.sigma)
         contours = self._track_contours(img)
-        return self._fit_ellipses(img, contours)
+        return self._fit_ellipses(contours)
 
     def _transform_from_roi_to_frame(self, results: np.ndarray):
         if self.roi.value is not None:
