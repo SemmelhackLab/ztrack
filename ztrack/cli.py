@@ -45,6 +45,12 @@ def create_config(**kwargs):
 )
 @my_command
 @overwrite
+@click.option(
+    "-i",
+    "--ignore-errors",
+    is_flag=True,
+    help="Whether to view video in egocentric coordinates.",
+)
 def run(**kwargs):
     from ztrack._run_tracking import run_tracking
 
@@ -92,10 +98,38 @@ def run(**kwargs):
     help="Format to use for generating the tracking video.",
 )
 @click.option(
-    "--timer/--no-timer",
-    default=False,
+    "--egocentric",
+    is_flag=True,
+    help="Whether to view video in egocentric coordinates.",
+)
+@click.option(
+    "--width",
+    default=200,
     show_default=True,
-    help="Whether to show timer in the tracking video.",
+    help="Width of video (for egocentric view)",
+)
+@click.option(
+    "--front",
+    default=80,
+    show_default=True,
+    help="Number of pixels in front of midpoint of eyes (for egocentric view)",
+)
+@click.option(
+    "--behind",
+    default=120,
+    show_default=True,
+    help="Number of pixels behind midpoint of eyes (for egocentric view)",
+)
+@click.option(
+    "--label/--no-label",
+    default=True,
+    show_default=True,
+    help="Whether to label body parts.",
+)
+@click.option(
+    "--timer",
+    is_flag=True,
+    help="Show timer in the tracking video.",
 )
 def view(**kwargs):
     from ztrack._view_results import view_results
@@ -107,6 +141,6 @@ def view(**kwargs):
 @verbose
 @click.option("--style", default="dark", show_default=True)
 def gui(**kwargs):
-    from ztrack.gui.menu_widget import main as main_
+    from ztrack._run_gui import run_gui
 
-    main_(**kwargs)
+    run_gui(**kwargs)

@@ -57,13 +57,13 @@ class IntWidget(VariableWidget):
 
         self._slider = QtWidgets.QSlider(self)
         self._slider.setOrientation(QtCore.Qt.Horizontal)
-        self._slider.setValue(variable.value)
         self._slider.setMinimum(variable.minimum)
         self._slider.setMaximum(variable.maximum)
+        self._slider.setValue(variable.value)
         self._spinBox = QtWidgets.QSpinBox(self)
-        self._spinBox.setValue(variable.value)
         self._spinBox.setMinimum(variable.minimum)
         self._spinBox.setMaximum(variable.maximum)
+        self._spinBox.setValue(variable.value)
 
         layout = QtWidgets.QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -87,9 +87,9 @@ class FloatWidget(VariableWidget):
         super().__init__(parent, variable=variable)
 
         self._spinBox = QtWidgets.QDoubleSpinBox(self)
-        self._spinBox.setValue(variable.value)
         self._spinBox.setMinimum(variable.minimum)
         self._spinBox.setMaximum(variable.maximum)
+        self._spinBox.setValue(variable.value)
         self._spinBox.setSingleStep(variable.step)
 
         layout = QtWidgets.QHBoxLayout()

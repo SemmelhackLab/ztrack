@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
 
-import cv2
 import numpy as np
 import pandas as pd
 
+import ztrack.utils.cv as zcv
 from ztrack.tracking.params import Params
 from ztrack.tracking.tracker import Tracker
-from ztrack.utils.cv import binary_threshold, find_contours
 from ztrack.utils.geometry import wrap_degrees
 from ztrack.utils.shape import Ellipse
 
@@ -33,25 +32,9 @@ class EyeTracker(Tracker, ABC):
     def shapes(self):
         return [self._left_eye, self._right_eye, self._swim_bladder]
 
-    @abstractmethod
-    def _track_ellipses(self, src: np.ndarray) -> np.ndarray:
-        pass
-
-    @staticmethod
-    def _preprocess(img, sigma=0):
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-
-        if cv2.mean(img)[0] > 127:
-            img = cv2.bitwise_not(img)
-
-        if sigma > 0:
-            img = cv2.GaussianBlur(img, (0, 0), sigma)
-
-        return img
-
     @staticmethod
     def _binary_segmentation(img, threshold):
-        return find_contours(binary_threshold(img, threshold))
+        return zcv.find_contours(zcv.binary_threshold(img, threshold))
 
     @staticmethod
     def _correct_orientation(ellipses):
@@ -59,24 +42,18 @@ class EyeTracker(Tracker, ABC):
         midpoint = centers[:2].mean(0)
         midline = midpoint - centers[2]
         heading = np.rad2deg(np.arctan2(*midline[::-1]))
-        is_opposite = abs(wrap_degrees(heading - ellipses[:, -1])) > 90
-        ellipses[is_opposite, -1] = wrap_degrees(
-            ellipses[is_opposite, -1] - 180
-        )
+        for i in range(4, ellipses.shape[1]):
+            is_opposite = abs(wrap_degrees(heading - ellipses[:, i])) > 90
+            ellipses[is_opposite, i] = wrap_degrees(
+                ellipses[is_opposite, i] - 180
+            )
         return ellipses
 
-    @staticmethod
-    def _fit_ellipses(contours):
+    def _fit_ellipses(self, contours):
         ellipses = np.array(
-            [
-                (x, y, b / 2, a / 2, theta - 90)
-                for (x, y), (a, b), theta in map(
-                    cv2.fitEllipse, map(cv2.convexHull, contours)
-                )
-            ]
+            [zcv.fit_ellipse_moments(contour) for contour in contours]
         )
-
-        return ellipses
+        return self._correct_orientation(ellipses)
 
     @staticmethod
     def _sort_centers(centers):
@@ -100,8 +77,14 @@ class EyeTracker(Tracker, ABC):
             s = series[j]
             i.cx, i.cy, i.a, i.b, i.theta = s.cx, s.cy, s.a, s.b, s.theta
 
+    @abstractmethod
+    def _track_contours(self, img: np.ndarray):
+        pass
+
     def _track_img(self, img: np.ndarray) -> np.ndarray:
-        return self._track_ellipses(img)
+        img = zcv.rgb2gray_dark_bg_blur(img, self.params.sigma)
+        contours = self._track_contours(img)
+        return self._fit_ellipses(contours)
 
     def _transform_from_roi_to_frame(self, results: np.ndarray):
         if self.roi.value is not None:
@@ -109,7 +92,7 @@ class EyeTracker(Tracker, ABC):
         return results
 
     @classmethod
-    def _results_to_series(cls, results: np.ndarray):
+    def _results_to_series(cls, results):
         eyes_midpoint = results[:2, :2].mean(0)
         swim_bladder_center = results[-1, :2]
         midline = eyes_midpoint - swim_bladder_center

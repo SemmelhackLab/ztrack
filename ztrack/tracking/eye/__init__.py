@@ -1,4 +1,5 @@
+from ..tracker import NoneTracker
 from .binary import BinaryEyeTracker
 from .multi_threshold import MultiThresholdEyeTracker
 
-trackers = [BinaryEyeTracker, MultiThresholdEyeTracker]
+trackers = [NoneTracker, MultiThresholdEyeTracker, BinaryEyeTracker]

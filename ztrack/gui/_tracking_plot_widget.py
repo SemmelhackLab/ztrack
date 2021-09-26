@@ -16,7 +16,6 @@ if TYPE_CHECKING:
     from ztrack.utils.shape import Shape
     from ztrack.utils.typing import config_dict
 
-
 pg.setConfigOptions(imageAxisOrder="row-major")
 
 

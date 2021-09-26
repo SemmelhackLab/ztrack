@@ -115,7 +115,7 @@ class MenuWidget(QtWidgets.QWidget):
             self.setEnabled(False)
 
     def _onCreateConfigPushButtonClicked(self):
-        self.currentWindow = CreateConfigWindow()
+        self.currentWindow = CreateConfigWindow(verbose=self._verbose)
         self.currentWindow.closedSignal.connect(self._onWindowClosed)
         self.currentWindow.showMaximized()
 

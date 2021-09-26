@@ -1,12 +1,16 @@
 from typing import Dict, Iterable, List, Type
 
 from .eye import trackers as eye_trackers
+from .free import trackers as free_trackers
+from .paramecia import trackers as paramecia_trackers
 from .tail import trackers as tail_trackers
-from .tracker import Tracker
+from .tracker import NoneTracker, Tracker
 
 _trackers: Dict[str, Iterable[Type[Tracker]]] = {
     "eye": eye_trackers,
     "tail": tail_trackers,
+    "free": free_trackers,
+    "paramecia": paramecia_trackers,
 }
 
 _trackers_dict: Dict[str, Dict[str, Type[Tracker]]] = {
@@ -15,8 +19,11 @@ _trackers_dict: Dict[str, Dict[str, Type[Tracker]]] = {
 }
 
 
-def get_trackers() -> Dict[str, List[Tracker]]:
-    return {key: [i() for i in value] for key, value in _trackers.items()}
+def get_trackers(verbose) -> Dict[str, List[Tracker]]:
+    return {
+        key: [i(verbose=verbose) for i in value]
+        for key, value in _trackers.items()
+    }
 
 
 def get_trackers_from_config(config_dict, **kwargs) -> Dict[str, Tracker]:

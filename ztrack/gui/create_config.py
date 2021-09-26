@@ -8,6 +8,7 @@ from PyQt5 import QtWidgets
 from ztrack._settings import config_extension
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.tracking import get_trackers
+from ztrack.tracking.tracker import NoneTracker
 from ztrack.utils.file import get_config_dict, get_paths_for_config_creation
 
 from ._control_widget import ControlWidget
@@ -36,7 +37,7 @@ class CreateConfigWindow(MainWindow):
 
         self._savePaths: List[List[str]] = savePaths
 
-        self._trackerGroups = get_trackers()
+        self._trackerGroups = get_trackers(verbose=verbose)
         self._controlWidget = ControlWidget(self)
 
         self._buttonBox = QtWidgets.QDialogButtonBox(self)
@@ -87,11 +88,12 @@ class CreateConfigWindow(MainWindow):
             tracker = trackers[
                 self._controlWidget.getCurrentTrackerIndex(group_name)
             ]
-            trackingConfig[group_name] = dict(
-                method=tracker.name(),
-                roi=tracker.roi.value,
-                params=tracker.params.to_dict(),
-            )
+            if not isinstance(tracker, NoneTracker):
+                trackingConfig[group_name] = dict(
+                    method=tracker.name(),
+                    roi=tracker.roi.value,
+                    params=tracker.params.to_dict(),
+                )
 
         for savePath in self._currentSavePaths:
             with open(savePath + config_extension, "w") as fp:
@@ -166,6 +168,10 @@ class CreateConfigWindow(MainWindow):
 
             if trackingConfig is not None:
                 self._setStateFromTrackingConfig(trackingConfig)
+
+        for tracker_group in self._trackerGroups.values():
+            for tracker in tracker_group:
+                tracker.set_video(self._currentVideoPath)
 
         super().updateVideo()
 
