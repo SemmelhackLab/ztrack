@@ -121,7 +121,7 @@ def generate_tracking_video(
 
     midpoints = None
 
-    if egocentric:
+    if egocentric and df_eye is not None:
         w = width
         h = front + behind
 
@@ -185,7 +185,7 @@ def generate_tracking_video(
                 img, [pts], False, colors["tail"], line_width, line_type
             )
 
-        if egocentric:
+        if egocentric and df_eye is not None and midpoints is not None:
             row_eye = df_eye.iloc[i]
             heading = row_eye["heading"].item()
             img = zcv.warp_img(

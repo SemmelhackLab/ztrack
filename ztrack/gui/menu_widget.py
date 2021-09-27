@@ -123,15 +123,18 @@ class MenuWidget(QtWidgets.QWidget):
         self.currentWindow = None
 
     def _onRunTrackingPushButtonClicked(self):
-        inputs, (recursive, overwrite) = selectVideoDirectories(
+        inputs, (recursive, overwrite, ignore_errors) = selectVideoDirectories(
             (
                 (
                     ("Include subdirectories", True),
                     ("Overwrite tracking results", True),
+                    ("Ignore errors", True),
                 )
             )
         )
-        run_tracking(inputs, recursive, overwrite, self._verbose)
+        run_tracking(
+            inputs, recursive, overwrite, self._verbose, ignore_errors
+        )
 
     def _onViewResultsPushButtonClicked(self):
         self.currentWindow = TrackingViewer()

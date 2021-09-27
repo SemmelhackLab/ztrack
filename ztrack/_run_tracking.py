@@ -19,17 +19,25 @@ def run_tracking(
     for video in videos:
         config = get_config_dict(video)
         trackers = get_trackers_from_config(config, verbose=verbose)
-        s = pd.HDFStore(get_results_path(video))
+
+        dfs = {}
+
         for key, tracker in trackers.items():
 
             if verbose:
                 print(f"Tracking {video}")
 
             try:
-                s[key] = tracker.track_video(video, ignore_errors)
+                dfs[key] = tracker.track_video(video, ignore_errors)
             except VideoTrackingError as e:
                 warnings.warn(
                     f"Tracker {key} failed for {video} at frame {e.frame}."
                 )
 
-        s.close()
+        if dfs:
+            s = pd.HDFStore(get_results_path(video))
+
+            for key, df in dfs.items():
+                s[key] = df
+
+            s.close()
