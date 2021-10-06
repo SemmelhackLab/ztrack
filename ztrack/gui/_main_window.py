@@ -88,7 +88,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle("ztrack")
         self.setAcceptDrops(True)
         self._setEnabled(False)
-        self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
     @property
     def _currentFrame(self):
