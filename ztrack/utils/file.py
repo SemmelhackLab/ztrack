@@ -77,7 +77,7 @@ def get_paths_for_config_creation(
                 videos = [
                     video
                     for video in videos
-                    if not video.with_suffix(results_extension).exists()
+                    if not Path(str(video) + config_extension).exists()
                 ]
 
             if len(videos) > 0:
@@ -93,7 +93,7 @@ def get_paths_for_config_creation(
         files = [
             file
             for file in files
-            if not file.with_suffix(results_extension).exists()
+            if not Path(str(file) + config_extension).exists()
         ]
 
     for file in files:
