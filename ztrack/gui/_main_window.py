@@ -181,6 +181,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def updateVideo(self):
         if self._currentVideoPath is not None:
+            self.setWindowTitle("ztrack - " + self._currentVideoPath)
             self._videoReader = VideoReader(self._currentVideoPath)
             self._frameBar.setMaximum(len(self._videoReader) - 1)
 
@@ -194,6 +195,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self._trackingPlotWidget.setRoiMaxBounds(rect)
             self._setEnabled(True)
         else:
+            self.setWindowTitle("ztrack")
             self._setEnabled(False)
 
     def closeEvent(self, a0: QtGui.QCloseEvent):
