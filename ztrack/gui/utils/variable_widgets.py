@@ -40,6 +40,7 @@ class VariableWidget(QtWidgets.QWidget, ABC, metaclass=AbstractWidgetMeta):
 
     def _setValue(self, value):
         self._variable.value = value
+        self._setGuiValue(self._variable.value)
         self.valueChanged.emit()
 
     @abstractmethod

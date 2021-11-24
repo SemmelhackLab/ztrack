@@ -16,6 +16,17 @@ def binary_threshold(img: np.ndarray, threshold: int) -> np.ndarray:
     return cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY)[1]
 
 
+def adaptive_threshold(img: np.ndarray, block_size: int, c: int) -> np.ndarray:
+    return cv2.adaptiveThreshold(
+        img,
+        255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY,
+        block_size,
+        c,
+    )
+
+
 def find_contours(img: np.ndarray) -> list:
     return cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
 
