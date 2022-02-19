@@ -17,7 +17,8 @@ from .params import Params
 class Tracker(ABC):
     _index: pd.Index
 
-    def __init__(self, roi=None, params: dict = None, *, verbose=0):
+    def __init__(self, roi=None, params: dict = None, *, verbose=0, debug=False):
+        self._debug = debug
         self._roi = Rect("", roi)
         self._params = self._Params(params)
         self._verbose = verbose

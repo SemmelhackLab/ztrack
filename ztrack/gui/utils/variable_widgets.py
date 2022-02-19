@@ -5,11 +5,11 @@ from typing import TYPE_CHECKING
 
 from PyQt5 import QtCore, QtWidgets
 
-from ztrack.utils.variable import Angle, Float, Int, Point
+from ztrack.utils.variable import Angle, Float, Int, Point, Rect
 
 if TYPE_CHECKING:
     from ztrack.gui._tracking_plot_widget import TrackingPlotWidget
-    from ztrack.utils.typing import point2d
+    from ztrack.utils.typing import point2d, rect
     from ztrack.utils.variable import Variable
 
 
@@ -36,6 +36,8 @@ class VariableWidget(QtWidgets.QWidget, ABC, metaclass=AbstractWidgetMeta):
             return IntWidget(parent, variable=variable)
         if isinstance(variable, Point):
             return PointWidget(parent, variable=variable)
+        if isinstance(variable, Rect):
+            return RectWidget(parent, variable=variable)
         raise NotImplementedError
 
     def _setValue(self, value):
@@ -165,12 +167,13 @@ class AngleWidget(VariableWidget):
 
 
 class PointWidget(VariableWidget):
-    _pointSelectionModeChanged = QtCore.pyqtSignal(bool)
+    _selectionModeChanged = QtCore.pyqtSignal(bool)
+    _trackingPlotWidget: TrackingPlotWidget
 
     def __init__(self, parent: QtWidgets.QWidget = None, *, variable: Point):
         super().__init__(parent, variable=variable)
 
-        self._pointSelectionMode = False
+        self._selectionMode = False
 
         self._pushButton = QtWidgets.QPushButton(self)
         self._pushButton.setText(self._get_display_str(variable.value))
@@ -181,7 +184,7 @@ class PointWidget(VariableWidget):
         self.setLayout(layout)
 
         self._pushButton.clicked.connect(
-            lambda: self._setPointSelectionMode(not self._pointSelectionMode)
+            lambda: self._setSelectionMode(not self._selectionMode)
         )
 
     def _setGuiValue(self, value: point2d):
@@ -192,24 +195,112 @@ class PointWidget(VariableWidget):
         x, y = value
         return f"({x}, {y})"
 
-    def _setPoint(self, x: int, y: int):
-        self._setValue((x, y))
-        self._setPointSelectionMode(False)
+    def _setValue(self, value):
+        print(value)
+        super()._setValue(value)
+        self._setSelectionMode(False)
 
-    def _setPointSelectionMode(self, b: bool):
-        self._pointSelectionMode = b
+    def _setSelectionMode(self, b: bool):
+        self._selectionMode = b
 
-        if self._pointSelectionMode:
+        if self._selectionMode:
+            print("link")
+            self.link()
             self._pushButton.setText("Cancel")
         else:
+            print("unlink")
+            self.unlink()
             self._pushButton.setText(
                 self._get_display_str(self._variable.value)
             )
 
-        self._pointSelectionModeChanged.emit(self._pointSelectionMode)
+        self._selectionModeChanged.emit(self._selectionMode)
 
-    def link(self, trackingPlotWidget: TrackingPlotWidget):
-        self._pointSelectionModeChanged.connect(
-            trackingPlotWidget.setPointSelectionModeEnabled
+    def link(self):
+        self._trackingPlotWidget.pointSelected.connect(lambda x, y: self._setValue((x, y)))
+
+    def unlink(self):
+        try:
+            self._trackingPlotWidget.pointSelected.disconnect()
+        except TypeError:
+            pass
+
+    def setTrackingPlotWidget(self, trackingPlotWidget: TrackingPlotWidget):
+        self._trackingPlotWidget = trackingPlotWidget
+        self._selectionModeChanged.connect(
+            self._trackingPlotWidget.setPointSelectionModeEnabled
         )
-        trackingPlotWidget.pointSelected.connect(self._setPoint)
+
+
+class RectWidget(VariableWidget):
+    _selectionModeChanged = QtCore.pyqtSignal(bool)
+    _trackingPlotWidget: TrackingPlotWidget
+
+    def __init__(self, parent: QtWidgets.QWidget = None, *, variable: Rect):
+        super().__init__(parent, variable=variable)
+
+        self._selectedPoints = -1
+
+        self._pushButton = QtWidgets.QPushButton(self)
+        self._pushButton.setText(self._get_display_str(variable.value))
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._pushButton)
+        self.setLayout(layout)
+
+        self._pushButton.clicked.connect(
+            lambda: self._setSelectionState(-1 if self._selectedPoints >= 0 else 0)
+        )
+
+    def _setGuiValue(self, value: rect):
+        self._pushButton.setText(self._get_display_str(value))
+
+    @staticmethod
+    def _get_display_str(value: rect):
+        x, y, w, h = value
+        return f"({x}, {y}, {w}, {h})"
+
+    def _setPoint(self, x_new, y_new):
+        x, y, w, h = self._variable.value
+
+        if self._selectedPoints == 0:
+            x, y = x_new, y_new
+        else:
+            w, h = x_new - x, y_new - y
+
+        super().setValue((x, y, w, h))
+
+        self._setSelectionState(self._selectedPoints + 1)
+
+    def _setSelectionState(self, b: int):
+        if b >= 2:
+            b = -1
+
+        self._selectedPoints = b
+
+        if self._selectedPoints >= 0:
+            self.link()
+            self._pushButton.setText("Cancel")
+        else:
+            self.unlink()
+            self._pushButton.setText(
+                self._get_display_str(self._variable.value)
+            )
+
+        self._selectionModeChanged.emit(self._selectedPoints >= 0)
+
+    def link(self):
+        self._trackingPlotWidget.pointSelected.connect(self._setPoint)
+
+    def unlink(self):
+        try:
+            self._trackingPlotWidget.pointSelected.disconnect()
+        except TypeError:
+            pass
+
+    def setTrackingPlotWidget(self, trackingPlotWidget: TrackingPlotWidget):
+        self._trackingPlotWidget = trackingPlotWidget
+        self._selectionModeChanged.connect(
+            self._trackingPlotWidget.setPointSelectionModeEnabled
+        )

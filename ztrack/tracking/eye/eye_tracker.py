@@ -22,8 +22,8 @@ class EyeTracker(Tracker, ABC):
         )
     )
 
-    def __init__(self, roi=None, params: dict = None, *, verbose=0):
-        super().__init__(roi, params, verbose=verbose)
+    def __init__(self, roi=None, params: dict = None, *, verbose=0, debug=False):
+        super().__init__(roi, params, verbose=verbose, debug=debug)
         self._left_eye = Ellipse(0, 0, 1, 1, 0, 4, "b")
         self._right_eye = Ellipse(0, 0, 1, 1, 0, 4, "r")
         self._swim_bladder = Ellipse(0, 0, 1, 1, 0, 4, "g")

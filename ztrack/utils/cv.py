@@ -84,7 +84,7 @@ def interpolate_tail(tail: np.ndarray, n_points: int) -> np.ndarray:
     return np.column_stack(splev(np.linspace(0, 1, n_points), tck))
 
 
-def sequential_track_tail(img, point, angle, theta, n_steps, length, n_points):
+def sequential_track_tail(img, point, angle, theta, theta2, fraction, n_steps, length, n_points):
     h, w = img.shape
     tail = np.zeros((n_steps + 1, 2), dtype=int)
     tail[0] = point
@@ -94,7 +94,8 @@ def sequential_track_tail(img, point, angle, theta, n_steps, length, n_points):
             circle_perimeter(*point, step_lengths[i], shape=(w, h))
         )
         angles = np.arctan2(*reversed((points - point).T))
-        idx = angle_diff(angles, angle) < theta
+        lim = theta if i / n_steps < fraction else theta2
+        idx = angle_diff(angles, angle) < lim
         points, angles = points[idx], angles[idx]
         x, y = points.T
 

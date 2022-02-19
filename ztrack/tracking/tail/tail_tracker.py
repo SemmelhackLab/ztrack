@@ -23,9 +23,10 @@ class TailTracker(Tracker, ABC):
         params: dict = None,
         *,
         verbose=0,
+        debug=False,
         cmap: Union[colors.Colormap, str] = "jet",
     ):
-        super().__init__(roi, params, verbose=verbose)
+        super().__init__(roi, params, verbose=verbose, debug=debug)
 
         self._tail_cmap = cm.get_cmap(cmap)
         self._points = Points(np.array([[0, 0]]), 1, "m", symbol="+")

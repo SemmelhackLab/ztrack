@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from PyQt5 import QtCore, QtWidgets
 
-from ztrack.gui.utils.variable_widgets import PointWidget, VariableWidget
+from ztrack.gui.utils.variable_widgets import PointWidget, VariableWidget, RectWidget
 
 if TYPE_CHECKING:
     from typing import Dict, Iterable, List
@@ -128,8 +128,8 @@ class ParamsWidget(QtWidgets.QFrame):
             label.setText(param.display_name)
             field = VariableWidget.fromVariable(param, self)
 
-            if isinstance(field, PointWidget):
-                field.link(self._trackingPlotWidget)
+            if isinstance(field, (PointWidget, RectWidget)):
+                field.setTrackingPlotWidget(self._trackingPlotWidget)
 
             field.valueChanged.connect(self.paramsChanged.emit)
             self._fields[name] = field

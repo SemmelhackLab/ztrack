@@ -19,14 +19,14 @@ _trackers_dict: Dict[str, Dict[str, Type[Tracker]]] = {
 }
 
 
-def get_trackers(verbose) -> Dict[str, List[Tracker]]:
+def get_trackers(verbose, debug=False) -> Dict[str, List[Tracker]]:
     return {
-        key: [i(verbose=verbose) for i in value]
+        key: [i(verbose=verbose, debug=debug) for i in value]
         for key, value in _trackers.items()
     }
 
 
-def get_trackers_from_config(config_dict, **kwargs) -> Dict[str, Tracker]:
+def get_trackers_from_config(config_dict, debug=False, **kwargs) -> Dict[str, Tracker]:
     return {
         group_name: _trackers_dict[group_name][group_dict["method"]](
             group_dict["roi"], group_dict["params"], **kwargs

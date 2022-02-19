@@ -24,8 +24,8 @@ class ContourFreeSwimTracker(BaseFreeSwimTracker):
             self.threshold_swim_bladder = UInt8("Swim bladder threshold", 70)
             self.n_points = Int("Number of points", 51, 2, 100)
 
-    def __init__(self, roi=None, params: dict = None, *, verbose=0):
-        super().__init__(roi, params, verbose=verbose)
+    def __init__(self, roi=None, params: dict = None, *, verbose=0, debug=False):
+        super().__init__(roi, params, verbose=verbose, debug=debug)
 
     @property
     def _Params(self):
