@@ -1,7 +1,7 @@
 import numpy as np
 
 import ztrack.utils.cv as zcv
-from ztrack.utils.variable import Angle, Float, Int, Point, Rect
+from ztrack.utils.variable import Angle, Float, Int, Point, Rect, String
 from ztrack.utils.shape import Rectangle
 
 from .tail_tracker import TailParams, TailTracker
@@ -25,6 +25,8 @@ class SequentialTailTracker(TailTracker):
 
             self.bbox_l_tail = Rect("Left tail", (0, 0, 30, 30))
             self.bbox_r_tail = Rect("Right tail", (0, 0, 30, 30))
+
+            self.step_lengths = String("Step lengths", "")
 
     def __init__(self, roi=None, params: dict = None, *, verbose=0, debug=False):
         super().__init__(roi, params, verbose=verbose, debug=debug)
@@ -59,7 +61,8 @@ class SequentialTailTracker(TailTracker):
         img[y:y+h, x:x+w] = 0
 
         return zcv.sequential_track_tail(
-            img, point, angle, theta, theta2, p.fraction, p.n_steps, p.length, p.n_points
+            img, point, angle, theta, theta2, p.fraction, p.n_steps, p.length, p.n_points,
+            p.step_lengths
         )
 
     @staticmethod

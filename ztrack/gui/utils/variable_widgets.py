@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from PyQt5 import QtCore, QtWidgets
 
-from ztrack.utils.variable import Angle, Float, Int, Point, Rect
+from ztrack.utils.variable import Angle, Float, Int, Point, Rect, String
 
 if TYPE_CHECKING:
     from ztrack.gui._tracking_plot_widget import TrackingPlotWidget
@@ -38,6 +38,8 @@ class VariableWidget(QtWidgets.QWidget, ABC, metaclass=AbstractWidgetMeta):
             return PointWidget(parent, variable=variable)
         if isinstance(variable, Rect):
             return RectWidget(parent, variable=variable)
+        if isinstance(variable, String):
+            return StringWidget(parent, variable=variable)
         raise NotImplementedError
 
     def _setValue(self, value):
@@ -52,6 +54,24 @@ class VariableWidget(QtWidgets.QWidget, ABC, metaclass=AbstractWidgetMeta):
     def setValue(self, value):
         self._setValue(value)
         self._setGuiValue(value)
+
+
+class StringWidget(VariableWidget):
+    def __init__(self, parent: QtWidgets.QWidget = None, *, variable: String):
+        super().__init__(parent, variable=variable)
+
+        self._line = QtWidgets.QLineEdit(self)
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._line)
+        self.setLayout(layout)
+        self._line.editingFinished.connect(self._updateValue)
+
+    def _updateValue(self):
+        return self.setValue(self._line.text())
+
+    def _setGuiValue(self, value):
+        pass
 
 
 class IntWidget(VariableWidget):

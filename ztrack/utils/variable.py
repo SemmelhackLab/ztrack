@@ -57,6 +57,20 @@ class Point(Variable):
         self._value = value
 
 
+class String(Variable):
+    def __init__(self, display_name: str, string):
+        super().__init__(display_name)
+        self._value = string
+
+    @property
+    def value(self) -> str:
+        return self._value
+
+    @value.setter
+    def value(self, value: str):
+        self._value = value
+
+
 class Rect(Variable):
     def __init__(self, display_name: str, bbox=None):
         super().__init__(display_name)
