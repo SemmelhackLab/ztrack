@@ -31,12 +31,12 @@ class TailTracker(Tracker, ABC):
         self._points = Points(np.array([[0, 0]]), 1, "m", symbol="+")
 
     @classmethod
-    def _results_to_series(cls, results: np.ndarray):
+    def _results_to_dataframe(cls, results: np.ndarray):
         n_points = len(results)
         idx = pd.MultiIndex.from_product(
             ((f"point{i:02d}" for i in range(n_points)), ("x", "y"))
         )
-        return pd.Series(results.ravel(), idx)
+        return pd.DataFrame(results.reshape(len(results), -1), columns=idx)
 
     @abstractmethod
     def _track_tail(self, img: np.ndarray):
@@ -49,6 +49,10 @@ class TailTracker(Tracker, ABC):
     @property
     def shapes(self):
         return [self._points]
+
+    def annotate_from_results(self, a: np.ndarray) -> None:
+        self._points.visible = True
+        self._points.data = a
 
     def annotate_from_series(self, s: pd.Series) -> None:
         tail = s.values.reshape(-1, 2)

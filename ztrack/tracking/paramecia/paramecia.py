@@ -44,6 +44,10 @@ class ParameciaTracker(Tracker, BackgroundSubtractionMixin):
         self._points.visible = True
         self._points.data = centers
 
+    def annotate_from_results(self, a: np.ndarray) -> None:
+        self._points.visible = True
+        self._points.data = a
+
     @staticmethod
     def name():
         return "paramecia"
@@ -53,7 +57,7 @@ class ParameciaTracker(Tracker, BackgroundSubtractionMixin):
         return "Paramecia"
 
     @classmethod
-    def _results_to_series(cls, results):
+    def _results_to_dataframe(cls, results):
         row = results.ravel()
         return pd.Series(row)
 

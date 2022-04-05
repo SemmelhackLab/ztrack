@@ -42,9 +42,9 @@ class BaseFreeSwimTracker(
                 self._is_bg_bright = cv2.mean(self._bg)[0] > 127
 
     @classmethod
-    def _results_to_series(cls, results):
+    def _results_to_dataframe(cls, results):
         eye, tail = results
-        s = super()._results_to_series(eye)
+        s = super()._results_to_dataframe(eye)
 
         if tail is not None:
             n_points = len(tail)
@@ -55,8 +55,8 @@ class BaseFreeSwimTracker(
 
         return s
 
-    def annotate_from_series(self, series: pd.Series) -> None:
-        super().annotate_from_series(series)
+    def annotate_from_results(self, series: pd.Series) -> None:
+        super().annotate_from_results(series)
 
         if "point00" in series:
             idx = [f"point{i:02d}" for i in range(self.params.n_points)]

@@ -84,7 +84,7 @@ def interpolate_tail(tail: np.ndarray, n_points: int) -> np.ndarray:
     return np.column_stack(splev(np.linspace(0, 1, n_points), tck))
 
 
-def sequential_track_tail(img, point, angle, theta, n_steps, length, n_points):
+def sequential_track_tail(img, point, angle, theta, n_steps, length):
     h, w = img.shape
     tail = np.zeros((n_steps + 1, 2), dtype=int)
     tail[0] = point
@@ -106,7 +106,7 @@ def sequential_track_tail(img, point, angle, theta, n_steps, length, n_points):
         angle = angles[argmax]
         tail[i + 1] = point = points[argmax]
 
-    return interpolate_tail(tail, n_points)
+    return tail
 
 
 def rgb2gray_dark_bg_blur(img, sigma=0):

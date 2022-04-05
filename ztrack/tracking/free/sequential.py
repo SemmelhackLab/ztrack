@@ -18,7 +18,6 @@ class SequentialFreeSwimTracker(BaseFreeSwimTracker):
             self.threshold_right_eye = UInt8("Right eye threshold", 70)
             self.threshold_swim_bladder = UInt8("Swim bladder threshold", 70)
             self.n_steps = Int("Number of steps", 20, 3, 20)
-            self.n_points = Int("Number of points", 51, 2, 100)
             self.length = Int("Tail length (px)", 90, 0, 1000)
             self.theta = Angle("Search angle (°)", 60)
 
@@ -39,7 +38,7 @@ class SequentialFreeSwimTracker(BaseFreeSwimTracker):
         theta = np.deg2rad(p.theta / 2)
         img = zcv.gaussian_blur(src, p.sigma_tail)
         tail = zcv.sequential_track_tail(
-            img, point, angle, theta, p.n_steps, p.length, p.n_points
+            img, point, angle, theta, p.n_steps, p.length
         )
 
         return tail

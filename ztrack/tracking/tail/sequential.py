@@ -12,9 +12,6 @@ class SequentialTailTracker(TailTracker):
             super().__init__(params)
             self.sigma = Float("Sigma (px)", 2, 0, 100, 0.1)
             self.n_steps = Int("Number of steps", 10, 3, 20)
-            self.n_points = Int(
-                "Number of points", 51, 2, SequentialTailTracker.max_n_points
-            )
             self.length = Int("Tail length (px)", 200, 0, 1000)
             self.tail_base = Point("Tail base (x, y)", (250, 120))
             self.angle = Angle("Initial angle (°)", 90)
@@ -41,7 +38,7 @@ class SequentialTailTracker(TailTracker):
         img = zcv.rgb2gray_dark_bg_blur(img, p.sigma)
 
         return zcv.sequential_track_tail(
-            img, point, angle, theta, p.n_steps, p.length, p.n_points
+            img, point, angle, theta, p.n_steps, p.length
         )
 
     @staticmethod
