@@ -1,4 +1,3 @@
-import traceback
 from abc import ABC, abstractmethod
 from typing import Union
 
@@ -40,6 +39,14 @@ class TailTracker(Tracker, ABC):
         )
         return pd.Series(results.ravel(), idx)
 
+    @classmethod
+    def _results_to_dataframe(cls, results):
+        n_points = results.shape[-2]
+        idx = pd.MultiIndex.from_product(
+            ((f"point{i:02d}" for i in range(n_points)), ("x", "y"))
+        )
+        return pd.DataFrame(results.reshape(len(results), -1), columns=idx)
+
     @abstractmethod
     def _track_tail(self, img: np.ndarray):
         pass
@@ -52,23 +59,14 @@ class TailTracker(Tracker, ABC):
     def shapes(self):
         return [self._points]
 
-    def annotate(self, frame: np.ndarray) -> None:
-        try:
-            img = self._get_bbox_img(frame)
-            results = self._track_img(img)
-            tail = results.reshape(-1, 2)
-            self._points.visible = True
-            self._points.data = tail
-        except Exception:
-            print(traceback.format_exc())
-            for shape in self.shapes:
-                shape.visible = False
-
     def annotate_from_series(self, s: pd.Series) -> None:
-        pass
-        # tail = s.values.reshape(-1, 2)
-        # self._points.visible = True
-        # self._points.data = tail
+        tail = s.values.reshape(-1, 2)
+        self._points.visible = True
+        self._points.data = tail
+
+    def annotate_from_results(self, a: np.ndarray) -> None:
+        self._points.visible = True
+        self._points.data = a
 
     def _transform_from_roi_to_frame(self, results: np.ndarray):
         if self.roi.value is not None:

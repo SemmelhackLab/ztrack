@@ -1,5 +1,4 @@
 import traceback
-import warnings
 from abc import ABC, abstractmethod
 from typing import Type
 
@@ -8,7 +7,6 @@ import pandas as pd
 from decord import VideoReader
 from tqdm import tqdm
 
-from ztrack.utils.exception import VideoTrackingError
 from ztrack.utils.variable import Rect
 
 from .params import Params
@@ -52,8 +50,7 @@ class Tracker(ABC):
     def annotate(self, frame: np.ndarray) -> None:
         try:
             img = self._get_bbox_img(frame)
-            results = self._results_to_series(self._track_img(img))
-            self.annotate_from_series(results)
+            self.annotate_from_results(self._track_img(img))
         except Exception:
             print(traceback.format_exc())
             for shape in self.shapes:
@@ -62,6 +59,12 @@ class Tracker(ABC):
     @abstractmethod
     def annotate_from_series(self, s: pd.Series) -> None:
         pass
+
+    def annotate_from_results(self, a: np.ndarray) -> None:
+        if a is not None:
+            return self.annotate_from_series(
+                self._results_to_dataframe(a[None]).iloc[0]
+            )
 
     @property
     def params(self) -> Params:
@@ -78,15 +81,16 @@ class Tracker(ABC):
         pass
 
     def _track_frame(self, frame: np.ndarray) -> pd.Series:
-        results = self._track_img(frame[self.roi.to_slice()])
-        return self._results_to_series(
-            self._transform_from_roi_to_frame(results)
-        )
+        return self._track_img(frame[self.roi.to_slice()])
 
     @classmethod
     @abstractmethod
     def _results_to_series(cls, results):
         pass
+
+    @classmethod
+    def _results_to_dataframe(cls, results):
+        return pd.DataFrame([cls._results_to_series(i) for i in results])
 
     @abstractmethod
     def _transform_from_roi_to_frame(self, results):
@@ -106,25 +110,14 @@ class Tracker(ABC):
             else range(len(video_reader))
         )
 
-        data = []
+        s_ = self.roi.to_slice()
+        data = np.asarray(
+            [self._track_img(video_reader[i].asnumpy()[s_]) for i in it]
+        )
 
-        for i in it:
-            try:
-                data.append(self._track_frame(video_reader[i].asnumpy()))
-            except Exception:
-                if ignore_errors:
-                    warnings.warn(
-                        f"Results for {video_path} at frame {i} is set to NaNs due to tracking errors."
-                    )
-                    data.append(
-                        pd.Series(
-                            np.full_like(self._index, np.nan), self._index
-                        )
-                    )
-                else:
-                    raise VideoTrackingError(frame=i)
-
-        return pd.DataFrame(data)
+        return self._results_to_dataframe(
+            self._transform_from_roi_to_frame(data)
+        )
 
     def set_video(self, video_path):
         pass
