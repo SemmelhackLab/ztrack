@@ -1,21 +1,27 @@
 import cv2
 import numpy as np
+from skimage.morphology import remove_small_objects
 
 import ztrack.utils.cv as zcv
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
-from ztrack.utils.variable import Float, Int, Rect
 from ztrack.utils.shape import Rectangle
-from skimage.morphology import remove_small_objects
+from ztrack.utils.variable import Float, Int, Rect
 
 
 class AdaptiveThresholdEyeTracker(EyeTracker):
-    def __init__(self, roi=None, params: dict = None, *, verbose=0, debug=False):
+    def __init__(
+        self, roi=None, params: dict = None, *, verbose=0, debug=False
+    ):
         super().__init__(roi, params, verbose=verbose, debug=debug)
 
         self._left_eye_bbox = Rectangle(0, 0, 1, 1, 4, "b")
         self._right_eye_bbox = Rectangle(0, 0, 1, 1, 4, "r")
         self._swim_bladder_bbox = Rectangle(0, 0, 1, 1, 4, "g")
-        self._bboxes = [self._left_eye_bbox, self._right_eye_bbox, self._swim_bladder_bbox]
+        self._bboxes = [
+            self._left_eye_bbox,
+            self._right_eye_bbox,
+            self._swim_bladder_bbox,
+        ]
 
     class __Params(EyeParams):
         def __init__(self, params: dict = None):
@@ -23,15 +29,21 @@ class AdaptiveThresholdEyeTracker(EyeTracker):
             self.sigma = Float("Sigma (px)", 2, 0, 100, 0.1)
 
             self.bbox_l = Rect("Left eye", (0, 0, 30, 30))
-            self.block_size_l = Int("Block size (px)", 11, 1, 99, odd_only=True)
+            self.block_size_l = Int(
+                "Block size (px)", 11, 1, 99, odd_only=True
+            )
             self.c_l = Int("C", 0, -100, 100)
 
             self.bbox_r = Rect("Right eye", (0, 0, 30, 30))
-            self.block_size_r = Int("Block size (px)", 11, 1, 99, odd_only=True)
+            self.block_size_r = Int(
+                "Block size (px)", 11, 1, 99, odd_only=True
+            )
             self.c_r = Int("C", 0, -100, 100)
 
             self.bbox_sb = Rect("Swim bladder", (0, 0, 30, 30))
-            self.block_size_sb = Int("Block size (px)", 11, 1, 99, odd_only=True)
+            self.block_size_sb = Int(
+                "Block size (px)", 11, 1, 99, odd_only=True
+            )
             self.c_sb = Int("C", 0, -100, 100)
 
             self.min_size = Int("Minimum size (px)", 5, 0, 200)
@@ -76,14 +88,16 @@ class AdaptiveThresholdEyeTracker(EyeTracker):
             x -= self.roi.value[0]
             y -= self.roi.value[1]
 
-            im = img[y:y+h, x:x+w]
+            im = img[y : y + h, x : x + w]
 
             block_size = getattr(p, f"block_size_{part}")
             c = getattr(p, f"c_{part}")
             threshold = zcv.adaptive_threshold(im, block_size, c)
-            threshold = (remove_small_objects(threshold > 0, p.min_size) * 255).astype(np.uint8)
+            threshold = (
+                remove_small_objects(threshold > 0, p.min_size) * 255
+            ).astype(np.uint8)
 
-            temp[y:y+h, x:x+w] = threshold
+            temp[y : y + h, x : x + w] = threshold
 
             points = np.concatenate(zcv.find_contours(threshold))
             contour = cv2.convexHull(points) + np.array([[x, y]])

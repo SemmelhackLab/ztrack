@@ -18,6 +18,9 @@ exclude = '''
 )
 '''
 
+[tool.isort]
+profile = "black"
+
 [tool.poetry]
 name = "ztrack"
 version = "0.3.0"

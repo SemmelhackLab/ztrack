@@ -26,7 +26,9 @@ def get_trackers(verbose, debug=False) -> Dict[str, List[Tracker]]:
     }
 
 
-def get_trackers_from_config(config_dict, debug=False, **kwargs) -> Dict[str, Tracker]:
+def get_trackers_from_config(
+    config_dict, debug=False, **kwargs
+) -> Dict[str, Tracker]:
     return {
         group_name: _trackers_dict[group_name][group_dict["method"]](
             group_dict["roi"], group_dict["params"], **kwargs

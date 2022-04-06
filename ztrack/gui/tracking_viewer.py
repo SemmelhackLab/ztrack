@@ -9,8 +9,12 @@ from PyQt5 import QtGui, QtWidgets
 
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.tracking import get_trackers_from_config
-from ztrack.utils.file import (get_config_path, get_paths_for_view_results,
-                               get_results_path, video_extensions)
+from ztrack.utils.file import (
+    get_config_path,
+    get_paths_for_view_results,
+    get_results_path,
+    video_extensions,
+)
 
 from ._main_window import MainWindow
 

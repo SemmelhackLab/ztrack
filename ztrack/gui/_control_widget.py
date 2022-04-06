@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 from PyQt5 import QtCore, QtWidgets
 
-from ztrack.gui.utils.variable_widgets import PointWidget, VariableWidget, RectWidget
+from ztrack.gui.utils.variable_widgets import PointWidget, RectWidget, VariableWidget
 
 if TYPE_CHECKING:
     from typing import Dict, Iterable, List

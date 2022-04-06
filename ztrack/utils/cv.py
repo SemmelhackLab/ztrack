@@ -73,13 +73,14 @@ def interpolate_tail(tail: np.ndarray, n_points: int) -> np.ndarray:
     return np.column_stack(splev(np.linspace(0, 1, n_points), tck))
 
 
-def sequential_track_tail(img, point, angle, theta, theta2, fraction, n_steps, length,
-                          step_lengths):
+def sequential_track_tail(
+    img, point, angle, theta, theta2, fraction, n_steps, length, step_lengths
+):
     h, w = img.shape
     if step_lengths.strip() != "":
         try:
             step_lengths = eval(step_lengths)
-        except:
+        except Exception:
             print("invalid step lengths")
             step_lengths = split_int(round(length), n_steps)
     else:

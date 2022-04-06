@@ -237,7 +237,9 @@ class PointWidget(VariableWidget):
         self._selectionModeChanged.emit(self._selectionMode)
 
     def link(self):
-        self._trackingPlotWidget.pointSelected.connect(lambda x, y: self._setValue((x, y)))
+        self._trackingPlotWidget.pointSelected.connect(
+            lambda x, y: self._setValue((x, y))
+        )
 
     def unlink(self):
         try:
@@ -270,16 +272,21 @@ class RectWidget(VariableWidget):
         self.setLayout(layout)
 
         self._pushButton.clicked.connect(
-            lambda: self._setSelectionState(-1 if self._selectedPoints >= 0 else 0)
+            lambda: self._setSelectionState(
+                -1 if self._selectedPoints >= 0 else 0
+            )
         )
 
     def _setGuiValue(self, value: rect):
         self._pushButton.setText(self._get_display_str(value))
 
     @staticmethod
-    def _get_display_str(value: rect):
-        x, y, w, h = value
-        return f"({x}, {y}, {w}, {h})"
+    def _get_display_str(value: rect = None):
+        if value is not None:
+            x, y, w, h = value
+            return f"({x}, {y}, {w}, {h})"
+        else:
+            return "Npne"
 
     def _setPoint(self, x_new, y_new):
         x, y, w, h = self._variable.value

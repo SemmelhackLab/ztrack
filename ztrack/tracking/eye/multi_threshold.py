@@ -17,7 +17,9 @@ class MultiThresholdEyeTracker(EyeTracker):
             self.threshold_right_eye = UInt8("Right eye threshold", 127)
             self.threshold_swim_bladder = UInt8("Swim bladder threshold", 127)
 
-    def __init__(self, roi=None, params: dict = None, *, verbose=0, debug=False):
+    def __init__(
+        self, roi=None, params: dict = None, *, verbose=0, debug=False
+    ):
         super().__init__(roi, params, verbose=verbose, debug=debug)
 
     @property
