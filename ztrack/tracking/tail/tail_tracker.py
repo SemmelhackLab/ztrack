@@ -1,3 +1,4 @@
+import traceback
 from abc import ABC, abstractmethod
 from typing import Union
 
@@ -51,10 +52,23 @@ class TailTracker(Tracker, ABC):
     def shapes(self):
         return [self._points]
 
+    def annotate(self, frame: np.ndarray) -> None:
+        try:
+            img = self._get_bbox_img(frame)
+            results = self._track_img(img)
+            tail = results.reshape(-1, 2)
+            self._points.visible = True
+            self._points.data = tail
+        except Exception:
+            print(traceback.format_exc())
+            for shape in self.shapes:
+                shape.visible = False
+
     def annotate_from_series(self, s: pd.Series) -> None:
-        tail = s.values.reshape(-1, 2)
-        self._points.visible = True
-        self._points.data = tail
+        pass
+        # tail = s.values.reshape(-1, 2)
+        # self._points.visible = True
+        # self._points.data = tail
 
     def _transform_from_roi_to_frame(self, results: np.ndarray):
         if self.roi.value is not None:

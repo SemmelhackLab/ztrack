@@ -136,5 +136,8 @@ class ParamsWidget(QtWidgets.QFrame):
             self._formLayout.addRow(label, field)
 
     def setParams(self, params: params_dict):
-        for name, value in params.items():
-            self._fields[name].setValue(value)
+        for name, value in params.copy().items():
+            if name in self._fields:
+                self._fields[name].setValue(value)
+            else:
+                params.pop(name)

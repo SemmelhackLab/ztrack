@@ -16,17 +16,6 @@ def binary_threshold(img: np.ndarray, threshold: int) -> np.ndarray:
     return cv2.threshold(img, threshold, 255, cv2.THRESH_BINARY)[1]
 
 
-def adaptive_threshold(img: np.ndarray, block_size: int, c: int) -> np.ndarray:
-    return cv2.adaptiveThreshold(
-        img,
-        255,
-        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-        cv2.THRESH_BINARY,
-        block_size,
-        c,
-    )
-
-
 def find_contours(img: np.ndarray) -> list:
     return cv2.findContours(img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)[0]
 
@@ -84,11 +73,9 @@ def interpolate_tail(tail: np.ndarray, n_points: int) -> np.ndarray:
     return np.column_stack(splev(np.linspace(0, 1, n_points), tck))
 
 
-def sequential_track_tail(img, point, angle, theta, theta2, fraction, n_steps, length, n_points,
+def sequential_track_tail(img, point, angle, theta, theta2, fraction, n_steps, length,
                           step_lengths):
     h, w = img.shape
-    tail = np.zeros((n_steps + 1, 2), dtype=int)
-    tail[0] = point
     if step_lengths.strip() != "":
         try:
             step_lengths = eval(step_lengths)
@@ -98,8 +85,10 @@ def sequential_track_tail(img, point, angle, theta, theta2, fraction, n_steps, l
     else:
         step_lengths = split_int(round(length), n_steps)
 
-    print(step_lengths)
     n_steps = len(step_lengths)
+
+    tail = np.zeros((n_steps + 1, 2), dtype=int)
+    tail[0] = point
 
     for i in range(n_steps):
         points = np.column_stack(
@@ -119,7 +108,7 @@ def sequential_track_tail(img, point, angle, theta, theta2, fraction, n_steps, l
         angle = angles[argmax]
         tail[i + 1] = point = points[argmax]
 
-    return interpolate_tail(tail, n_points)
+    return tail
 
 
 def rgb2gray_dark_bg_blur(img, sigma=0):
@@ -171,7 +160,7 @@ def fit_ellipse_moments(contour):
     return cx, cy, a / 2, b / 2, theta
 
 
-def adaptive_threshold(src: np.ndarray, block_size: int, c: int):
+def adaptive_threshold(src: np.ndarray, block_size: int, c: int) -> np.ndarray:
     if block_size % 2 == 0:
         block_size += 1
 

@@ -71,7 +71,7 @@ class StringWidget(VariableWidget):
         return self.setValue(self._line.text())
 
     def _setGuiValue(self, value):
-        pass
+        self._line.setText(value)
 
 
 class IntWidget(VariableWidget):

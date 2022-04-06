@@ -13,19 +13,14 @@ class SequentialTailTracker(TailTracker):
             super().__init__(params)
             self.sigma = Float("Sigma (px)", 2, 0, 100, 0.1)
             self.n_steps = Int("Number of steps", 10, 3, 20)
-            self.n_points = Int(
-                "Number of points", 51, 2, SequentialTailTracker.max_n_points
-            )
             self.length = Int("Tail length (px)", 200, 0, 1000)
             self.tail_base = Point("Tail base (x, y)", (250, 120))
             self.angle = Angle("Initial angle (°)", 90)
             self.theta = Angle("Search angle (°)", 60)
             self.theta2 = Angle("Search angle 2 (°)", 60)
             self.fraction = Float("Fraction", .5, 0, 1, .05)
-
             self.bbox_l_tail = Rect("Left tail", (0, 0, 30, 30))
             self.bbox_r_tail = Rect("Right tail", (0, 0, 30, 30))
-
             self.step_lengths = String("Step lengths", "")
 
     def __init__(self, roi=None, params: dict = None, *, verbose=0, debug=False):
@@ -61,7 +56,7 @@ class SequentialTailTracker(TailTracker):
         img[y:y+h, x:x+w] = 0
 
         return zcv.sequential_track_tail(
-            img, point, angle, theta, theta2, p.fraction, p.n_steps, p.length, p.n_points,
+            img, point, angle, theta, theta2, p.fraction, p.n_steps, p.length,
             p.step_lengths
         )
 
