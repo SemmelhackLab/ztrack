@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from ztrack.utils.variable import Rect
 
 if TYPE_CHECKING:
@@ -33,7 +35,7 @@ class Shape(ABC):
 
 
 class Points(Shape):
-    def __init__(self, data, lw, lc, symbol):
+    def __init__(self, data: np.ndarray, lw, lc, symbol):
         super().__init__(lw, lc)
         self._data = data
         self.symbol = symbol
