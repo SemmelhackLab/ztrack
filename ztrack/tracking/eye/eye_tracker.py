@@ -90,7 +90,9 @@ class EyeTracker(Tracker, ABC):
         pass
 
     def _track_img(self, img: np.ndarray) -> np.ndarray:
-        img = zcv.rgb2gray_dark_bg_blur(img, self.params.sigma)
+        img = zcv.rgb2gray_dark_bg_blur(
+            img, self.params.sigma, self.params.invert
+        )
         contours = self._track_contours(img)
         return self._fit_ellipses(contours)
 

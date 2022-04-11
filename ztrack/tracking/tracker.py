@@ -7,6 +7,7 @@ import pandas as pd
 from decord import VideoReader
 from tqdm import tqdm
 
+from ztrack.utils.exception import TrackingError
 from ztrack.utils.variable import Rect
 
 from .params import Params
@@ -100,6 +101,15 @@ class Tracker(ABC):
     def _track_img(self, img: np.ndarray):
         pass
 
+    def __track_img(self, img: np.ndarray, i: int, ignore_error=False):
+        try:
+            return self._track_img(img)
+        except Exception:
+            if ignore_error:
+                print(f"Tracker {self.name()} failed at frame {i}")
+                return np.nan
+            raise TrackingError(i)
+
     def track_video(self, video_path, ignore_errors=False):
         self.set_video(video_path)
 
@@ -112,7 +122,14 @@ class Tracker(ABC):
 
         s_ = self.roi.to_slice()
         data = np.asarray(
-            [self._track_img(video_reader[i].asnumpy()[s_]) for i in it]
+            np.broadcast_arrays(
+                *[
+                    self.__track_img(
+                        video_reader[i].asnumpy()[s_], i, ignore_errors
+                    )
+                    for i in it
+                ]
+            )
         )
 
         return self._results_to_dataframe(

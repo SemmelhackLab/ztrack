@@ -22,6 +22,7 @@ class SequentialTailTracker(TailTracker):
             self.bbox_l_tail = Rect("Left tail", (0, 0, 30, 30))
             self.bbox_r_tail = Rect("Right tail", (0, 0, 30, 30))
             self.step_lengths = String("Step lengths", "")
+            self.invert = Int("invert", 0, -1, 1)
 
     def __init__(
         self, roi=None, params: dict = None, *, verbose=0, debug=False
@@ -49,7 +50,7 @@ class SequentialTailTracker(TailTracker):
         angle = np.deg2rad(p.angle)
         theta = np.deg2rad(p.theta / 2)
         theta2 = np.deg2rad(p.theta2 / 2)
-        img = zcv.rgb2gray_dark_bg_blur(img, p.sigma)
+        img = zcv.rgb2gray_dark_bg_blur(img, p.sigma, p.invert)
 
         x, y, w, h = p.bbox_l_tail
         img[y : y + h, x : x + w] = 0

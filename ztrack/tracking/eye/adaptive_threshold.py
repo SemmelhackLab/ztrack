@@ -30,23 +30,25 @@ class AdaptiveThresholdEyeTracker(EyeTracker):
 
             self.bbox_l = Rect("Left eye", (0, 0, 30, 30))
             self.block_size_l = Int(
-                "Block size (px)", 11, 1, 99, odd_only=True
+                "Block size (px)", 11, 1, 299, odd_only=True
             )
             self.c_l = Int("C", 0, -100, 100)
 
             self.bbox_r = Rect("Right eye", (0, 0, 30, 30))
             self.block_size_r = Int(
-                "Block size (px)", 11, 1, 99, odd_only=True
+                "Block size (px)", 11, 1, 299, odd_only=True
             )
             self.c_r = Int("C", 0, -100, 100)
 
             self.bbox_sb = Rect("Swim bladder", (0, 0, 30, 30))
             self.block_size_sb = Int(
-                "Block size (px)", 11, 1, 99, odd_only=True
+                "Block size (px)", 11, 1, 299, odd_only=True
             )
             self.c_sb = Int("C", 0, -100, 100)
 
             self.min_size = Int("Minimum size (px)", 5, 0, 200)
+
+            self.invert = Int("invert", 0, -1, 1)
 
     @property
     def shapes(self):

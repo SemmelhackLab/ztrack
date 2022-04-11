@@ -112,10 +112,13 @@ def sequential_track_tail(
     return tail
 
 
-def rgb2gray_dark_bg_blur(img, sigma=0):
+def rgb2gray_dark_bg_blur(img, sigma=0, invert=0):
     img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-    if cv2.mean(img)[0] > 127:
+    if invert == 0:
+        if cv2.mean(img)[0] > 127:
+            img = cv2.bitwise_not(img)
+    elif invert == 1:
         img = cv2.bitwise_not(img)
 
     if sigma > 0:
