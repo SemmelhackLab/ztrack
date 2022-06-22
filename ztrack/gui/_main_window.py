@@ -27,6 +27,7 @@ class MainWindow(QtWidgets.QMainWindow):
         *,
         videoPaths: List[str] = None,
         verbose=False,
+        dock=False,
     ):
         super().__init__(parent)
 
@@ -47,9 +48,19 @@ class MainWindow(QtWidgets.QMainWindow):
         self._layout.addWidget(self._frameBar)
         self._layout.addLayout(self._hBoxLayout)
 
-        widget = QtWidgets.QWidget(self)
-        widget.setLayout(self._layout)
-        self.setCentralWidget(widget)
+        self._widget = QtWidgets.QWidget(self)
+        self._widget.setLayout(self._layout)
+
+        if dock:
+            self.videoDockWidget = QtWidgets.QDockWidget(self)
+            self.videoDockWidget.setWidget(self._widget)
+            self.addDockWidget(
+                QtCore.Qt.DockWidgetArea(QtCore.Qt.LeftDockWidgetArea),
+                self.videoDockWidget,
+            )
+
+        else:
+            self.setCentralWidget(self._widget)
 
         menuBar = self.menuBar()
 
@@ -97,7 +108,7 @@ class MainWindow(QtWidgets.QMainWindow):
         return self._videoReader[self._frameBar.value()].asnumpy()
 
     def _setEnabled(self, b: bool):
-        self.centralWidget().setEnabled(b)
+        self._widget.setEnabled(b)
         self._trackingPlotWidget.setEnabled(b)
 
     @abstractmethod
@@ -136,7 +147,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 self._frameBar.setFps(spinBox.value())
             else:
                 if self._videoReader is not None:
-                    self._frameBar.setFps(int(self._videoReader.get_avg_fps()))
+                    self._frameBar.setFps(
+                        round(self._videoReader.get_avg_fps())
+                    )
 
             dialog.close()
 

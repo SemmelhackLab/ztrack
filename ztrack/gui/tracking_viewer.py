@@ -30,12 +30,17 @@ class TrackingViewer(MainWindow):
         parent: QtWidgets.QWidget = None,
         videoPaths: List[str] = None,
         verbose=False,
+        dock=False,
+        update=True,
     ):
-        super().__init__(parent, videoPaths=videoPaths, verbose=verbose)
+        super().__init__(
+            parent, videoPaths=videoPaths, verbose=verbose, dock=dock
+        )
 
         self._results: Dict[str, pd.DataFrame] = {}
         self._trackers: Dict[str, Tracker] = {}
-        self.updateVideo()
+        if update:
+            self.updateVideo()
 
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
         paths = [u.toLocalFile() for u in event.mimeData().urls()]
