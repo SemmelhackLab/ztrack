@@ -50,20 +50,16 @@ scikit-image = "^0.18.2"
 tables = "^3.6.1"
 tqdm = "^4.61.2"
 
-black = { version = "*", optional = true }
-flake8 = { version = "*", optional = true }
-isort = { version = "*", optional = true }
-mypy = { version = "*", optional = true }
+bump2version = { version = "*", optional = true }
 pandas-stubs = { version = "*", optional = true }
+pre-commit = { version = "*", optional = true }
 PyQt5-stubs = { version = "*", optional = true }
 
 [tool.poetry.extras]
 dev = [
-    "black",
-    "flake8",
-    "isort",
-    "mypy",
+    "bump2version",
     "pandas-stubs",
+    "pre-commit",
     "PyQt5-stubs",
 ]
 
