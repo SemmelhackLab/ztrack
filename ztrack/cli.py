@@ -49,7 +49,7 @@ def create_config(**kwargs):
     "-i",
     "--ignore-errors",
     is_flag=True,
-    help="Whether to view video in egocentric coordinates.",
+    help="Ignore errors during tracking.",
 )
 def run(**kwargs):
     from ztrack._run_tracking import run_tracking
