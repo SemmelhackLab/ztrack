@@ -1,16 +1,3 @@
-import warnings
-
-import pandas as pd
-
-from ztrack.tracking import get_trackers_from_config
-from ztrack.utils.exception import VideoTrackingError
-from ztrack.utils.file import (
-    get_config_dict,
-    get_results_path,
-    get_video_paths_from_inputs,
-)
-
-
 def run_tracking(
     inputs,
     recursive,
@@ -18,6 +5,18 @@ def run_tracking(
     verbose,
     ignore_errors,
 ):
+    import warnings
+
+    import pandas as pd
+
+    from ztrack.tracking import get_trackers_from_config
+    from ztrack.utils.exception import VideoTrackingError
+    from ztrack.utils.file import (
+        get_config_dict,
+        get_results_path,
+        get_video_paths_from_inputs,
+    )
+
     videos = get_video_paths_from_inputs(inputs, recursive, overwrite)
     for video in videos:
         config = get_config_dict(video)

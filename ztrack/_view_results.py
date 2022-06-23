@@ -1,17 +1,3 @@
-from pathlib import Path
-
-import cv2
-import numpy as np
-import pandas as pd
-from decord import VideoReader
-from tqdm import tqdm
-
-import ztrack.utils.cv as zcv
-from ztrack.gui.tracking_viewer import TrackingViewer
-from ztrack.gui.utils.launch import launch
-from ztrack.utils.file import get_paths_for_view_results
-
-
 def view_results(
     inputs,
     recursive,
@@ -29,6 +15,10 @@ def view_results(
     label,
     verbose,
 ):
+    from ztrack.gui.tracking_viewer import TrackingViewer
+    from ztrack.gui.utils.launch import launch
+    from ztrack.utils.file import get_paths_for_view_results
+
     video_paths = [
         str(i) for i in get_paths_for_view_results(inputs, recursive)
     ]
@@ -76,6 +66,16 @@ def generate_tracking_video(
     label,
     verbose=0,
 ):
+    from pathlib import Path
+
+    import cv2
+    import numpy as np
+    import pandas as pd
+    from decord import VideoReader
+    from tqdm import tqdm
+
+    import ztrack.utils.cv as zcv
+
     colors = dict(
         left_eye=(0, 0, 255),
         right_eye=(255, 0, 0),
