@@ -24,8 +24,10 @@ class ParameciaTracker(Tracker, BackgroundSubtractionMixin):
             self.min_area = Int("Min area", 0, 0, 100)
             self.max_area = Int("Max area", 20, 0, 100)
 
-    def __init__(self, roi=None, params: dict = None, *, verbose=0):
-        super().__init__(roi, params, verbose=verbose)
+    def __init__(
+        self, roi=None, params: dict = None, *, verbose=0, debug=False
+    ):
+        super().__init__(roi, params, verbose=verbose, debug=debug)
         self._bg = None
         self._is_bg_bright = False
         self._video_path = None

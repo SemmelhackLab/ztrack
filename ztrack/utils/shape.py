@@ -3,6 +3,8 @@ from __future__ import annotations
 from abc import ABC
 from typing import TYPE_CHECKING
 
+import numpy as np
+
 from ztrack.utils.variable import Rect
 
 if TYPE_CHECKING:
@@ -33,7 +35,7 @@ class Shape(ABC):
 
 
 class Points(Shape):
-    def __init__(self, data, lw, lc, symbol):
+    def __init__(self, data: np.ndarray, lw, lc, symbol):
         super().__init__(lw, lc)
         self._data = data
         self.symbol = symbol
@@ -47,6 +49,35 @@ class Points(Shape):
     @data.setter
     def data(self, data):
         self._data = data
+
+
+class Rectangle(Shape):
+    def __init__(self, x: float, y: float, w: float, h: float, lw, lc):
+        super().__init__(lw, lc)
+        self._x = x
+        self._y = y
+        self.w = w
+        self.h = h
+
+    @property
+    def x(self):
+        if self._bbox.value is None:
+            return self._x
+        return self._x + self._bbox.value[0]
+
+    @x.setter
+    def x(self, x: float):
+        self._x = x
+
+    @property
+    def y(self):
+        if self._bbox.value is None:
+            return self._y
+        return self._y + self._bbox.value[1]
+
+    @y.setter
+    def y(self, y: float):
+        self._y = y
 
 
 class Ellipse(Shape):

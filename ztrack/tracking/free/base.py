@@ -23,8 +23,12 @@ class BaseFreeSwimTracker(
             self._points,
         ]
 
-    def __init__(self, roi=None, params: dict = None, *, verbose=0):
-        MultiThresholdEyeTracker.__init__(self, roi, params, verbose=verbose)
+    def __init__(
+        self, roi=None, params: dict = None, *, verbose=0, debug=False
+    ):
+        MultiThresholdEyeTracker.__init__(
+            self, roi, params, verbose=verbose, debug=debug
+        )
         self._bg = None
         self._is_bg_bright = False
         self._video_path = None

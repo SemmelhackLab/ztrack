@@ -37,7 +37,7 @@ class CreateConfigWindow(MainWindow):
 
         self._savePaths: List[List[str]] = savePaths
 
-        self._trackerGroups = get_trackers(verbose=verbose)
+        self._trackerGroups = get_trackers(verbose=verbose, debug=True)
         self._controlWidget = ControlWidget(self)
 
         self._buttonBox = QtWidgets.QDialogButtonBox(self)

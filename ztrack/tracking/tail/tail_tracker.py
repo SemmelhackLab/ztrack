@@ -23,9 +23,10 @@ class TailTracker(Tracker, ABC):
         params: dict = None,
         *,
         verbose=0,
+        debug=False,
         cmap: Union[colors.Colormap, str] = "jet",
     ):
-        super().__init__(roi, params, verbose=verbose)
+        super().__init__(roi, params, verbose=verbose, debug=debug)
 
         self._tail_cmap = cm.get_cmap(cmap)
         self._points = Points(np.array([[0, 0]]), 1, "m", symbol="+")
@@ -37,6 +38,14 @@ class TailTracker(Tracker, ABC):
             ((f"point{i:02d}" for i in range(n_points)), ("x", "y"))
         )
         return pd.Series(results.ravel(), idx)
+
+    @classmethod
+    def _results_to_dataframe(cls, results):
+        n_points = results.shape[-2]
+        idx = pd.MultiIndex.from_product(
+            ((f"point{i:02d}" for i in range(n_points)), ("x", "y"))
+        )
+        return pd.DataFrame(results.reshape(len(results), -1), columns=idx)
 
     @abstractmethod
     def _track_tail(self, img: np.ndarray):
@@ -54,6 +63,10 @@ class TailTracker(Tracker, ABC):
         tail = s.values.reshape(-1, 2)
         self._points.visible = True
         self._points.data = tail
+
+    def annotate_from_results(self, a: np.ndarray) -> None:
+        self._points.visible = True
+        self._points.data = a
 
     def _transform_from_roi_to_frame(self, results: np.ndarray):
         if self.roi.value is not None:

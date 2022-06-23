@@ -57,6 +57,20 @@ class Point(Variable):
         self._value = value
 
 
+class String(Variable):
+    def __init__(self, display_name: str, string):
+        super().__init__(display_name)
+        self._value = string
+
+    @property
+    def value(self) -> str:
+        return self._value
+
+    @value.setter
+    def value(self, value: str):
+        self._value = value
+
+
 class Rect(Variable):
     def __init__(self, display_name: str, bbox=None):
         super().__init__(display_name)
@@ -133,9 +147,28 @@ class Bounded(Numerical, ABC):
 
 class Int(Bounded):
     def __init__(
-        self, display_name: str, value: int, minimum: int, maximum: int
+        self,
+        display_name: str,
+        value: int,
+        minimum: int,
+        maximum: int,
+        odd_only=False,
     ):
         super().__init__(display_name, value, minimum, maximum)
+        self._odd_only = odd_only
+
+    @property
+    def value(self):
+        return super().value
+
+    @value.setter
+    def value(self, value):
+        assert self._minimum <= value <= self._maximum
+
+        if self._odd_only and value % 2 == 0:
+            value += 1
+
+        self._value = value
 
 
 class UInt8(Int):

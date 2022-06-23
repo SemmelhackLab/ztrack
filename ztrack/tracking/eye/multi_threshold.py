@@ -4,7 +4,7 @@ import numpy as np
 import ztrack.utils.cv as zcv
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
 from ztrack.utils.exception import TrackingError
-from ztrack.utils.variable import Float, UInt8
+from ztrack.utils.variable import Float, Int, UInt8
 
 
 class MultiThresholdEyeTracker(EyeTracker):
@@ -16,9 +16,12 @@ class MultiThresholdEyeTracker(EyeTracker):
             self.threshold_left_eye = UInt8("Left eye threshold", 127)
             self.threshold_right_eye = UInt8("Right eye threshold", 127)
             self.threshold_swim_bladder = UInt8("Swim bladder threshold", 127)
+            self.invert = Int("invert", 0, -1, 1)
 
-    def __init__(self, roi=None, params: dict = None, *, verbose=0):
-        super().__init__(roi, params, verbose=verbose)
+    def __init__(
+        self, roi=None, params: dict = None, *, verbose=0, debug=False
+    ):
+        super().__init__(roi, params, verbose=verbose, debug=debug)
 
     @property
     def _Params(self):

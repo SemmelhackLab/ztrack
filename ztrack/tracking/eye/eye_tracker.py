@@ -22,8 +22,10 @@ class EyeTracker(Tracker, ABC):
         )
     )
 
-    def __init__(self, roi=None, params: dict = None, *, verbose=0):
-        super().__init__(roi, params, verbose=verbose)
+    def __init__(
+        self, roi=None, params: dict = None, *, verbose=0, debug=False
+    ):
+        super().__init__(roi, params, verbose=verbose, debug=debug)
         self._left_eye = Ellipse(0, 0, 1, 1, 0, 4, "b")
         self._right_eye = Ellipse(0, 0, 1, 1, 0, 4, "r")
         self._swim_bladder = Ellipse(0, 0, 1, 1, 0, 4, "g")
@@ -69,6 +71,12 @@ class EyeTracker(Tracker, ABC):
         )
         return left_eye, right_eye, swim_bladder
 
+    def annotate_from_results(self, a: np.ndarray) -> None:
+        ellipse_shapes = [self._left_eye, self._right_eye, self._swim_bladder]
+        for i, j in zip(ellipse_shapes, a):
+            i.visible = True
+            i.cx, i.cy, i.a, i.b, i.theta = j
+
     def annotate_from_series(self, series: pd.Series) -> None:
         ellipse_shapes = [self._left_eye, self._right_eye, self._swim_bladder]
         body_parts = ["left_eye", "right_eye", "swim_bladder"]
@@ -82,13 +90,15 @@ class EyeTracker(Tracker, ABC):
         pass
 
     def _track_img(self, img: np.ndarray) -> np.ndarray:
-        img = zcv.rgb2gray_dark_bg_blur(img, self.params.sigma)
+        img = zcv.rgb2gray_dark_bg_blur(
+            img, self.params.sigma, self.params.invert
+        )
         contours = self._track_contours(img)
         return self._fit_ellipses(contours)
 
     def _transform_from_roi_to_frame(self, results: np.ndarray):
         if self.roi.value is not None:
-            results[:, :2] += self.roi.value[:2]
+            results[..., :2] += self.roi.value[:2]
         return results
 
     @classmethod
@@ -106,3 +116,21 @@ class EyeTracker(Tracker, ABC):
         s["right_eye", "angle"] = angle_r
         s["heading"] = heading
         return s
+
+    @classmethod
+    def _results_to_dataframe(cls, results):
+        eyes_midpoint = results[..., :2, :2].mean(-2)
+        swim_bladder_center = results[..., -1, :2]
+        midline = eyes_midpoint - swim_bladder_center
+        x2, x1 = midline.T
+        heading = np.rad2deg(np.arctan2(x1, x2))
+        theta_l, theta_r = results[..., :2, -1].T
+        angle_l = wrap_degrees(theta_l - heading)
+        angle_r = wrap_degrees(heading - theta_r)
+        df = pd.DataFrame(
+            results.reshape(len(results), -1), columns=cls._index
+        )
+        df["left_eye", "angle"] = angle_l
+        df["right_eye", "angle"] = angle_r
+        df["heading"] = heading
+        return df

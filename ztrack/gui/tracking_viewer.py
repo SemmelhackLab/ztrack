@@ -9,8 +9,12 @@ from PyQt5 import QtGui, QtWidgets
 
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.tracking import get_trackers_from_config
-from ztrack.utils.file import (get_config_path, get_paths_for_view_results,
-                               get_results_path, video_extensions)
+from ztrack.utils.file import (
+    get_config_path,
+    get_paths_for_view_results,
+    get_results_path,
+    video_extensions,
+)
 
 from ._main_window import MainWindow
 
@@ -26,12 +30,17 @@ class TrackingViewer(MainWindow):
         parent: QtWidgets.QWidget = None,
         videoPaths: List[str] = None,
         verbose=False,
+        dock=False,
+        update=True,
     ):
-        super().__init__(parent, videoPaths=videoPaths, verbose=verbose)
+        super().__init__(
+            parent, videoPaths=videoPaths, verbose=verbose, dock=dock
+        )
 
         self._results: Dict[str, pd.DataFrame] = {}
         self._trackers: Dict[str, Tracker] = {}
-        self.updateVideo()
+        if update:
+            self.updateVideo()
 
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
         paths = [u.toLocalFile() for u in event.mimeData().urls()]

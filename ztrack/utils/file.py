@@ -2,15 +2,18 @@ import json
 from pathlib import Path
 from typing import List, Optional
 
-from ztrack._settings import (config_extension, results_extension,
-                              video_extensions)
+from ztrack._settings import config_extension, results_extension, video_extensions
 
 
 def get_results_path(video):
+    if Path(str(video)).with_suffix(results_extension).exists():
+        return Path(str(video)).with_suffix(results_extension)
     return Path(str(video) + results_extension)
 
 
 def get_config_path(video):
+    if Path(str(video)).with_suffix(config_extension).exists():
+        return Path(str(video)).with_suffix(config_extension)
     return Path(str(video) + config_extension)
 
 

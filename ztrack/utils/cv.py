@@ -73,17 +73,31 @@ def interpolate_tail(tail: np.ndarray, n_points: int) -> np.ndarray:
     return np.column_stack(splev(np.linspace(0, 1, n_points), tck))
 
 
-def sequential_track_tail(img, point, angle, theta, n_steps, length, n_points):
+def sequential_track_tail(
+    img, point, angle, theta, theta2, fraction, n_steps, length, step_lengths
+):
     h, w = img.shape
+    if step_lengths.strip() != "":
+        try:
+            step_lengths = eval(step_lengths)
+        except Exception:
+            print("invalid step lengths")
+            step_lengths = split_int(round(length), n_steps)
+    else:
+        step_lengths = split_int(round(length), n_steps)
+
+    n_steps = len(step_lengths)
+
     tail = np.zeros((n_steps + 1, 2), dtype=int)
     tail[0] = point
-    step_lengths = split_int(round(length), n_steps)
+
     for i in range(n_steps):
         points = np.column_stack(
             circle_perimeter(*point, step_lengths[i], shape=(w, h))
         )
         angles = np.arctan2(*reversed((points - point).T))
-        idx = angle_diff(angles, angle) < theta
+        lim = theta if i / n_steps < fraction else theta2
+        idx = angle_diff(angles, angle) < lim
         points, angles = points[idx], angles[idx]
         x, y = points.T
 
@@ -95,13 +109,16 @@ def sequential_track_tail(img, point, angle, theta, n_steps, length, n_points):
         angle = angles[argmax]
         tail[i + 1] = point = points[argmax]
 
-    return interpolate_tail(tail, n_points)
+    return tail
 
 
-def rgb2gray_dark_bg_blur(img, sigma=0):
+def rgb2gray_dark_bg_blur(img, sigma=0, invert=0):
     img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
-    if cv2.mean(img)[0] > 127:
+    if invert == 0:
+        if cv2.mean(img)[0] > 127:
+            img = cv2.bitwise_not(img)
+    elif invert == 1:
         img = cv2.bitwise_not(img)
 
     if sigma > 0:
@@ -147,7 +164,7 @@ def fit_ellipse_moments(contour):
     return cx, cy, a / 2, b / 2, theta
 
 
-def adaptive_threshold(src: np.ndarray, block_size: int, c: int):
+def adaptive_threshold(src: np.ndarray, block_size: int, c: int) -> np.ndarray:
     if block_size % 2 == 0:
         block_size += 1
 
