@@ -115,3 +115,57 @@ class Ellipse(Shape):
 class Circle(Ellipse):
     def __init__(self, cx: float, cy: float, r: float, lw, lc):
         super().__init__(cx, cy, r, r, 0, lw, lc)
+
+
+class Line(Shape):
+    def __init__(self, x1: float, x2: float, y1: float, y2: float, lw, lc):
+        super().__init__(lw, lc)
+        self._x1 = x1
+        self._x2 = x2
+        self._y1 = y1
+        self._y2 = y2
+
+    @property
+    def x1(self):
+        if self._bbox.value is None:
+            return self._x1
+        return self._x1 + self._bbox.value[0]
+
+    @x1.setter
+    def x1(self, x1: float):
+        self._x1 = x1
+
+    @property
+    def x2(self):
+        if self._bbox.value is None:
+            return self._x2
+        return self._x2 + self._bbox.value[0]
+
+    @x2.setter
+    def x2(self, x2: float):
+        self._x2 = x2
+
+    @property
+    def y1(self):
+        if self._bbox.value is None:
+            return self._y1
+        return self._y1 + self._bbox.value[1]
+
+    @y1.setter
+    def y1(self, y1: float):
+        self._y1 = y1
+
+    @property
+    def y2(self):
+        if self._bbox.value is None:
+            return self._y2
+        return self._y2 + self._bbox.value[1]
+
+    @y2.setter
+    def y2(self, y2: float):
+        self._y2 = y2
+
+    def set_center_length_angle(self, center, length, angle):
+        center = np.asarray(center)
+        v = (length / 2) * np.array((np.cos(angle), np.sin(angle)))
+        (self.x1, self.y1), (self.x2, self.y2) = center - v, center + v
