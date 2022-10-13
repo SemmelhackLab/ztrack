@@ -8,7 +8,7 @@ import ztrack.utils.cv as zcv
 from ztrack.tracking.tracker import Params, Tracker
 from ztrack.utils.math import split_int
 from ztrack.utils.shape import Line, Points
-from ztrack.utils.variable import Angle, Float, Int, Point
+from ztrack.utils.variable import Angle, Bool, Float, Int, Point
 
 
 def _track_img(
@@ -107,7 +107,7 @@ class GradientTailTracker2(Tracker):
             self.w1 = Int("Tail base width (px)", 30, 5, 100)
             self.w2 = Int("Tail end width (px)", 30, 5, 100)
             self.sigma_tail = Float("sigma tail", 1, 0, 10, 0.1)
-            self.invert = Int("invert", 0, -1, 1)
+            self.invert = Bool("invert", True)
 
     def __init__(
         self,

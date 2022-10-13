@@ -4,8 +4,18 @@ from abc import ABC, ABCMeta, abstractmethod
 from typing import TYPE_CHECKING
 
 from PyQt5 import QtCore, QtWidgets
+from superqt import QLabeledDoubleRangeSlider
 
-from ztrack.utils.variable import Angle, Float, Int, Point, Rect, String
+from ztrack.utils.variable import (
+    Angle,
+    Bool,
+    Float,
+    FloatRange,
+    Int,
+    Point,
+    Rect,
+    String,
+)
 
 if TYPE_CHECKING:
     from ztrack.gui._tracking_plot_widget import TrackingPlotWidget
@@ -40,6 +50,10 @@ class VariableWidget(QtWidgets.QWidget, ABC, metaclass=AbstractWidgetMeta):
             return RectWidget(parent, variable=variable)
         if isinstance(variable, String):
             return StringWidget(parent, variable=variable)
+        if isinstance(variable, Bool):
+            return BoolWidget(parent, variable=variable)
+        if isinstance(variable, FloatRange):
+            return FloatRangeWidget(parent, variable=variable)
         raise NotImplementedError
 
     def _setValue(self, value):
@@ -54,6 +68,94 @@ class VariableWidget(QtWidgets.QWidget, ABC, metaclass=AbstractWidgetMeta):
     def setValue(self, value):
         self._setValue(value)
         self._setGuiValue(value)
+
+
+class FloatRangeWidget(VariableWidget):
+    _variable: FloatRange
+
+    def __init__(
+        self, parent: QtWidgets.QWidget = None, *, variable: FloatRange
+    ):
+        super().__init__(parent, variable=variable)
+        self._slider = QLabeledDoubleRangeSlider(self)
+        self._slider.setOrientation(QtCore.Qt.Orientation.Horizontal)
+        self._slider.setRange(variable.minimum, variable.maximum)
+        self._slider.setValue(variable.value)
+        # self._slider.setSingleStep(variable.step)
+        # self._slider.setTickInterval(variable.step)
+        # self._slider.setPageStep(variable.step)
+
+        # self._min_spin_box = QtWidgets.QDoubleSpinBox(self)
+        # self._min_spin_box.setMinimum(variable.minimum)
+        # self._min_spin_box.setMaximum(variable.maximum)
+        # self._min_spin_box.setValue(variable.value[0])
+        # self._min_spin_box.setSingleStep(variable.step)
+        #
+        # self._max_spin_box = QtWidgets.QDoubleSpinBox(self)
+        # self._max_spin_box.setMinimum(variable.minimum)
+        # self._max_spin_box.setMaximum(variable.maximum)
+        # self._max_spin_box.setValue(variable.value[1])
+        # self._max_spin_box.setSingleStep(variable.step)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._slider)
+        # layout.addWidget(self._min_spin_box)
+        # layout.addWidget(self._max_spin_box)
+        self.setLayout(layout)
+
+        # self._min_spin_box.valueChanged.connect(self._set_slider_min)
+        # self._max_spin_box.valueChanged.connect(self._set_slider_max)
+
+        self._slider.valueChanged.connect(self._setValue)
+
+    # def _set_spinbox_values(self, value):
+    #     vmin, vmax = value
+    #     self._min_spin_box.setValue(vmin)
+    #     self._max_spin_box.setValue(vmax)
+    #
+    # def _set_slider_max(self, value: float):
+    #     vmin, vmax = self._slider.value()
+    #     print(self._variable.strict)
+    #     print(vmin, value, vmin < value, vmin <= value, (vmin < value if self._variable.strict else vmin <= value))
+    #     if (self._slider.minimum() <= value <= self._slider.maximum()) \
+    #             and (vmin < value if self._variable.strict else vmin <= value):
+    #         self._slider.setValue((vmin, value))
+    #     else:
+    #         self._max_spin_box.setValue(vmax)
+    #
+    # def _set_slider_min(self, value: float):
+    #     vmin, vmax = self._slider.value()
+    #     if (self._slider.minimum() <= value <= self._slider.maximum()) \
+    #             and (value < vmax if self._variable.strict else value <= vmax):
+    #         self._slider.setValue((value, vmax))
+    #     else:
+    #         self._min_spin_box.setValue(vmin)
+
+    def _setGuiValue(self, value):
+        self._slider.valueChanged.disconnect()
+        # self._set_spinbox_values(value)
+        self._slider.setValue(value)
+        self._slider.valueChanged.connect(self._setValue)
+        # self._slider.valueChanged.connect(self._set_spinbox_values)
+
+
+class BoolWidget(VariableWidget):
+    def __init__(self, parent: QtWidgets.QWidget = None, *, variable: Bool):
+        super().__init__(parent, variable=variable)
+
+        self._checkbox = QtWidgets.QCheckBox(self)
+        self._checkbox.setChecked(variable.value)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._checkbox)
+        self.setLayout(layout)
+
+        self._checkbox.stateChanged.connect(self._setValue)
+
+    def _setGuiValue(self, value: bool):
+        self._checkbox.setChecked(value)
 
 
 class StringWidget(VariableWidget):

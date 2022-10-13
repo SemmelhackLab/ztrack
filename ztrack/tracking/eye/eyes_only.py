@@ -6,7 +6,7 @@ import ztrack.utils.cv as zcv
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
 from ztrack.utils.cv import winsorize
 from ztrack.utils.exception import TrackingError
-from ztrack.utils.variable import Angle, Float, Int, Point, UInt8
+from ztrack.utils.variable import Angle, Bool, Float, FloatRange, Point, UInt8
 
 
 class EyesOnlyTracker(EyeTracker):
@@ -14,6 +14,7 @@ class EyesOnlyTracker(EyeTracker):
         def __init__(self, params: dict = None):
             super().__init__(params)
             self.sigma = Float("Sigma (px)", 2, 0, 100, 0.1)
+            self.q = FloatRange("Quantiles", (0.05, 0.99))
             self.qmin = Float("qmin", 0.05, 0, 1, 0.01)
             self.qmax = Float("qmax", 0.99, 0, 1, 0.01)
             self.threshold_segmentation = UInt8("Segmentation threshold", 127)
@@ -25,7 +26,7 @@ class EyesOnlyTracker(EyeTracker):
             self.swim_bladder_orientation = Angle(
                 "Swim bladder orientation", 270
             )
-            self.invert = Int("invert", 0, -1, 1)
+            self.invert = Bool("invert", True)
 
     def __init__(
         self, roi=None, params: dict = None, *, verbose=0, debug=False
@@ -51,10 +52,10 @@ class EyesOnlyTracker(EyeTracker):
     def _track_contours(self, img: np.ndarray):
         p = self.params
 
-        img = img_as_ubyte(winsorize(img, p.qmin, p.qmax))
+        img = img_as_ubyte(winsorize(img, *p.q))
 
         if self._debug:
-            cv2.imshow(img)
+            cv2.imshow("debug", img)
 
         # segment the image with binary threshold
         contours = self._binary_segmentation(img, p.threshold_segmentation)

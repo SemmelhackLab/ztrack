@@ -1,7 +1,7 @@
 import numpy as np
 
 import ztrack.utils.cv as zcv
-from ztrack.utils.variable import Angle, Float, Int, Point, String
+from ztrack.utils.variable import Angle, Bool, Float, Int, Point, String
 
 from .tail_tracker import TailParams, TailTracker
 
@@ -19,7 +19,7 @@ class SequentialTailTracker(TailTracker):
             self.theta2 = Angle("Search angle 2 (°)", 60)
             self.fraction = Float("Fraction", 0.5, 0, 1, 0.05)
             self.step_lengths = String("Step lengths", "")
-            self.invert = Int("invert", 0, -1, 1)
+            self.invert = Bool("invert", True)
 
     def __init__(
         self, roi=None, params: dict = None, *, verbose=0, debug=False

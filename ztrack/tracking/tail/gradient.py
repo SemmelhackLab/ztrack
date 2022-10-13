@@ -7,7 +7,7 @@ from scipy.ndimage import gaussian_filter
 import ztrack.utils.cv as zcv
 from ztrack.tracking.tracker import Params, Tracker
 from ztrack.utils.shape import Points
-from ztrack.utils.variable import Angle, Float, Int, Point
+from ztrack.utils.variable import Angle, Bool, Float, Int, Point
 
 
 class GradientTailTracker(Tracker):
@@ -44,7 +44,7 @@ class GradientTailTracker(Tracker):
             self.theta = Angle("Search angle (°)", 60)
             self.d_theta = Float("dtheta", 0.05, 0.01, 0.1, 0.01)
             self.sigma_tail = Float("sigma tail", 0.2, 0.05, 0.4, 0.05)
-            self.invert = Int("invert", 0, -1, 1)
+            self.invert = Bool("invert", True)
 
     def __init__(
         self,

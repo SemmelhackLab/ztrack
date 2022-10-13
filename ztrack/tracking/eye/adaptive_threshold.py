@@ -5,7 +5,7 @@ from skimage.morphology import remove_small_objects
 import ztrack.utils.cv as zcv
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
 from ztrack.utils.shape import Rectangle
-from ztrack.utils.variable import Angle, Float, Int, Point, Rect, UInt8
+from ztrack.utils.variable import Angle, Bool, Float, Int, Point, Rect, UInt8
 
 
 class AdaptiveThresholdEyeTracker(EyeTracker):
@@ -47,7 +47,7 @@ class AdaptiveThresholdEyeTracker(EyeTracker):
 
             self.min_size = Int("Minimum size (px)", 5, 0, 200)
 
-            self.invert = Int("invert", 0, -1, 1)
+            self.invert = Bool("invert", True)
 
     @property
     def shapes(self):
