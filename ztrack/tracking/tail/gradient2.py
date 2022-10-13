@@ -52,17 +52,8 @@ def _track_img(
         if min(x0, x1, y0, y1) >= 0 and max(x0, x1) < w and max(y0, y1) < h:
             x_ = np.linspace(x0, x1, length).astype(int)
             y_ = np.linspace(y0, y1, length).astype(int)
-
-            # try:
             z = img[y_, x_]
-            # except IndexError:
-            #     print(y_)
-            #     print(x_)
-            #     print(x0, x1, y0, y1, w, h)
-
-            z = correlate1d(
-                z.astype(float), weights, 0, mode="nearest", origin=0
-            )
+            z = correlate1d(z.astype(float), weights, 0, mode="nearest", origin=0)
             m = length // 2
             argmax = (z[:m].argmax() + m + z[m:].argmin()) // 2
             angle_rad = np.arctan2(y_[argmax] - y, x_[argmax] - x)
@@ -143,10 +134,7 @@ class GradientTailTracker2(Tracker):
         w1 = p.w1
         w2 = p.w2
         half_lengths = (
-            w1
-            + (w2 - w1)
-            * np.cumsum((0, *segment_lengths[1:]))
-            / segment_lengths[1:].sum()
+            w1 + (w2 - w1) * np.cumsum((0, *segment_lengths[1:])) / segment_lengths[1:].sum()
         )
         lengths = (half_lengths * 2).astype(int)
         sigma_tail = p.sigma_tail
@@ -171,9 +159,7 @@ class GradientTailTracker2(Tracker):
 
                 lw = int(4.0 * float(sigma_tail) + 0.5)
                 weights = _gaussian_kernel1d(sigma_tail, 1, lw)[::-1]
-                z = correlate1d(
-                    z.astype(float), weights, 0, mode="nearest", origin=0
-                )
+                z = correlate1d(z.astype(float), weights, 0, mode="nearest", origin=0)
 
                 m = length // 2
                 argmax = (z[:m].argmax() + m + z[m:].argmin()) // 2
@@ -214,9 +200,7 @@ class GradientTailTracker2(Tracker):
     @classmethod
     def _results_to_dataframe(cls, results):
         n_points = results.shape[-2]
-        idx = pd.MultiIndex.from_product(
-            ((f"point{i:02d}" for i in range(n_points)), ("x", "y"))
-        )
+        idx = pd.MultiIndex.from_product(((f"point{i:02d}" for i in range(n_points)), ("x", "y")))
         return pd.DataFrame(results.reshape(len(results), -1), columns=idx)
 
     def track_video(self, video_path, ignore_errors=False):
@@ -237,20 +221,13 @@ class GradientTailTracker2(Tracker):
 
         segment_lengths = split_int(p.tail_length, n_segments)
         half_lengths = (
-            p.w1
-            + (p.w2 - p.w1)
-            * np.cumsum((0, *segment_lengths[1:]))
-            / segment_lengths[1:].sum()
+            p.w1 + (p.w2 - p.w1) * np.cumsum((0, *segment_lengths[1:])) / segment_lengths[1:].sum()
         )
         lengths = (half_lengths * 2).astype(int)
         sigma_tail = p.sigma_tail
         roi = self.roi.value
 
-        it = (
-            tqdm(range(len(video_reader)))
-            if self._verbose
-            else range(len(video_reader))
-        )
+        it = tqdm(range(len(video_reader))) if self._verbose else range(len(video_reader))
 
         s_ = self.roi.to_slice()
 
@@ -276,6 +253,4 @@ class GradientTailTracker2(Tracker):
             ]
         )
 
-        return self._results_to_dataframe(
-            self._transform_from_roi_to_frame(data)
-        )
+        return self._results_to_dataframe(self._transform_from_roi_to_frame(data))

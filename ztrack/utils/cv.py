@@ -59,16 +59,12 @@ def rgb2gray(img: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 
 
-def video_median(
-    video_path: str, n_frames_for_bg=300, verbose=False
-) -> np.ndarray:
+def video_median(video_path: str, n_frames_for_bg=300, verbose=False) -> np.ndarray:
     vr = VideoReader(video_path)
     n_frames = len(vr)
     n_frames_for_bg = min(n_frames, n_frames_for_bg)
     idx = np.linspace(0, n_frames - 1, n_frames_for_bg).astype(int)
-    frames = [
-        rgb2gray(vr[i].asnumpy()) for i in (tqdm(idx) if verbose else idx)
-    ]
+    frames = [rgb2gray(vr[i].asnumpy()) for i in (tqdm(idx) if verbose else idx)]
 
     return np.median(frames, axis=0).astype(np.uint8)
 
@@ -79,29 +75,36 @@ def interpolate_tail(tail: np.ndarray, n_points: int) -> np.ndarray:
 
 
 def sequential_track_tail(
-    img, point, angle, theta, theta2, fraction, n_steps, length, step_lengths
+    img,
+    point,
+    angle,
+    theta,
+    n_steps,
+    length,
+    skips,
 ):
     h, w = img.shape
-    if step_lengths.strip() != "":
-        try:
-            step_lengths = eval(step_lengths)
-        except Exception:
-            print("invalid step lengths")
-            step_lengths = split_int(round(length), n_steps)
-    else:
-        step_lengths = split_int(round(length), n_steps)
 
+    if skips == "":
+        skips = ()
+    else:
+        skips = np.sort(np.unique(eval(skips)))
+
+    step_lengths = split_int(round(length), n_steps + len(skips))
+
+    for skip in skips[::-1]:
+        step_lengths[skip - 1] += step_lengths[skip]
+
+    step_lengths = np.delete(step_lengths, skips)
     n_steps = len(step_lengths)
 
     tail = np.full((n_steps + 1, 2), -1, dtype=int)
     tail[0] = point
 
     for i in range(n_steps):
-        points = np.column_stack(
-            circle_perimeter(*point, step_lengths[i], shape=(w, h))
-        )
+        points = np.column_stack(circle_perimeter(*point, step_lengths[i], shape=(w, h)))
         angles = np.arctan2(*reversed((points - point).T))
-        lim = theta if i / n_steps < fraction else theta2
+        lim = theta
         idx = angle_diff(angles, angle) < lim
         points, angles = points[idx], angles[idx]
 
@@ -138,9 +141,7 @@ def warp_img(
     rect = (bbox_midpoint, (w, h), heading + 90)
     box = np.int0(cv2.boxPoints(rect))
     src_pts = box.astype("float32")
-    dst_pts = np.array(
-        [[0, h - 1], [0, 0], [w - 1, 0], [w - 1, h - 1]], dtype="float32"
-    )
+    dst_pts = np.array([[0, h - 1], [0, 0], [w - 1, 0], [w - 1, h - 1]], dtype="float32")
 
     T = cv2.getPerspectiveTransform(src_pts, dst_pts)
 
@@ -149,10 +150,7 @@ def warp_img(
 
 def orientation(src):
     moments = cv2.moments(src)
-    return np.rad2deg(
-        np.arctan2(2 * moments["mu11"], (moments["mu20"] - moments["mu02"]))
-        / 2
-    )
+    return np.rad2deg(np.arctan2(2 * moments["mu11"], (moments["mu20"] - moments["mu02"])) / 2)
 
 
 def fit_ellipse_moments(contour):

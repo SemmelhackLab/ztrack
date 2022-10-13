@@ -1,3 +1,4 @@
+import logging
 import traceback
 from abc import ABC, abstractmethod
 from typing import Type
@@ -16,9 +17,7 @@ from .params import Params
 class Tracker(ABC):
     _index: pd.Index
 
-    def __init__(
-        self, roi=None, params: dict = None, *, verbose=0, debug=False
-    ):
+    def __init__(self, roi=None, params: dict = None, *, verbose=0, debug=False):
         self._debug = debug
         self._roi = Rect("", roi)
         self._params = self._Params(params)
@@ -63,9 +62,7 @@ class Tracker(ABC):
 
     def annotate_from_results(self, a: np.ndarray) -> None:
         if a is not None:
-            return self.annotate_from_series(
-                self._results_to_dataframe(a[None]).iloc[0]
-            )
+            return self.annotate_from_series(self._results_to_dataframe(a[None]).iloc[0])
 
     @property
     def params(self) -> Params:
@@ -106,7 +103,7 @@ class Tracker(ABC):
             return self._track_img(img)
         except Exception:
             if ignore_error:
-                print(f"Tracker {self.name()} failed at frame {i}")
+                logging.error(f"Tracker {self.name()} failed at frame {i}")
                 return np.nan
             raise TrackingError(i)
 
@@ -114,27 +111,16 @@ class Tracker(ABC):
         self.set_video(video_path)
 
         video_reader = VideoReader(str(video_path))
-        it = (
-            tqdm(range(len(video_reader)))
-            if self._verbose
-            else range(len(video_reader))
-        )
+        it = tqdm(range(len(video_reader))) if self._verbose else range(len(video_reader))
 
         s_ = self.roi.to_slice()
         data = np.asarray(
             np.broadcast_arrays(
-                *[
-                    self.__track_img(
-                        video_reader[i].asnumpy()[s_], i, ignore_errors
-                    )
-                    for i in it
-                ]
+                *[self.__track_img(video_reader[i].asnumpy()[s_], i, ignore_errors) for i in it]
             )
         )
 
-        return self._results_to_dataframe(
-            self._transform_from_roi_to_frame(data)
-        )
+        return self._results_to_dataframe(self._transform_from_roi_to_frame(data))
 
     def set_video(self, video_path):
         pass

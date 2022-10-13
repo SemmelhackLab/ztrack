@@ -1,6 +1,6 @@
 [tool.black]
 target-version = ['py38']
-line-length = 79
+line-length = 99
 exclude = '''
 (
   /(
@@ -50,6 +50,7 @@ PyQt5 = "^5.10.1"
 pyqtgraph = "^0.12.2"
 qtmodern = "^0.2.0"
 scikit-image = "^0.18.2"
+superqt = "^0.3"
 tables = "3.6.1"
 tqdm = "^4.61.2"
 

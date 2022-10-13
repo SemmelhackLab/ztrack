@@ -5,6 +5,7 @@ def run_tracking(
     verbose,
     ignore_errors,
 ):
+    import logging
     import warnings
 
     import pandas as pd
@@ -17,6 +18,8 @@ def run_tracking(
         get_video_paths_from_inputs,
     )
 
+    logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.DEBUG)
+
     videos = get_video_paths_from_inputs(inputs, recursive, overwrite)
     for video in videos:
         config = get_config_dict(video)
@@ -27,14 +30,12 @@ def run_tracking(
         for key, tracker in trackers.items():
 
             if verbose:
-                print(f"Tracking {video}")
+                logging.info(f"Tracking {video}")
 
             try:
                 dfs[key] = tracker.track_video(video, ignore_errors)
             except VideoTrackingError as e:
-                warnings.warn(
-                    f"Tracker {key} failed for {video} at frame {e.frame}."
-                )
+                warnings.warn(f"Tracker {key} failed for {video} at frame {e.frame}.")
 
         if dfs:
             s = pd.HDFStore(get_results_path(video), complib="zlib")

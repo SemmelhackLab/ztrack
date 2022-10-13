@@ -15,22 +15,20 @@ class EyesOnlyTracker(EyeTracker):
             super().__init__(params)
             self.sigma = Float("Sigma (px)", 2, 0, 100, 0.1)
             self.q = FloatRange("Quantiles", (0.05, 0.99))
-            self.qmin = Float("qmin", 0.05, 0, 1, 0.01)
-            self.qmax = Float("qmax", 0.99, 0, 1, 0.01)
             self.threshold_segmentation = UInt8("Segmentation threshold", 127)
             self.threshold_left_eye = UInt8("Left eye threshold", 127)
             self.threshold_right_eye = UInt8("Right eye threshold", 127)
             self.swim_bladder_center = Point("Swim bladder center", (0, 0))
             self.swim_bladder_length = UInt8("Swim bladder length", 20)
             self.swim_bladder_width = UInt8("Swim bladder width", 30)
-            self.swim_bladder_orientation = Angle(
-                "Swim bladder orientation", 270
-            )
+
+            self.eye_length = UInt8("Eye length", 40)
+            self.eye_width = UInt8("Eye width", 20)
+
+            self.swim_bladder_orientation = Angle("Swim bladder orientation", 270)
             self.invert = Bool("invert", True)
 
-    def __init__(
-        self, roi=None, params: dict = None, *, verbose=0, debug=False
-    ):
+    def __init__(self, roi=None, params: dict = None, *, verbose=0, debug=False):
         super().__init__(roi, params, verbose=verbose, debug=debug)
 
     @property
@@ -88,9 +86,7 @@ class EyesOnlyTracker(EyeTracker):
         return results
 
     def _fit_ellipses(self, contours):
-        ellipses = np.array(
-            [zcv.fit_ellipse_moments(contour) for contour in contours]
-        )
+        ellipses = np.array([zcv.fit_ellipse_moments(contour) for contour in contours])
         return ellipses
 
     def _track_img(self, img: np.ndarray) -> np.ndarray:
@@ -105,4 +101,7 @@ class EyesOnlyTracker(EyeTracker):
             p.swim_bladder_width,
             p.swim_bladder_orientation,
         )
-        return self._correct_orientation(np.row_stack((eyes, swim_bladder)))
+        ellipses = self._correct_orientation(np.row_stack((eyes, swim_bladder)))
+        ellipses[:2, 2] = p.eye_length
+        ellipses[:2, 3] = p.eye_width
+        return ellipses
