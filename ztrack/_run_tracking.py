@@ -37,7 +37,7 @@ def run_tracking(
                 )
 
         if dfs:
-            s = pd.HDFStore(get_results_path(video))
+            s = pd.HDFStore(get_results_path(video), complib="zlib")
 
             for key, df in dfs.items():
                 s[key] = df

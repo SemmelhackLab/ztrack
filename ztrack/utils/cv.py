@@ -7,9 +7,14 @@ from scipy.interpolate import splev, splprep
 from skimage.draw import circle_perimeter
 from tqdm import tqdm
 
-from .exception import TrackingError
 from .geometry import angle_diff
 from .math import split_int
+
+
+def winsorize(img, qmin, qmax):
+    vmin = np.quantile(img, qmin)
+    vmax = np.quantile(img, qmax)
+    return np.clip((img - vmin) / (vmax - vmin), 0, 1)
 
 
 def binary_threshold(img: np.ndarray, threshold: int) -> np.ndarray:
@@ -88,7 +93,7 @@ def sequential_track_tail(
 
     n_steps = len(step_lengths)
 
-    tail = np.zeros((n_steps + 1, 2), dtype=int)
+    tail = np.full((n_steps + 1, 2), -1, dtype=int)
     tail[0] = point
 
     for i in range(n_steps):
@@ -99,13 +104,12 @@ def sequential_track_tail(
         lim = theta if i / n_steps < fraction else theta2
         idx = angle_diff(angles, angle) < lim
         points, angles = points[idx], angles[idx]
+
+        if len(points) == 0:
+            break
+
         x, y = points.T
-
-        try:
-            argmax = img[y, x].argmax()
-        except ValueError:
-            raise TrackingError("Tail tracking failed")
-
+        argmax = img[y, x].argmax()
         angle = angles[argmax]
         tail[i + 1] = point = points[argmax]
 

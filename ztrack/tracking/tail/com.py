@@ -13,12 +13,14 @@ from ztrack.utils.variable import Angle, Float, Int, Point
 
 def _track_img(
     img: np.ndarray,
+    h,
+    w,
     angle_rad,
     tail_base,
     sigma,
     invert,
     n_segments,
-    segment_lengths,
+    segment_lenths,
     half_lengths,
     lengths,
     weights,
@@ -31,9 +33,8 @@ def _track_img(
         x -= x0
         y -= y0
 
-    img = zcv.rgb2gray_dark_bg_blur(img, sigma, invert)
-
-    h, w = img.shape
+    if invert:
+        img = zcv.rgb2gray_dark_bg_blur(img, sigma, invert)
 
     results = np.empty((n_segments, 2), dtype=np.int16)
 
@@ -41,7 +42,7 @@ def _track_img(
         sin = np.sin(angle_rad)
         cos = np.cos(angle_rad)
 
-        r = segment_lengths[i]
+        r = segment_lenths[i]
         half_length = half_lengths[i]
         length = lengths[i]
         x0 = x + (r_cos := r * cos) - (l_sin := half_length * sin)
@@ -53,13 +54,7 @@ def _track_img(
             x_ = np.linspace(x0, x1, length).astype(int)
             y_ = np.linspace(y0, y1, length).astype(int)
 
-            # try:
             z = img[y_, x_]
-            # except IndexError:
-            #     print(y_)
-            #     print(x_)
-            #     print(x0, x1, y0, y1, w, h)
-
             z = correlate1d(
                 z.astype(float), weights, 0, mode="nearest", origin=0
             )
@@ -75,7 +70,7 @@ def _track_img(
     return results
 
 
-class GradientTailTracker2(Tracker):
+class ComTailTracker(Tracker):
     @property
     def _Params(self) -> Type[Params]:
         return self.__Params
@@ -106,7 +101,7 @@ class GradientTailTracker2(Tracker):
             self.angle = Angle("Initial angle (°)", 90)
             self.w1 = Int("Tail base width (px)", 30, 5, 100)
             self.w2 = Int("Tail end width (px)", 30, 5, 100)
-            self.sigma_tail = Float("sigma tail", 1, 0, 10, 0.1)
+            self.quantile = Float("sigma tail", 0, 0, 1, 0.01)
             self.invert = Int("invert", 0, -1, 1)
 
     def __init__(
@@ -132,8 +127,8 @@ class GradientTailTracker2(Tracker):
             y -= y0
 
         angle = np.deg2rad(p.angle)
-
-        img = zcv.rgb2gray_dark_bg_blur(img, p.sigma, p.invert)
+        if p.invert:
+            img = zcv.rgb2gray_dark_bg_blur(img, p.sigma, p.invert)
 
         h, w = img.shape
         n_segments = p.n_segments
@@ -149,7 +144,7 @@ class GradientTailTracker2(Tracker):
             / segment_lengths[1:].sum()
         )
         lengths = (half_lengths * 2).astype(int)
-        sigma_tail = p.sigma_tail
+        q = p.quantile
 
         for i in range(n_segments):
             r = segment_lengths[i]
@@ -168,18 +163,17 @@ class GradientTailTracker2(Tracker):
                 y_ = np.linspace(y0, y1, length).astype(int)
 
                 z = img[y_, x_]
+                z = np.maximum(0, z - np.quantile(z, q))
+                z = z / z.sum()
+                xn = x_ @ z
+                yn = y_ @ z
 
-                lw = int(4.0 * float(sigma_tail) + 0.5)
-                weights = _gaussian_kernel1d(sigma_tail, 1, lw)[::-1]
-                z = correlate1d(
-                    z.astype(float), weights, 0, mode="nearest", origin=0
-                )
+                dx = xn - x
+                dy = yn - y
+                s = np.sqrt(dx * dx + dy * dy)
+                x = x + dx / s * r
+                y = y + dy / s * r
 
-                m = length // 2
-                argmax = (z[:m].argmax() + m + z[m:].argmin()) // 2
-                angle = np.arctan2(y_[argmax] - y, x_[argmax] - x)
-                x += round(r * np.cos(angle))
-                y += round(r * np.sin(angle))
                 results[i] = x, y
             else:
                 results[i:] = -1
@@ -188,11 +182,11 @@ class GradientTailTracker2(Tracker):
 
     @staticmethod
     def name():
-        return "gradient2"
+        return "com"
 
     @staticmethod
     def display_name():
-        return "Gradient2"
+        return "COM"
 
     @staticmethod
     def calculate_angle(p1, p2):
@@ -261,6 +255,8 @@ class GradientTailTracker2(Tracker):
             [
                 _track_img(
                     video_reader[i].asnumpy()[s_],
+                    h,
+                    w,
                     angle_rad,
                     tail_base,
                     sigma,
