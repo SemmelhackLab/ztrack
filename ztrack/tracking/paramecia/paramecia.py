@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Type
+from typing import Optional, Type
 
 import cv2
 import numpy as np
@@ -16,7 +16,7 @@ from ..tracker import Tracker
 
 class ParameciaTracker(Tracker, BackgroundSubtractionMixin):
     class __Params(Params):
-        def __init__(self, params: dict = None):
+        def __init__(self, params: Optional[dict] = None):
             super().__init__(params=params)
             self.sigma = Float("Sigma (px)", 0, 0, 100, 0.1)
             self.block_size = Int("Block size", 99, 3, 200)
@@ -24,9 +24,7 @@ class ParameciaTracker(Tracker, BackgroundSubtractionMixin):
             self.min_area = Int("Min area", 0, 0, 100)
             self.max_area = Int("Max area", 20, 0, 100)
 
-    def __init__(
-        self, roi=None, params: dict = None, *, verbose=0, debug=False
-    ):
+    def __init__(self, roi=None, params: Optional[dict] = None, *, verbose=0, debug=False):
         super().__init__(roi, params, verbose=verbose, debug=debug)
         self._bg = None
         self._is_bg_bright = False
@@ -78,9 +76,7 @@ class ParameciaTracker(Tracker, BackgroundSubtractionMixin):
 
     def _track_img(self, img: np.ndarray):
         if self._bg is None:
-            self._is_bg_bright, self._bg = self.calculate_background(
-                self._video_path
-            )
+            self._is_bg_bright, self._bg = self.calculate_background(self._video_path)
 
         img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
         bg = self._bg[self.roi.to_slice()]
@@ -101,8 +97,6 @@ class ParameciaTracker(Tracker, BackgroundSubtractionMixin):
                 contours,
             )
         )
-        centers = np.array(
-            [zcv.contour_center(contour) for contour in contours]
-        )
+        centers = np.array([zcv.contour_center(contour) for contour in contours])
 
         return centers

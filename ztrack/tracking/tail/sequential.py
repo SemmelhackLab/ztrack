@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 
 import ztrack.utils.cv as zcv
@@ -8,7 +10,7 @@ from .tail_tracker import TailParams, TailTracker
 
 class SequentialTailTracker(TailTracker):
     class __Params(TailParams):
-        def __init__(self, params: dict = None):
+        def __init__(self, params: Optional[dict] = None):
             super().__init__(params)
             self.sigma = Float("Sigma (px)", 2, 0, 100, 0.1)
             self.n_steps = Int("Number of steps", 10, 3, 20)
@@ -19,7 +21,7 @@ class SequentialTailTracker(TailTracker):
             self.skips = String("Skips", "")
             self.invert = Bool("invert", True)
 
-    def __init__(self, roi=None, params: dict = None, *, verbose=0, debug=False):
+    def __init__(self, roi=None, params: Optional[dict] = None, *, verbose=0, debug=False):
         super().__init__(roi, params, verbose=verbose, debug=debug)
 
     @property

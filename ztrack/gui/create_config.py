@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from PyQt5 import QtWidgets
 
-from ztrack._settings import config_extension
+from ztrack._settings import config_extension, video_extensions
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.tracking import get_trackers
 from ztrack.tracking.tracker import NoneTracker
@@ -27,8 +27,8 @@ class CreateConfigWindow(MainWindow):
     def __init__(
         self,
         parent: QtWidgets.QWidget = None,
-        videoPaths: List[str] = None,
-        savePaths: List[List[str]] = None,
+        videoPaths: Optional[List[str]] = None,
+        savePaths: Optional[List[List[str]]] = None,
         verbose=False,
     ):
         super().__init__(parent, videoPaths=videoPaths, verbose=verbose)
@@ -107,9 +107,11 @@ class CreateConfigWindow(MainWindow):
         self.updateVideo()
 
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
-        paths = sorted([u.toLocalFile() for u in event.mimeData().urls()], reverse=True)
+        paths = [u.toLocalFile() for u in event.mimeData().urls()]
+        paths = [path for path in paths if Path(path).suffix in video_extensions]
+        paths = sorted(paths, key=lambda x: x[::-1])
 
-        for path in paths:
+        for path in paths[::-1]:
             self.enqueue(path, [path], first=True)
 
         self.updateVideo()

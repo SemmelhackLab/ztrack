@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Optional, Type
 
 import numpy as np
 import pandas as pd
@@ -88,7 +88,7 @@ class GradientTailTracker2(Tracker):
         return results
 
     class __Params(Params):
-        def __init__(self, params: dict = None):
+        def __init__(self, params: Optional[dict] = None):
             super().__init__(params)
             self.sigma = Float("Sigma (px)", 2, 0, 100, 0.1)
             self.n_segments = Int("Number of segments", 10, 3, 20)
@@ -103,7 +103,7 @@ class GradientTailTracker2(Tracker):
     def __init__(
         self,
         roi=None,
-        params: dict = None,
+        params: Optional[dict] = None,
         *,
         verbose=0,
         debug=False,

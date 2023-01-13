@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Optional
 
 import cv2
 import numpy as np
@@ -11,9 +12,7 @@ from ztrack.utils.exception import TrackingError
 from ztrack.utils.shape import Points
 
 
-class BaseFreeSwimTracker(
-    MultiThresholdEyeTracker, BackgroundSubtractionMixin, ABC
-):
+class BaseFreeSwimTracker(MultiThresholdEyeTracker, BackgroundSubtractionMixin, ABC):
     @property
     def shapes(self):
         return [
@@ -23,12 +22,8 @@ class BaseFreeSwimTracker(
             self._points,
         ]
 
-    def __init__(
-        self, roi=None, params: dict = None, *, verbose=0, debug=False
-    ):
-        MultiThresholdEyeTracker.__init__(
-            self, roi, params, verbose=verbose, debug=debug
-        )
+    def __init__(self, roi=None, params: Optional[dict] = None, *, verbose=0, debug=False):
+        MultiThresholdEyeTracker.__init__(self, roi, params, verbose=verbose, debug=debug)
         self._bg = None
         self._is_bg_bright = False
         self._video_path = None
@@ -86,9 +81,7 @@ class BaseFreeSwimTracker(
 
     def _track_img(self, img: np.ndarray):
         if self._bg is None:
-            self._is_bg_bright, self._bg = self.calculate_background(
-                self._video_path
-            )
+            self._is_bg_bright, self._bg = self.calculate_background(self._video_path)
 
         img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
         bg = self._bg[self.roi.to_slice()]
@@ -108,8 +101,7 @@ class BaseFreeSwimTracker(
         opp_heading = np.arctan2(*midline[::-1])
         sb_theta = np.deg2rad(ellipses[2, -1])
         sb_posterior = np.round(
-            sb_center
-            - ellipses[2, 2] * np.array([np.cos(sb_theta), np.sin(sb_theta)])
+            sb_center - ellipses[2, 2] * np.array([np.cos(sb_theta), np.sin(sb_theta)])
         ).astype(int)
 
         try:

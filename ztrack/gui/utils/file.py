@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING
 from PyQt5 import QtCore, QtWidgets
 
 if TYPE_CHECKING:
-    from typing import Iterable, List, Tuple
+    from typing import Iterable, List, Optional, Tuple
 
 
-def selectFiles(filter_: str = None, native=False) -> List[str]:
+def selectFiles(filter_: Optional[str] = None, native=False) -> List[str]:
     dialog = QtWidgets.QFileDialog()
     dialog.setFileMode(QtWidgets.QFileDialog.ExistingFiles)
     dialog.setOption(QtWidgets.QFileDialog.DontUseNativeDialog, not native)
@@ -19,15 +19,13 @@ def selectFiles(filter_: str = None, native=False) -> List[str]:
     return dialog.selectedFiles() if dialog.exec() else []
 
 
-def selectVideoPaths(
-    extensions: Iterable[str] = (".avi", ".mp4"), native=False
-):
+def selectVideoPaths(extensions: Iterable[str] = (".avi", ".mp4"), native=False):
     filter_ = f'Videos (*{" *".join(extensions)})'
     return selectFiles(filter_, native)
 
 
 def selectVideoDirectories(
-    options: Iterable[Tuple[str, bool]] = None
+    options: Optional[Iterable[Tuple[str, bool]]] = None
 ) -> Tuple[List[str], List[bool]]:
     dialog = QtWidgets.QFileDialog()
     dialog.setWindowFlag(QtCore.Qt.WindowContextHelpButtonHint, False)
@@ -64,9 +62,7 @@ def selectVideoDirectories(
 
     for view in (fileView, treeView):
         if view is not None:
-            view.setSelectionMode(
-                QtWidgets.QAbstractItemView.ExtendedSelection
-            )
+            view.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
 
     return (dialog.selectedFiles() if dialog.exec() else []), [
         checkBox.isChecked() for checkBox in checkBoxes

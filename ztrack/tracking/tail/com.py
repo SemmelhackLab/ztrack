@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Optional, Type
 
 import numpy as np
 import pandas as pd
@@ -55,9 +55,7 @@ def _track_img(
             y_ = np.linspace(y0, y1, length).astype(int)
 
             z = img[y_, x_]
-            z = correlate1d(
-                z.astype(float), weights, 0, mode="nearest", origin=0
-            )
+            z = correlate1d(z.astype(float), weights, 0, mode="nearest", origin=0)
             m = length // 2
             argmax = (z[:m].argmax() + m + z[m:].argmin()) // 2
             angle_rad = np.arctan2(y_[argmax] - y, x_[argmax] - x)
@@ -92,7 +90,7 @@ class ComTailTracker(Tracker):
         return results
 
     class __Params(Params):
-        def __init__(self, params: dict = None):
+        def __init__(self, params: Optional[dict] = None):
             super().__init__(params)
             self.sigma = Float("Sigma (px)", 2, 0, 100, 0.1)
             self.n_segments = Int("Number of segments", 10, 3, 20)
@@ -107,7 +105,7 @@ class ComTailTracker(Tracker):
     def __init__(
         self,
         roi=None,
-        params: dict = None,
+        params: Optional[dict] = None,
         *,
         verbose=0,
         debug=False,
@@ -138,10 +136,7 @@ class ComTailTracker(Tracker):
         w1 = p.w1
         w2 = p.w2
         half_lengths = (
-            w1
-            + (w2 - w1)
-            * np.cumsum((0, *segment_lengths[1:]))
-            / segment_lengths[1:].sum()
+            w1 + (w2 - w1) * np.cumsum((0, *segment_lengths[1:])) / segment_lengths[1:].sum()
         )
         lengths = (half_lengths * 2).astype(int)
         q = p.quantile
@@ -208,9 +203,7 @@ class ComTailTracker(Tracker):
     @classmethod
     def _results_to_dataframe(cls, results):
         n_points = results.shape[-2]
-        idx = pd.MultiIndex.from_product(
-            ((f"point{i:02d}" for i in range(n_points)), ("x", "y"))
-        )
+        idx = pd.MultiIndex.from_product(((f"point{i:02d}" for i in range(n_points)), ("x", "y")))
         return pd.DataFrame(results.reshape(len(results), -1), columns=idx)
 
     def track_video(self, video_path, ignore_errors=False):
@@ -231,20 +224,13 @@ class ComTailTracker(Tracker):
 
         segment_lengths = split_int(p.tail_length, n_segments)
         half_lengths = (
-            p.w1
-            + (p.w2 - p.w1)
-            * np.cumsum((0, *segment_lengths[1:]))
-            / segment_lengths[1:].sum()
+            p.w1 + (p.w2 - p.w1) * np.cumsum((0, *segment_lengths[1:])) / segment_lengths[1:].sum()
         )
         lengths = (half_lengths * 2).astype(int)
         sigma_tail = p.sigma_tail
         roi = self.roi.value
 
-        it = (
-            tqdm(range(len(video_reader)))
-            if self._verbose
-            else range(len(video_reader))
-        )
+        it = tqdm(range(len(video_reader))) if self._verbose else range(len(video_reader))
 
         s_ = self.roi.to_slice()
 
@@ -272,6 +258,4 @@ class ComTailTracker(Tracker):
             ]
         )
 
-        return self._results_to_dataframe(
-            self._transform_from_roi_to_frame(data)
-        )
+        return self._results_to_dataframe(self._transform_from_roi_to_frame(data))

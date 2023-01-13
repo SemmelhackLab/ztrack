@@ -18,6 +18,8 @@ from ztrack.utils.variable import (
 )
 
 if TYPE_CHECKING:
+    from typing import Optional
+
     from ztrack.gui._tracking_plot_widget import TrackingPlotWidget
     from ztrack.utils.typing import point2d, rect
     from ztrack.utils.variable import Variable
@@ -320,7 +322,7 @@ class RectWidget(VariableWidget):
         self._pushButton.setText(self._get_display_str(value))
 
     @staticmethod
-    def _get_display_str(value: rect = None):
+    def _get_display_str(value: Optional[rect] = None):
         if value is not None:
             x, y, w, h = value
             return f"({x}, {y}, {w}, {h})"

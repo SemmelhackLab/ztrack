@@ -1,3 +1,5 @@
+from typing import Optional
+
 import numpy as np
 
 import ztrack.utils.cv as zcv
@@ -9,7 +11,7 @@ from .base import BaseFreeSwimTracker
 
 class SequentialFreeSwimTracker(BaseFreeSwimTracker):
     class __Params(Params):
-        def __init__(self, params: dict = None):
+        def __init__(self, params: Optional[dict] = None):
             super().__init__(params)
             self.sigma_eye = Float("Eye sigma (px)", 0, 0, 100, 0.1)
             self.sigma_tail = Float("Tail sigma (px)", 0, 0, 100, 0.1)
@@ -38,8 +40,6 @@ class SequentialFreeSwimTracker(BaseFreeSwimTracker):
         p = self.params
         theta = np.deg2rad(p.theta / 2)
         img = zcv.gaussian_blur(src, p.sigma_tail)
-        tail = zcv.sequential_track_tail(
-            img, point, angle, theta, p.n_steps, p.length, p.n_points
-        )
+        tail = zcv.sequential_track_tail(img, point, angle, theta, p.n_steps, p.length, p.n_points)
 
         return tail

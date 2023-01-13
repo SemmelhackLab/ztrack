@@ -1,3 +1,5 @@
+from typing import Optional
+
 import cv2
 import numpy as np
 from skimage.util import img_as_ubyte
@@ -11,7 +13,7 @@ from ztrack.utils.variable import Angle, Bool, Float, FloatRange, Point, UInt8
 
 class EyesOnlyTracker(EyeTracker):
     class __Params(EyeParams):
-        def __init__(self, params: dict = None):
+        def __init__(self, params: Optional[dict] = None):
             super().__init__(params)
             self.sigma = Float("Sigma (px)", 2, 0, 100, 0.1)
             self.q = FloatRange("Quantiles", (0.05, 0.99))
@@ -28,7 +30,7 @@ class EyesOnlyTracker(EyeTracker):
             self.swim_bladder_orientation = Angle("Swim bladder orientation", 270)
             self.invert = Bool("invert", True)
 
-    def __init__(self, roi=None, params: dict = None, *, verbose=0, debug=False):
+    def __init__(self, roi=None, params: Optional[dict] = None, *, verbose=0, debug=False):
         super().__init__(roi, params, verbose=verbose, debug=debug)
 
     @property

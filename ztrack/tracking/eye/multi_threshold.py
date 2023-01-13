@@ -1,3 +1,5 @@
+from typing import Optional
+
 import cv2
 import numpy as np
 
@@ -9,7 +11,7 @@ from ztrack.utils.variable import Bool, Float, UInt8
 
 class MultiThresholdEyeTracker(EyeTracker):
     class __Params(EyeParams):
-        def __init__(self, params: dict = None):
+        def __init__(self, params: Optional[dict] = None):
             super().__init__(params)
             self.sigma = Float("Sigma (px)", 2, 0, 100, 0.1)
             self.threshold_segmentation = UInt8("Segmentation threshold", 127)
@@ -18,9 +20,7 @@ class MultiThresholdEyeTracker(EyeTracker):
             self.threshold_swim_bladder = UInt8("Swim bladder threshold", 127)
             self.invert = Bool("invert", True)
 
-    def __init__(
-        self, roi=None, params: dict = None, *, verbose=0, debug=False
-    ):
+    def __init__(self, roi=None, params: Optional[dict] = None, *, verbose=0, debug=False):
         super().__init__(roi, params, verbose=verbose, debug=debug)
 
     @property

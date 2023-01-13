@@ -23,9 +23,9 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def __init__(
         self,
-        parent: QtWidgets.QWidget = None,
+        parent: Optional[QtWidgets.QWidget] = None,
         *,
-        videoPaths: List[str] = None,
+        videoPaths: Optional[List[str]] = None,
         verbose=False,
         dock=False,
     ):
@@ -147,9 +147,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self._frameBar.setFps(spinBox.value())
             else:
                 if self._videoReader is not None:
-                    self._frameBar.setFps(
-                        round(self._videoReader.get_avg_fps())
-                    )
+                    self._frameBar.setFps(round(self._videoReader.get_avg_fps()))
 
             dialog.close()
 
@@ -217,11 +215,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
         if event.mimeData().hasUrls():
-            if all(
-                [
-                    Path(u.toLocalFile()).suffix in video_extensions
-                    for u in event.mimeData().urls()
-                ]
+            if any(
+                [Path(u.toLocalFile()).suffix in video_extensions for u in event.mimeData().urls()]
             ):
                 event.accept()
         else:

@@ -1,3 +1,5 @@
+from typing import Optional
+
 import cv2
 import numpy as np
 from skimage.graph import route_through_array
@@ -12,7 +14,7 @@ from .base import BaseFreeSwimTracker
 
 class ContourFreeSwimTracker(BaseFreeSwimTracker):
     class __Params(Params):
-        def __init__(self, params: dict = None):
+        def __init__(self, params: Optional[dict] = None):
             super().__init__(params)
             self.sigma_eye = Float("Eye sigma (px)", 0, 0, 100, 0.1)
             self.sigma_tail = Float("Tail sigma (px)", 0, 0, 100, 0.1)
@@ -24,9 +26,7 @@ class ContourFreeSwimTracker(BaseFreeSwimTracker):
             self.threshold_swim_bladder = UInt8("Swim bladder threshold", 70)
             self.n_points = Int("Number of points", 51, 2, 100)
 
-    def __init__(
-        self, roi=None, params: dict = None, *, verbose=0, debug=False
-    ):
+    def __init__(self, roi=None, params: Optional[dict] = None, *, verbose=0, debug=False):
         super().__init__(roi, params, verbose=verbose, debug=debug)
 
     @property
