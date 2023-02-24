@@ -11,6 +11,7 @@ from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.tracking import get_trackers
 from ztrack.tracking.tracker import NoneTracker
 from ztrack.utils.file import get_config_dict, get_paths_for_config_creation
+from ztrack._settings import video_extensions
 
 from ._control_widget import ControlWidget
 from ._main_window import MainWindow
@@ -107,9 +108,11 @@ class CreateConfigWindow(MainWindow):
         self.updateVideo()
 
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
-        paths = sorted([u.toLocalFile() for u in event.mimeData().urls()], reverse=True)
+        paths = [u.toLocalFile() for u in event.mimeData().urls()]
+        paths = [path for path in paths if Path(path).suffix in video_extensions]
+        paths = sorted(paths, key=lambda x: x[::-1])
 
-        for path in paths:
+        for path in paths[::-1]:
             self.enqueue(path, [path], first=True)
 
         self.updateVideo()

@@ -44,8 +44,10 @@ class TrackingViewer(MainWindow):
 
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
         paths = [u.toLocalFile() for u in event.mimeData().urls()]
+        paths = [path for path in paths if Path(path).suffix in video_extensions]
+        paths = sorted(paths)
 
-        for path in paths:
+        for path in paths[::-1]:
             self.enqueue(str(path), first=True)
 
         self.updateVideo()
