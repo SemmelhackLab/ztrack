@@ -39,8 +39,23 @@ class TrackingViewer(MainWindow):
 
         self._results: Dict[str, pd.DataFrame] = {}
         self._trackers: Dict[str, Tracker] = {}
+
+        self._buttonBox = QtWidgets.QDialogButtonBox(self)
+        self._buttonBox.setStandardButtons(
+            QtWidgets.QDialogButtonBox.Ok  # type: ignore
+        )
+        self._layout.addWidget(self._buttonBox)
+
+        self._buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(
+            self._onOkButtonClicked
+        )
+
         if update:
             self.updateVideo()
+
+    def _onOkButtonClicked(self):
+        self.dequeue()
+        self.updateVideo()
 
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
         paths = [u.toLocalFile() for u in event.mimeData().urls()]
@@ -73,7 +88,7 @@ class TrackingViewer(MainWindow):
     def dequeue(self):
         if len(self._videoPaths) > 0:
             self._videoPaths.pop(0)
-            self._savePaths.pop(0)
+            # self._savePaths.pop(0)
 
     def _openFiles(self):
         videoPaths = selectVideoPaths(native=True)
@@ -129,8 +144,6 @@ class TrackingViewer(MainWindow):
             if all(
                 [
                     Path(path).suffix in video_extensions
-                    and get_config_path(path).exists()
-                    and get_results_path(path).exists()
                     for path in paths
                 ]
             ):
