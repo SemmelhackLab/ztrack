@@ -144,3 +144,11 @@ def gui(**kwargs):
     from ztrack._run_gui import run_gui
 
     run_gui(**kwargs)
+
+
+@main.command(short_help="Annotate.")
+@my_command
+def annotate(**kwargs):
+    from ztrack._annotate import annotate
+
+    annotate(**kwargs)
