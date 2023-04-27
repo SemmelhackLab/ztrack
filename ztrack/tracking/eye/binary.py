@@ -3,7 +3,7 @@ import numpy as np
 
 import ztrack.utils.cv as zcv
 from ztrack.tracking.eye.eye_tracker import EyeParams, EyeTracker
-from ztrack.utils.variable import Float, Int, UInt8
+from ztrack.utils.variable import Bool, Float, UInt8
 
 
 class BinaryEyeTracker(EyeTracker):
@@ -17,7 +17,7 @@ class BinaryEyeTracker(EyeTracker):
             super().__init__(params)
             self.sigma = Float("Sigma (px)", 2, 0, 100, 0.1)
             self.threshold = UInt8("Threshold", 127)
-            self.invert = Int("invert", 0, -1, 1)
+            self.invert = Bool("invert", True)
 
     @property
     def _Params(self):

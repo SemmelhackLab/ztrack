@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from PyQt5 import QtWidgets
@@ -10,6 +11,7 @@ from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.tracking import get_trackers
 from ztrack.tracking.tracker import NoneTracker
 from ztrack.utils.file import get_config_dict, get_paths_for_config_creation
+from ztrack._settings import video_extensions
 
 from ._control_widget import ControlWidget
 from ._main_window import MainWindow
@@ -42,8 +44,7 @@ class CreateConfigWindow(MainWindow):
 
         self._buttonBox = QtWidgets.QDialogButtonBox(self)
         self._buttonBox.setStandardButtons(
-            QtWidgets.QDialogButtonBox.Ok  # type: ignore
-            | QtWidgets.QDialogButtonBox.Cancel
+            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel  # type: ignore
         )
 
         self._hBoxLayout.addWidget(self._controlWidget)
@@ -61,9 +62,9 @@ class CreateConfigWindow(MainWindow):
         self._controlWidget.paramsChanged.connect(self._onParamsChanged)
         self._trackingPlotWidget.roiChanged.connect(self._onRoiChanged)
 
-        self._buttonBox.button(
-            QtWidgets.QDialogButtonBox.Cancel
-        ).clicked.connect(self._onCancelButtonClicked)
+        self._buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(
+            self._onCancelButtonClicked
+        )
 
         self._buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(
             self._onOkButtonClicked
@@ -85,9 +86,7 @@ class CreateConfigWindow(MainWindow):
         trackingConfig = {}
 
         for group_name, trackers in self._trackerGroups.items():
-            tracker = trackers[
-                self._controlWidget.getCurrentTrackerIndex(group_name)
-            ]
+            tracker = trackers[self._controlWidget.getCurrentTrackerIndex(group_name)]
             if not isinstance(tracker, NoneTracker):
                 trackingConfig[group_name] = dict(
                     method=tracker.name(),
@@ -96,7 +95,7 @@ class CreateConfigWindow(MainWindow):
                 )
 
         for savePath in self._currentSavePaths:
-            with open(savePath + config_extension, "w") as fp:
+            with open(Path(savePath).with_suffix(config_extension), "w") as fp:
                 json.dump(trackingConfig, fp)
 
     def _onOkButtonClicked(self):
@@ -110,8 +109,10 @@ class CreateConfigWindow(MainWindow):
 
     def dropEvent(self, event: QtGui.QDropEvent) -> None:
         paths = [u.toLocalFile() for u in event.mimeData().urls()]
+        paths = [path for path in paths if Path(path).suffix in video_extensions]
+        paths = sorted(paths, key=lambda x: x[::-1])
 
-        for path in paths:
+        for path in paths[::-1]:
             self.enqueue(path, [path], first=True)
 
         self.updateVideo()
@@ -197,11 +198,7 @@ class CreateConfigWindow(MainWindow):
         self.updateVideo()
 
     def _openFolders(self):
-        directories, (
-            recursive,
-            sameConfig,
-            overwrite,
-        ) = selectVideoDirectories(
+        directories, (recursive, sameConfig, overwrite,) = selectVideoDirectories(
             (
                 ("Include subdirectories", True),
                 ("Use one configuration file per directory", True),

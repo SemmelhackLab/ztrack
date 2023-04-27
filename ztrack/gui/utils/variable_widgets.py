@@ -4,8 +4,18 @@ from abc import ABC, ABCMeta, abstractmethod
 from typing import TYPE_CHECKING
 
 from PyQt5 import QtCore, QtWidgets
+from superqt import QLabeledDoubleRangeSlider
 
-from ztrack.utils.variable import Angle, Float, Int, Point, Rect, String
+from ztrack.utils.variable import (
+    Angle,
+    Bool,
+    Float,
+    FloatRange,
+    Int,
+    Point,
+    Rect,
+    String,
+)
 
 if TYPE_CHECKING:
     from ztrack.gui._tracking_plot_widget import TrackingPlotWidget
@@ -20,9 +30,7 @@ class AbstractWidgetMeta(type(QtWidgets.QWidget), ABCMeta):  # type: ignore
 class VariableWidget(QtWidgets.QWidget, ABC, metaclass=AbstractWidgetMeta):
     valueChanged = QtCore.pyqtSignal()
 
-    def __init__(
-        self, parent: QtWidgets.QWidget = None, *, variable: Variable
-    ):
+    def __init__(self, parent: QtWidgets.QWidget = None, *, variable: Variable):
         super().__init__(parent)
         self._variable = variable
 
@@ -40,6 +48,10 @@ class VariableWidget(QtWidgets.QWidget, ABC, metaclass=AbstractWidgetMeta):
             return RectWidget(parent, variable=variable)
         if isinstance(variable, String):
             return StringWidget(parent, variable=variable)
+        if isinstance(variable, Bool):
+            return BoolWidget(parent, variable=variable)
+        if isinstance(variable, FloatRange):
+            return FloatRangeWidget(parent, variable=variable)
         raise NotImplementedError
 
     def _setValue(self, value):
@@ -54,6 +66,46 @@ class VariableWidget(QtWidgets.QWidget, ABC, metaclass=AbstractWidgetMeta):
     def setValue(self, value):
         self._setValue(value)
         self._setGuiValue(value)
+
+
+class FloatRangeWidget(VariableWidget):
+    _variable: FloatRange
+
+    def __init__(self, parent: QtWidgets.QWidget = None, *, variable: FloatRange):
+        super().__init__(parent, variable=variable)
+        self._slider = QLabeledDoubleRangeSlider(self)
+        self._slider.setOrientation(QtCore.Qt.Orientation.Horizontal)
+        self._slider.setRange(variable.minimum, variable.maximum)
+        self._slider.setValue(variable.value)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._slider)
+        self.setLayout(layout)
+        self._slider.valueChanged.connect(self._setValue)
+
+    def _setGuiValue(self, value):
+        self._slider.valueChanged.disconnect()
+        self._slider.setValue(value)
+        self._slider.valueChanged.connect(self._setValue)
+
+
+class BoolWidget(VariableWidget):
+    def __init__(self, parent: QtWidgets.QWidget = None, *, variable: Bool):
+        super().__init__(parent, variable=variable)
+
+        self._checkbox = QtWidgets.QCheckBox(self)
+        self._checkbox.setChecked(variable.value)
+
+        layout = QtWidgets.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(self._checkbox)
+        self.setLayout(layout)
+
+        self._checkbox.stateChanged.connect(self._setValue)
+
+    def _setGuiValue(self, value: bool):
+        self._checkbox.setChecked(value)
 
 
 class StringWidget(VariableWidget):
@@ -203,9 +255,7 @@ class PointWidget(VariableWidget):
         layout.addWidget(self._pushButton)
         self.setLayout(layout)
 
-        self._pushButton.clicked.connect(
-            lambda: self._setSelectionMode(not self._selectionMode)
-        )
+        self._pushButton.clicked.connect(lambda: self._setSelectionMode(not self._selectionMode))
 
     def _setGuiValue(self, value: point2d):
         self._pushButton.setText(self._get_display_str(value))
@@ -216,7 +266,6 @@ class PointWidget(VariableWidget):
         return f"({x}, {y})"
 
     def _setValue(self, value):
-        print(value)
         super()._setValue(value)
         self._setSelectionMode(False)
 
@@ -224,22 +273,16 @@ class PointWidget(VariableWidget):
         self._selectionMode = b
 
         if self._selectionMode:
-            print("link")
             self.link()
             self._pushButton.setText("Cancel")
         else:
-            print("unlink")
             self.unlink()
-            self._pushButton.setText(
-                self._get_display_str(self._variable.value)
-            )
+            self._pushButton.setText(self._get_display_str(self._variable.value))
 
         self._selectionModeChanged.emit(self._selectionMode)
 
     def link(self):
-        self._trackingPlotWidget.pointSelected.connect(
-            lambda x, y: self._setValue((x, y))
-        )
+        self._trackingPlotWidget.pointSelected.connect(lambda x, y: self._setValue((x, y)))
 
     def unlink(self):
         try:
@@ -249,9 +292,7 @@ class PointWidget(VariableWidget):
 
     def setTrackingPlotWidget(self, trackingPlotWidget: TrackingPlotWidget):
         self._trackingPlotWidget = trackingPlotWidget
-        self._selectionModeChanged.connect(
-            self._trackingPlotWidget.setPointSelectionModeEnabled
-        )
+        self._selectionModeChanged.connect(self._trackingPlotWidget.setPointSelectionModeEnabled)
 
 
 class RectWidget(VariableWidget):
@@ -272,9 +313,7 @@ class RectWidget(VariableWidget):
         self.setLayout(layout)
 
         self._pushButton.clicked.connect(
-            lambda: self._setSelectionState(
-                -1 if self._selectedPoints >= 0 else 0
-            )
+            lambda: self._setSelectionState(-1 if self._selectedPoints >= 0 else 0)
         )
 
     def _setGuiValue(self, value: rect):
@@ -311,9 +350,7 @@ class RectWidget(VariableWidget):
             self._pushButton.setText("Cancel")
         else:
             self.unlink()
-            self._pushButton.setText(
-                self._get_display_str(self._variable.value)
-            )
+            self._pushButton.setText(self._get_display_str(self._variable.value))
 
         self._selectionModeChanged.emit(self._selectedPoints >= 0)
 
@@ -328,6 +365,4 @@ class RectWidget(VariableWidget):
 
     def setTrackingPlotWidget(self, trackingPlotWidget: TrackingPlotWidget):
         self._trackingPlotWidget = trackingPlotWidget
-        self._selectionModeChanged.connect(
-            self._trackingPlotWidget.setPointSelectionModeEnabled
-        )
+        self._selectionModeChanged.connect(self._trackingPlotWidget.setPointSelectionModeEnabled)

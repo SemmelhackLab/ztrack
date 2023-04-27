@@ -31,9 +31,7 @@ class ControlWidget(QtWidgets.QTabWidget):
     def addTrackerGroup(self, groupName: str, trackers: Iterable[Tracker]):
         assert groupName not in self._tabs
         tab = TrackingTab(self, groupName)
-        tab.trackerIndexChanged.connect(
-            lambda index: self.trackerChanged.emit(groupName, index)
-        )
+        tab.trackerIndexChanged.connect(lambda index: self.trackerChanged.emit(groupName, index))
 
         for tracker in trackers:
             tab.addTracker(tracker)
@@ -45,10 +43,13 @@ class ControlWidget(QtWidgets.QTabWidget):
         return self._tabs[groupName].currentIndex
 
     def setStateFromTrackingConfig(self, trackingConfig: config_dict):
-        for groupName, groupDict in trackingConfig.items():
-            self._tabs[groupName].setState(
-                groupDict["method"], groupDict["params"]
-            )
+        for groupName in self._tabs:
+            if groupName in trackingConfig:
+                groupDict = trackingConfig[groupName]
+
+                self._tabs[groupName].setState(groupDict["method"], groupDict["params"])
+            else:
+                self._tabs[groupName].setState("none", {})
 
 
 class TrackingTab(QtWidgets.QWidget):
@@ -121,9 +122,7 @@ class ParamsWidget(QtWidgets.QFrame):
         self.setLayout(self._formLayout)
         self._fields: Dict[str, VariableWidget] = {}
 
-        for name, param in zip(
-            tracker.params.parameter_names, tracker.params.parameter_list
-        ):
+        for name, param in zip(tracker.params.parameter_names, tracker.params.parameter_list):
             label = QtWidgets.QLabel(self)
             label.setText(param.display_name)
             field = VariableWidget.fromVariable(param, self)

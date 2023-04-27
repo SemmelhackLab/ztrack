@@ -71,6 +71,45 @@ class String(Variable):
         self._value = value
 
 
+class FloatRange(Variable):
+    def __init__(self, display_name: str, value, minimum=0.0, maximum=1.0):
+        super().__init__(display_name)
+        vmin, vmax = value
+        assert minimum <= maximum
+        assert vmin <= vmax
+        self._value = (vmin, vmax)
+        self._minimum = minimum
+        self._maximum = maximum
+        # self._step = step
+        # self._strict = strict
+
+    @property
+    def value(self) -> Tuple[float, float]:
+        return self._value
+
+    @value.setter
+    def value(self, value):
+        vmin, vmax = value
+        assert vmin <= vmax
+        self._value = (vmin, vmax)
+
+    @property
+    def minimum(self):
+        return self._minimum
+
+    @property
+    def maximum(self):
+        return self._maximum
+
+    @property
+    def step(self):
+        return self._step
+
+    @property
+    def strict(self):
+        return self._strict
+
+
 class Rect(Variable):
     def __init__(self, display_name: str, bbox=None):
         super().__init__(display_name)
@@ -118,6 +157,10 @@ class Numerical(Variable, ABC):
     @value.setter
     def value(self, value):
         self._value = value
+
+
+class Bool(Numerical):
+    pass
 
 
 class Bounded(Numerical, ABC):

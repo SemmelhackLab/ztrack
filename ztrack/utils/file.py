@@ -6,15 +6,15 @@ from ztrack._settings import config_extension, results_extension, video_extensio
 
 
 def get_results_path(video):
-    if Path(str(video)).with_suffix(results_extension).exists():
-        return Path(str(video)).with_suffix(results_extension)
-    return Path(str(video) + results_extension)
+    if Path(str(video) + results_extension).exists():
+        return Path(str(video) + results_extension)
+    return Path(video).with_suffix(results_extension)
 
 
 def get_config_path(video):
-    if Path(str(video)).with_suffix(config_extension).exists():
-        return Path(str(video)).with_suffix(config_extension)
-    return Path(str(video) + config_extension)
+    if Path(str(video) + config_extension).exists():
+        return Path(str(video) + config_extension)
+    return Path(str(video)).with_suffix(config_extension)
 
 
 def get_config_dict(video) -> Optional[dict]:
@@ -31,17 +31,11 @@ def get_config_dict(video) -> Optional[dict]:
 
 def get_video_paths(inputs, recursive):
     paths: List[Path] = list(map(Path, inputs))
-    videos = [
-        path
-        for path in paths
-        if path.is_file() and path.suffix in video_extensions
-    ]
+    videos = [path for path in paths if path.is_file() and path.suffix in video_extensions]
 
     for path in filter(Path.is_dir, paths):
         for ext in video_extensions:
-            videos.extend(
-                path.rglob(f"*{ext}") if recursive else path.glob(f"*{ext}")
-            )
+            videos.extend(path.rglob(f"*{ext}") if recursive else path.glob(f"*{ext}"))
 
     return videos
 
@@ -60,11 +54,7 @@ def get_paths_for_config_creation(
 
     paths: List[Path] = [Path(path) for path in inputs]
     directories = [path for path in paths if path.is_dir()]
-    files = [
-        path
-        for path in paths
-        if path.is_file() and path.suffix in video_extensions
-    ]
+    files = [path for path in paths if path.is_file() and path.suffix in video_extensions]
 
     video_paths: List[str] = []
     save_paths: List[List[str]] = []
@@ -78,9 +68,7 @@ def get_paths_for_config_creation(
 
             if not overwrite:
                 videos = [
-                    video
-                    for video in videos
-                    if not Path(str(video) + config_extension).exists()
+                    video for video in videos if not Path(str(video) + config_extension).exists()
                 ]
 
             if len(videos) > 0:
@@ -93,11 +81,7 @@ def get_paths_for_config_creation(
                         save_paths.append([_str(video)])
 
     if not overwrite:
-        files = [
-            file
-            for file in files
-            if not Path(str(file) + config_extension).exists()
-        ]
+        files = [file for file in files if not Path(str(file) + config_extension).exists()]
 
     for file in files:
         video_paths.append(_str(file))
@@ -106,15 +90,11 @@ def get_paths_for_config_creation(
     return video_paths, save_paths
 
 
-def get_video_paths_from_inputs(
-    inputs: List[str], recursive: bool, overwrite: bool
-):
+def get_video_paths_from_inputs(inputs: List[str], recursive: bool, overwrite: bool):
     videos = get_video_paths(inputs, recursive)
     videos = [file for file in videos if get_config_path(file).exists()]
 
     if not overwrite:
-        videos = [
-            file for file in videos if not get_results_path(file).exists()
-        ]
+        videos = [file for file in videos if not get_results_path(file).exists()]
 
     return videos

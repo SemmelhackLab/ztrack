@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from PyQt5 import QtGui, QtWidgets
+from PyQt5 import QtGui, QtWidgets, QtCore
 
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.tracking import get_trackers_from_config
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from ztrack.tracking.tracker import Tracker
 
 
-class TrackingViewer(MainWindow):
+class Annotator(MainWindow):
     def __init__(
         self,
         parent: QtWidgets.QWidget = None,
@@ -42,7 +42,7 @@ class TrackingViewer(MainWindow):
 
         self._buttonBox = QtWidgets.QDialogButtonBox(self)
         self._buttonBox.setStandardButtons(
-            QtWidgets.QDialogButtonBox.Ok  # type: ignore
+            QtWidgets.QDialogButtonBox.Ok | QtWidgets.QDialogButtonBox.Cancel  # type: ignore
         )
         self._layout.addWidget(self._buttonBox)
 
@@ -50,10 +50,47 @@ class TrackingViewer(MainWindow):
             self._onOkButtonClicked
         )
 
+        self._buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).clicked.connect(
+            self._onCancelButtonClicked
+        )
+
+        self.buffer = []
+
         if update:
             self.updateVideo()
 
+    def keyPressEvent(self, event):
+        Key = QtCore.Qt.Key
+
+        def key2string(key):
+            if key in range(Key.Key_0, Key.Key_9 + 1):
+                return chr(key)
+            elif key in range(Key.Key_A, Key.Key_Z):
+                return chr(key)
+
+        if self._currentVideoPath is not None:
+            if event.key() == Key.Key_Backspace:
+                if self.buffer:
+                    self.buffer.pop()
+            else:
+                key = key2string(event.key())
+                if key is not None:
+                    thing = (self._frameBar.value(), key)
+                    if thing not in self.buffer:
+                        self.buffer.append(thing)
+
+            print(self.buffer)
+
+        event.accept()
+
     def _onOkButtonClicked(self):
+        csv_path = self._currentVideoPath.replace("mp4", "csv")
+        pd.DataFrame(self.buffer, columns=["frame", "type"]).to_csv(csv_path, index=False)
+        self.buffer.clear()
+        self.dequeue()
+        self.updateVideo()
+
+    def _onCancelButtonClicked(self):
         self.dequeue()
         self.updateVideo()
 
@@ -72,12 +109,6 @@ class TrackingViewer(MainWindow):
 
         if img is not None:
             self._trackingPlotWidget.setImage(img)
-
-            for name, tracker in self._trackers.items():
-                tracker.annotate_from_series(
-                    self._results[name].iloc[self._frameBar.value()]
-                )
-                self._trackingPlotWidget.updateRoiGroups()
 
     def enqueue(self, videoPath: str, first=False):
         if first:

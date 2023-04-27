@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import pyqtgraph as pg
 from PyQt5 import QtCore, QtGui, QtWidgets
 
-from ztrack.utils.shape import Ellipse, Points, Rectangle
+from ztrack.utils.shape import Ellipse, Line, Points, Rectangle
 from ztrack.utils.variable import Rect
 
 if TYPE_CHECKING:
@@ -210,6 +210,8 @@ def roiFromShape(shape: Shape):
         return GuiPoints(shape)
     elif isinstance(shape, Rectangle):
         return GuiRectangle(shape)
+    elif isinstance(shape, Line):
+        return GuiLine(shape)
     else:
         raise NotImplementedError
 
@@ -286,5 +288,25 @@ class GuiEllipse(QtWidgets.QGraphicsEllipseItem, ShapeMixin):
             self.setRect(cx - a, cy - b, a * 2, b * 2)
             self.setTransformOriginPoint(cx, cy)
             self.setRotation(theta)
+        else:
+            self.setVisible(False)
+
+
+class GuiLine(QtWidgets.QGraphicsLineItem, ShapeMixin):
+    def __init__(self, line: Line):
+        super().__init__()
+        self._line = line
+        self.setPen(pg.mkPen(color=line.lc, width=line.lw))
+        self.refresh()
+
+    def setBBox(self, bbox):
+        self._line.set_bbox(bbox)
+
+    def refresh(self):
+        if self._line.visible:
+            self.setVisible(True)
+            self.setLine(
+                self._line.x1, self._line.y1, self._line.x2, self._line.y2
+            )
         else:
             self.setVisible(False)

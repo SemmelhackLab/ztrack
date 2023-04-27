@@ -217,7 +217,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
         if event.mimeData().hasUrls():
-            if all(
+            if any(
                 [
                     Path(u.toLocalFile()).suffix in video_extensions
                     for u in event.mimeData().urls()
