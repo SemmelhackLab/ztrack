@@ -23,17 +23,16 @@ def run_tracking(
     videos = get_video_paths_from_inputs(inputs, recursive, overwrite)
     for video in videos:
         config = get_config_dict(video)
-        trackers = get_trackers_from_config(config, verbose=verbose)
+        trackers = get_trackers_from_config(config["tracking"], verbose=verbose)
 
         dfs = {}
 
         for key, tracker in trackers.items():
-
             if verbose:
                 logging.info(f"Tracking {video}")
 
             try:
-                dfs[key] = tracker.track_video(video, ignore_errors)
+                dfs[key] = tracker.track_video(video, ignore_errors, **config["video"])
             except VideoTrackingError as e:
                 warnings.warn(f"Tracker {key} failed for {video} at frame {e.frame}.")
 

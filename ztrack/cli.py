@@ -6,10 +6,9 @@ inputs = click.argument("inputs", nargs=-1, type=click.Path(exists=True))
 recursive = click.option(
     "-r", "--recursive", is_flag=True, help="Look for files in subdirectories."
 )
-overwrite = click.option(
-    "--overwrite/--no-overwrite", default=True, show_default=True
-)
+overwrite = click.option("--overwrite/--no-overwrite", default=True, show_default=True)
 verbose = click.option("-v", "--verbose", count=True, help="Verbosity.")
+
 common_parameters = (inputs, recursive, verbose)
 
 
@@ -30,8 +29,17 @@ def main():
     default=False,
     show_default=True,
     is_flag=True,
-    help="Generate the same configuration file for all videos in the "
-    "directory",
+    help="Generate the same configuration file for all videos in the " "directory",
+)
+@click.option(
+    "--bg-frames",
+    default=0,
+    help="Number of frames used for calculating the background. Set to 0 to disable background subtraction.",
+)
+@click.option(
+    "--dark-fish",
+    default=-1,
+    help="Whether the fish is dark. Set to -1 to automatically determine.",
 )
 @overwrite
 def create_config(**kwargs):
@@ -40,9 +48,7 @@ def create_config(**kwargs):
     create_config(**kwargs)
 
 
-@main.command(
-    short_help="Run tracking on videos with created tracking configurations."
-)
+@main.command(short_help="Run tracking on videos with created tracking configurations.")
 @my_command
 @overwrite
 @click.option(

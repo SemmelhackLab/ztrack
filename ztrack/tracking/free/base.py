@@ -5,15 +5,18 @@ import cv2
 import numpy as np
 import pandas as pd
 
-from ztrack.tracking.eye.multi_threshold import MultiThresholdEyeTracker
-from ztrack.tracking.mixins.background import BackgroundSubtractionMixin
+# from ztrack.tracking.eye.multi_threshold import MultiThresholdEyeTracker
+from ztrack.tracking.eye.eye_tracker import EyeTracker
+from ztrack.tracking.tail.tail_tracker import TailTracker
+
+# from ztrack.tracking.mixins.background import BackgroundSubtractionMixin
+from ztrack.tracking.tracker import Tracker
+from ztrack.utils import cv as zcv
 from ztrack.utils.exception import TrackingError
-from ztrack.utils.shape import Points
+from ztrack.utils.shape import Circle, Ellipse, Points
 
 
-class BaseFreeSwimTracker(
-    MultiThresholdEyeTracker, BackgroundSubtractionMixin, ABC
-):
+class BaseFreeSwimTracker(Tracker):
     @property
     def shapes(self):
         return [
@@ -21,18 +24,21 @@ class BaseFreeSwimTracker(
             self._right_eye,
             self._swim_bladder,
             self._points,
+            # self._arena,
         ]
 
-    def __init__(
-        self, roi=None, params: dict = None, *, verbose=0, debug=False
-    ):
-        MultiThresholdEyeTracker.__init__(
-            self, roi, params, verbose=verbose, debug=debug
-        )
+    def __init__(self, roi=None, params: dict = None, *, verbose=0, debug=False):
+        super().__init__(roi, verbose=verbose, debug=debug)
+        self._params = self._Params(params)
         self._bg = None
-        self._is_bg_bright = False
         self._video_path = None
+
+        self._left_eye = Ellipse(0, 0, 1, 1, 0, 4, "b")
+        self._right_eye = Ellipse(0, 0, 1, 1, 0, 4, "r")
+        self._swim_bladder = Ellipse(0, 0, 1, 1, 0, 4, "g")
+
         self._points = Points(np.array([[0, 0]]), 1, "m", symbol="+")
+        # self._arena = Circle(0, 0, 1, 2, "c")
 
     def set_video(self, video_path):
         self._bg = None
@@ -47,74 +53,49 @@ class BaseFreeSwimTracker(
 
     @classmethod
     def _results_to_series(cls, results):
-        eye, tail = results
-        s = super()._results_to_series(eye)
+        eye = results[:15].reshape((3, 5))
+        tail = results[15:].reshape((-1, 2))
 
-        if tail is not None:
-            n_points = len(tail)
-            idx = pd.MultiIndex.from_product(
-                ((f"point{i:02d}" for i in range(n_points)), ("x", "y"))
-            )
-            s = pd.concat([s, pd.Series(tail.ravel(), idx)])
+        s = EyeTracker._results_to_series(eye)
+        t = TailTracker._results_to_series(tail)
 
-        return s
+        return pd.concat([s, t])
 
     def annotate_from_series(self, series: pd.Series) -> None:
-        super().annotate_from_series(series)
+        print(series)
+        EyeTracker.annotate_from_series(self, series.iloc[:15])
+        TailTracker.annotate_from_series(self, series.iloc[18:])
 
-        if "point00" in series:
-            idx = [f"point{i:02d}" for i in range(self.params.n_points)]
-            tail = series.loc[idx].values.reshape(-1, 2)
-            self._points.visible = True
-            self._points.data = tail
-        else:
-            self._points.visible = False
+    def annotate_from_results(self, a) -> None:
+        eye = a[:15].reshape((3, 5))
+        tail = a[15:].reshape((-1, 2))
+        EyeTracker.annotate_from_results(self, eye)
+        TailTracker.annotate_from_results(self, tail)
+        # self._arena.visible = True
+        # self._arena.cx = self.params.cx
+        # self._arena.cy = self.params.cy
+        # self._arena.r = self.params.r
 
     def _transform_from_roi_to_frame(self, results):
-        eye, tail = results
-        eye = super()._transform_from_roi_to_frame(eye)
+        n_frames = len(results)
+        eye = results[:, :15].reshape((n_frames, 3, 5))
+        tail = results[:, 15:].reshape((n_frames, -1, 2))
+        eye = EyeTracker._transform_from_roi_to_frame(self, eye)
+        tail = TailTracker._transform_from_roi_to_frame(self, tail)
+        return np.column_stack((eye.reshape((n_frames, -1)), tail.reshape((n_frames, -1))))
 
-        if self.roi.value is not None:
-            x0, y0 = self.roi.value[:2]
-            tail += (x0, y0)
-
-        return eye, tail
+    # def get_outside_mask(self, img):
+    #     p = self.params
+    #     return cv2.circle(np.ones_like(img, np.uint8), (p.cx, p.cy), p.r, 0, -1).astype(bool)
 
     @abstractmethod
     def _track_tail(self, src, point, angle):
         pass
 
+    @abstractmethod
+    def _track_eyes(self, img):
+        pass
+
+    @abstractmethod
     def _track_img(self, img: np.ndarray):
-        if self._bg is None:
-            self._is_bg_bright, self._bg = self.calculate_background(
-                self._video_path
-            )
-
-        img = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        bg = self._bg[self.roi.to_slice()]
-
-        if self._is_bg_bright:
-            img = cv2.subtract(bg, img)
-        else:
-            img = cv2.subtract(img, bg)
-
-        contours = self._track_contours(img)
-        ellipses = self._fit_ellipses(contours)
-
-        centers = ellipses[:, :2]
-        sb_center = centers[2]
-        midpoint = centers[:2].mean(0)
-        midline = sb_center - midpoint
-        opp_heading = np.arctan2(*midline[::-1])
-        sb_theta = np.deg2rad(ellipses[2, -1])
-        sb_posterior = np.round(
-            sb_center
-            - ellipses[2, 2] * np.array([np.cos(sb_theta), np.sin(sb_theta)])
-        ).astype(int)
-
-        try:
-            tail = self._track_tail(img, sb_posterior, opp_heading)
-        except TrackingError:
-            tail = None
-
-        return ellipses, tail
+        pass

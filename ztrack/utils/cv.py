@@ -55,20 +55,6 @@ def fit_ellipse(contour) -> Tuple[float, float, float, float, float]:
     return x, y, b / 2, a / 2, theta - 90
 
 
-def rgb2gray(img: np.ndarray) -> np.ndarray:
-    return cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-
-
-def video_median(video_path: str, n_frames_for_bg=300, verbose=False) -> np.ndarray:
-    vr = VideoReader(video_path)
-    n_frames = len(vr)
-    n_frames_for_bg = min(n_frames, n_frames_for_bg)
-    idx = np.linspace(0, n_frames - 1, n_frames_for_bg).astype(int)
-    frames = [rgb2gray(vr[i].asnumpy()) for i in (tqdm(idx) if verbose else idx)]
-
-    return np.median(frames, axis=0).astype(np.uint8)
-
-
 def interpolate_tail(tail: np.ndarray, n_points: int) -> np.ndarray:
     tck = splprep(tail.T)[0]
     return np.column_stack(splev(np.linspace(0, 1, n_points), tck))
@@ -109,6 +95,7 @@ def sequential_track_tail(
         points, angles = points[idx], angles[idx]
 
         if len(points) == 0:
+            print("huh")
             break
 
         x, y = points.T
@@ -177,3 +164,7 @@ def adaptive_threshold(src: np.ndarray, block_size: int, c: int) -> np.ndarray:
     )
 
     return img
+
+
+def binary_segmentation(img, threshold):
+    return find_contours(binary_threshold(img, threshold))

@@ -4,6 +4,8 @@ def create_config(
     same_config,
     overwrite,
     verbose,
+    bg_frames,
+    dark_fish,
 ):
     from ztrack.gui.create_config import CreateConfigWindow
     from ztrack.gui.utils.launch import launch
@@ -17,4 +19,6 @@ def create_config(
         videoPaths=video_paths,
         savePaths=save_paths,
         verbose=verbose,
+        bg_frames=bg_frames,
+        dark_fish=dark_fish,
     )

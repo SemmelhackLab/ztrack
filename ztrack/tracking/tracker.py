@@ -5,11 +5,11 @@ from typing import Type
 
 import numpy as np
 import pandas as pd
-from decord import VideoReader
 from tqdm import tqdm
 
 from ztrack.utils.exception import TrackingError
 from ztrack.utils.variable import Rect
+from ztrack.utils.video import MyVideoReader
 
 from .params import Params
 
@@ -107,16 +107,16 @@ class Tracker(ABC):
                 return np.nan
             raise TrackingError(i)
 
-    def track_video(self, video_path, ignore_errors=False):
+    def track_video(self, video_path, ignore_errors=False, **kw):
         self.set_video(video_path)
 
-        video_reader = VideoReader(str(video_path))
+        video_reader = MyVideoReader(str(video_path), **kw)
         it = tqdm(range(len(video_reader))) if self._verbose else range(len(video_reader))
 
         s_ = self.roi.to_slice()
         data = np.asarray(
             np.broadcast_arrays(
-                *[self.__track_img(video_reader[i].asnumpy()[s_], i, ignore_errors) for i in it]
+                *[self.__track_img(video_reader[i][s_], i, ignore_errors) for i in it]
             )
         )
 

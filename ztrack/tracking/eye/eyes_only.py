@@ -56,7 +56,7 @@ class EyesOnlyTracker(EyeTracker):
             cv2.imshow("debug", img)
 
         # segment the image with binary threshold
-        contours = self._binary_segmentation(img, p.threshold_segmentation)
+        contours = zcv.binary_segmentation(img, p.threshold_segmentation)
 
         # get the 3 largest contours
         if len(contours) < 2:
@@ -79,7 +79,7 @@ class EyesOnlyTracker(EyeTracker):
         results = []
         for i, (threshold, center) in enumerate(zip(thresholds, centers)):
             # segment the image with binary threshold of the body part
-            contours = self._binary_segmentation(img, threshold)
+            contours = zcv.binary_segmentation(img, threshold)
             # get the contour closest to the body part's center
             results.append(zcv.nearest_contour(contours, tuple(center)))
 

@@ -1,17 +1,16 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import yaml
 from PyQt5 import QtWidgets
 
-from ztrack._settings import config_extension
+from ztrack._settings import config_extension, video_extensions
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.tracking import get_trackers
 from ztrack.tracking.tracker import NoneTracker
 from ztrack.utils.file import get_config_dict, get_paths_for_config_creation
-from ztrack._settings import video_extensions
 
 from ._control_widget import ControlWidget
 from ._main_window import MainWindow
@@ -31,8 +30,16 @@ class CreateConfigWindow(MainWindow):
         videoPaths: List[str] = None,
         savePaths: List[List[str]] = None,
         verbose=False,
+        bg_frames=0,
+        dark_fish=-1,
     ):
-        super().__init__(parent, videoPaths=videoPaths, verbose=verbose)
+        super().__init__(
+            parent,
+            videoPaths=videoPaths,
+            verbose=verbose,
+            bg_frames=bg_frames,
+            dark_fish=dark_fish,
+        )
 
         if savePaths is None:
             savePaths = []
@@ -90,13 +97,19 @@ class CreateConfigWindow(MainWindow):
             if not isinstance(tracker, NoneTracker):
                 trackingConfig[group_name] = dict(
                     method=tracker.name(),
-                    roi=tracker.roi.value,
+                    roi=list(tracker.roi.value),
                     params=tracker.params.to_dict(),
                 )
 
         for savePath in self._currentSavePaths:
-            with open(Path(savePath).with_suffix(config_extension), "w") as fp:
-                json.dump(trackingConfig, fp)
+            with open(Path(savePath).with_suffix(".yml"), "w") as fp:
+                yaml.dump(
+                    dict(
+                        video=dict(bg_frames=self._bg_frames, dark_fish=self._dark_fish),
+                        tracking=trackingConfig,
+                    ),
+                    fp,
+                )
 
     def _onOkButtonClicked(self):
         self._saveTrackingConfig()
@@ -164,8 +177,13 @@ class CreateConfigWindow(MainWindow):
         self._trackingPlotWidget.setStateFromTrackingConfig(trackingConfig)
 
     def updateVideo(self):
+        kw = {}
+        trackingConfig = {}
         if self._currentVideoPath is not None:
-            trackingConfig = get_config_dict(self._currentVideoPath)
+            config_dict = get_config_dict(self._currentVideoPath)
+            if isinstance(config_dict, dict):
+                trackingConfig = config_dict.get("tracking", {})
+                kw = config_dict.get("video", {})
 
             if trackingConfig is not None:
                 self._setStateFromTrackingConfig(trackingConfig)
@@ -174,7 +192,7 @@ class CreateConfigWindow(MainWindow):
             for tracker in tracker_group:
                 tracker.set_video(self._currentVideoPath)
 
-        super().updateVideo()
+        super().updateVideo(**kw)
 
     def enqueue(self, videoPath: str, savePaths: List[str], first=False):
         if first:
@@ -198,7 +216,11 @@ class CreateConfigWindow(MainWindow):
         self.updateVideo()
 
     def _openFolders(self):
-        directories, (recursive, sameConfig, overwrite,) = selectVideoDirectories(
+        directories, (
+            recursive,
+            sameConfig,
+            overwrite,
+        ) = selectVideoDirectories(
             (
                 ("Include subdirectories", True),
                 ("Use one configuration file per directory", True),

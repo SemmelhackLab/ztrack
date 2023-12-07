@@ -25,9 +25,7 @@ class PlotWidget(QtWidgets.QWidget):
 
     def plot(self, df_eye):
         n_frames = len(df_eye)
-        self._axes = MultiRowAxes(
-            np.linspace(0, n_frames, 7), 1, fig=self._figure
-        )
+        self._axes = MultiRowAxes(np.linspace(0, n_frames, 7), 1, fig=self._figure)
         ax_eye = self._axes[0]
         ax_eye.plot(df_eye[("left_eye", "angle")].values, c="b")
         ax_eye.plot(df_eye[("right_eye", "angle")].values, c="r")

@@ -4,9 +4,7 @@ from matplotlib.gridspec import GridSpec, GridSpecFromSubplotSpec
 
 
 class MultiRowAxes:
-    def __init__(
-        self, xlims: np.ndarray, nrow=2, hspace=0, fig=None, **kwargs
-    ):
+    def __init__(self, xlims: np.ndarray, nrow=2, hspace=0, fig=None, **kwargs):
         if fig is None:
             fig = plt.figure(**kwargs)
 
@@ -15,18 +13,12 @@ class MultiRowAxes:
         gs = GridSpec(nrow0, 1, figure=fig)
         axes = np.empty((nrow0, nrow), dtype=object)
         for i, gs_i in enumerate(gs):
-            gs_i = GridSpecFromSubplotSpec(
-                nrow, 1, subplot_spec=gs_i, hspace=hspace
-            )
+            gs_i = GridSpecFromSubplotSpec(nrow, 1, subplot_spec=gs_i, hspace=hspace)
             for j, gs_ij in enumerate(gs_i):
-                axes[i, j] = fig.add_subplot(
-                    gs_ij, sharex=axes[i, j - 1], sharey=axes[i - 1, j]
-                )
+                axes[i, j] = fig.add_subplot(gs_ij, sharex=axes[i, j - 1], sharey=axes[i - 1, j])
 
         self._axes = axes
-        self._multi_row_axes = [
-            MultiRowAx(xlims, axes=axes_) for axes_ in axes.T
-        ]
+        self._multi_row_axes = [MultiRowAx(xlims, axes=axes_) for axes_ in axes.T]
 
         # for ax in self._axes[:, :-1].ravel():
         #     ax.axes.xaxis.set_visible(False)

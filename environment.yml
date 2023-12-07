@@ -1,0 +1,19 @@
+channels:
+  - conda-forge
+dependencies:
+  - click
+  - matplotlib
+  - opencv
+  - pandas
+  - pyqt
+  - pyqtgraph
+  - pytables
+  - python=3.11
+  - scikit-image
+  - tqdm
+  - pip
+  - pyyaml
+  - pip:
+    - decord
+    - qtmodern
+    - superqt

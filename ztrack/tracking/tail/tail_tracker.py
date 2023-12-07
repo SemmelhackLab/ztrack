@@ -34,17 +34,13 @@ class TailTracker(Tracker, ABC):
     @classmethod
     def _results_to_series(cls, results: np.ndarray):
         n_points = len(results)
-        idx = pd.MultiIndex.from_product(
-            ((f"point{i:02d}" for i in range(n_points)), ("x", "y"))
-        )
+        idx = pd.MultiIndex.from_product(((f"point{i:02d}" for i in range(n_points)), ("x", "y")))
         return pd.Series(results.ravel(), idx)
 
     @classmethod
     def _results_to_dataframe(cls, results):
         n_points = results.shape[-2]
-        idx = pd.MultiIndex.from_product(
-            ((f"point{i:02d}" for i in range(n_points)), ("x", "y"))
-        )
+        idx = pd.MultiIndex.from_product(((f"point{i:02d}" for i in range(n_points)), ("x", "y")))
         return pd.DataFrame(results.reshape(len(results), -1), columns=idx)
 
     @abstractmethod

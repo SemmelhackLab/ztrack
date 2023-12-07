@@ -1,6 +1,7 @@
-import json
 from pathlib import Path
 from typing import List, Optional
+
+import yaml
 
 from ztrack._settings import config_extension, results_extension, video_extensions
 
@@ -12,9 +13,7 @@ def get_results_path(video):
 
 
 def get_config_path(video):
-    if Path(str(video) + config_extension).exists():
-        return Path(str(video) + config_extension)
-    return Path(str(video)).with_suffix(config_extension)
+    return Path(str(video)).with_suffix(".yml")
 
 
 def get_config_dict(video) -> Optional[dict]:
@@ -22,10 +21,8 @@ def get_config_dict(video) -> Optional[dict]:
 
     if path.exists():
         with open(path) as fp:
-            try:
-                return json.load(fp)
-            except json.JSONDecodeError:
-                return None
+            return yaml.safe_load(fp)
+
     return None
 
 

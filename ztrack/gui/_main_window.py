@@ -8,6 +8,7 @@ from decord import VideoReader
 from PyQt5 import QtCore, QtWidgets
 
 from ztrack.utils.file import video_extensions
+from ztrack.utils.video import MyVideoReader
 
 from ._tracking_plot_widget import TrackingPlotWidget
 from .utils.frame_bar import FrameBar
@@ -28,8 +29,13 @@ class MainWindow(QtWidgets.QMainWindow):
         videoPaths: List[str] = None,
         verbose=False,
         dock=False,
+        bg_frames=0,
+        dark_fish=-1,
     ):
         super().__init__(parent)
+
+        self._bg_frames = bg_frames
+        self._dark_fish = dark_fish
 
         if videoPaths is None:
             videoPaths = []
@@ -105,7 +111,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if self._videoReader is None:
             return None
 
-        return self._videoReader[self._frameBar.value()].asnumpy()
+        return self._videoReader[self._frameBar.value()]
 
     def _setEnabled(self, b: bool):
         self._widget.setEnabled(b)
@@ -147,9 +153,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 self._frameBar.setFps(spinBox.value())
             else:
                 if self._videoReader is not None:
-                    self._frameBar.setFps(
-                        round(self._videoReader.get_avg_fps())
-                    )
+                    self._frameBar.setFps(round(self._videoReader.get_avg_fps()))
 
             dialog.close()
 
@@ -192,10 +196,14 @@ class MainWindow(QtWidgets.QMainWindow):
 
         dialog.exec()
 
-    def updateVideo(self):
+    def updateVideo(self, bg_frames=None, dark_fish=None):
         if self._currentVideoPath is not None:
             self.setWindowTitle("ztrack - " + self._currentVideoPath)
-            self._videoReader = VideoReader(self._currentVideoPath)
+            if bg_frames is None:
+                bg_frames = self._bg_frames
+            if dark_fish is None:
+                dark_fish = self._dark_fish
+            self._videoReader = MyVideoReader(self._currentVideoPath, bg_frames, dark_fish)
             self._frameBar.setMaximum(len(self._videoReader) - 1)
 
             if self._useVideoFPS:
@@ -218,10 +226,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def dragEnterEvent(self, event: QtGui.QDragEnterEvent) -> None:
         if event.mimeData().hasUrls():
             if any(
-                [
-                    Path(u.toLocalFile()).suffix in video_extensions
-                    for u in event.mimeData().urls()
-                ]
+                [Path(u.toLocalFile()).suffix in video_extensions for u in event.mimeData().urls()]
             ):
                 event.accept()
         else:

@@ -81,9 +81,7 @@ class Rectangle(Shape):
 
 
 class Ellipse(Shape):
-    def __init__(
-        self, cx: float, cy: float, a: float, b: float, theta: float, lw, lc
-    ):
+    def __init__(self, cx: float, cy: float, a: float, b: float, theta: float, lw, lc):
         super().__init__(lw, lc)
         self._cx = cx
         self._cy = cy
@@ -115,6 +113,15 @@ class Ellipse(Shape):
 class Circle(Ellipse):
     def __init__(self, cx: float, cy: float, r: float, lw, lc):
         super().__init__(cx, cy, r, r, 0, lw, lc)
+
+    @property
+    def r(self):
+        return self.a
+
+    @r.setter
+    def r(self, r: float):
+        self.a = r
+        self.b = r
 
 
 class Line(Shape):

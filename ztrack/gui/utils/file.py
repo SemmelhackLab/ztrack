@@ -19,9 +19,7 @@ def selectFiles(filter_: str = None, native=False) -> List[str]:
     return dialog.selectedFiles() if dialog.exec() else []
 
 
-def selectVideoPaths(
-    extensions: Iterable[str] = (".avi", ".mp4"), native=False
-):
+def selectVideoPaths(extensions: Iterable[str] = (".avi", ".mp4"), native=False):
     filter_ = f'Videos (*{" *".join(extensions)})'
     return selectFiles(filter_, native)
 
@@ -64,9 +62,7 @@ def selectVideoDirectories(
 
     for view in (fileView, treeView):
         if view is not None:
-            view.setSelectionMode(
-                QtWidgets.QAbstractItemView.ExtendedSelection
-            )
+            view.setSelectionMode(QtWidgets.QAbstractItemView.ExtendedSelection)
 
     return (dialog.selectedFiles() if dialog.exec() else []), [
         checkBox.isChecked() for checkBox in checkBoxes

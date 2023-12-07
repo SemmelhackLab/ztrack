@@ -19,9 +19,7 @@ def view_results(
     from ztrack.gui.utils.launch import launch
     from ztrack.utils.file import get_paths_for_view_results
 
-    video_paths = [
-        str(i) for i in get_paths_for_view_results(inputs, recursive)
-    ]
+    video_paths = [str(i) for i in get_paths_for_view_results(inputs, recursive)]
 
     if gui:
         launch(
@@ -178,19 +176,13 @@ def generate_tracking_video(
         if label and df_tail is not None:
             row_tail = df_tail.iloc[i]
 
-            pts = np.round(row_tail.values.reshape(-1, 2)[:, None, :]).astype(
-                int
-            )
-            cv2.polylines(
-                img, [pts], False, colors["tail"], line_width, line_type
-            )
+            pts = np.round(row_tail.values.reshape(-1, 2)[:, None, :]).astype(int)
+            cv2.polylines(img, [pts], False, colors["tail"], line_width, line_type)
 
         if egocentric and df_eye is not None and midpoints is not None:
             row_eye = df_eye.iloc[i]
             heading = row_eye["heading"].item()
-            img = zcv.warp_img(
-                img, midpoints[i], heading, width, front, behind
-            )
+            img = zcv.warp_img(img, midpoints[i], heading, width, front, behind)
 
         if timer:
             t = i / fps

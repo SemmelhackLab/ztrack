@@ -22,9 +22,7 @@ class EyeTracker(Tracker, ABC):
         )
     )
 
-    def __init__(
-        self, roi=None, params: dict = None, *, verbose=0, debug=False
-    ):
+    def __init__(self, roi=None, params: dict = None, *, verbose=0, debug=False):
         super().__init__(roi, params, verbose=verbose, debug=debug)
         self._left_eye = Ellipse(0, 0, 1, 1, 0, 4, "b")
         self._right_eye = Ellipse(0, 0, 1, 1, 0, 4, "r")
@@ -35,10 +33,6 @@ class EyeTracker(Tracker, ABC):
         return [self._left_eye, self._right_eye, self._swim_bladder]
 
     @staticmethod
-    def _binary_segmentation(img, threshold):
-        return zcv.find_contours(zcv.binary_threshold(img, threshold))
-
-    @staticmethod
     def _correct_orientation(ellipses):
         centers = ellipses[:, :2]
         midpoint = centers[:2].mean(0)
@@ -46,28 +40,21 @@ class EyeTracker(Tracker, ABC):
         heading = np.rad2deg(np.arctan2(*midline[::-1]))
         for i in range(4, ellipses.shape[1]):
             is_opposite = abs(wrap_degrees(heading - ellipses[:, i])) > 90
-            ellipses[is_opposite, i] = wrap_degrees(
-                ellipses[is_opposite, i] - 180
-            )
+            ellipses[is_opposite, i] = wrap_degrees(ellipses[is_opposite, i] - 180)
         return ellipses
 
-    def _fit_ellipses(self, contours):
-        ellipses = np.array(
-            [zcv.fit_ellipse_moments(contour) for contour in contours]
-        )
-        return self._correct_orientation(ellipses)
+    @staticmethod
+    def _fit_ellipses(contours):
+        ellipses = np.array([zcv.fit_ellipse_moments(contour) for contour in contours])
+        return EyeTracker._correct_orientation(ellipses)
 
     @staticmethod
     def _sort_centers(centers):
         idx = np.arange(3)
-        swim_bladder = np.argmin(
-            [np.linalg.norm(np.subtract(*centers[idx != i])) for i in idx]
-        )
+        swim_bladder = np.argmin([np.linalg.norm(np.subtract(*centers[idx != i])) for i in idx])
         eyes = idx[idx != swim_bladder]
         left_eye, right_eye = (
-            eyes
-            if np.cross(*centers[eyes] - centers[swim_bladder]) > 0
-            else eyes[::-1]
+            eyes if np.cross(*centers[eyes] - centers[swim_bladder]) > 0 else eyes[::-1]
         )
         return left_eye, right_eye, swim_bladder
 
@@ -90,9 +77,7 @@ class EyeTracker(Tracker, ABC):
         pass
 
     def _track_img(self, img: np.ndarray) -> np.ndarray:
-        img = zcv.rgb2gray_dark_bg_blur(
-            img, self.params.sigma, self.params.invert
-        )
+        img = zcv.rgb2gray_dark_bg_blur(img, self.params.sigma, self.params.invert)
         contours = self._track_contours(img)
         return self._fit_ellipses(contours)
 
@@ -127,9 +112,7 @@ class EyeTracker(Tracker, ABC):
         theta_l, theta_r = results[..., :2, -1].T
         angle_l = wrap_degrees(theta_l - heading)
         angle_r = wrap_degrees(heading - theta_r)
-        df = pd.DataFrame(
-            results.reshape(len(results), -1), columns=cls._index
-        )
+        df = pd.DataFrame(results.reshape(len(results), -1), columns=cls._index)
         df["left_eye", "angle"] = angle_l
         df["right_eye", "angle"] = angle_r
         df["heading"] = heading

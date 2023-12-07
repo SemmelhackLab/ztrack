@@ -7,9 +7,7 @@ from ztrack.utils.variable import Bool, Float, UInt8
 
 
 class BinaryEyeTracker(EyeTracker):
-    def __init__(
-        self, roi=None, params: dict = None, *, verbose=0, debug=False
-    ):
+    def __init__(self, roi=None, params: dict = None, *, verbose=0, debug=False):
         super().__init__(roi, params, verbose=verbose, debug=debug)
 
     class __Params(EyeParams):
@@ -32,15 +30,13 @@ class BinaryEyeTracker(EyeTracker):
         return "Binary threshold"
 
     def _track_contours(self, img: np.ndarray):
-        contours = self._binary_segmentation(img, self.params.threshold)
+        contours = zcv.binary_segmentation(img, self.params.threshold)
 
         # get the 3 largest contours
         contours = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
         assert len(contours) == 3
 
-        centers = np.array(
-            [zcv.contour_center(contour) for contour in contours]
-        )
+        centers = np.array([zcv.contour_center(contour) for contour in contours])
         left_eye, right_eye, swim_bladder = self._sort_centers(centers)
 
         return contours[left_eye], contours[right_eye], contours[swim_bladder]

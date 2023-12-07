@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pandas as pd
-from PyQt5 import QtGui, QtWidgets, QtCore
+from PyQt5 import QtCore, QtGui, QtWidgets
 
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.tracking import get_trackers_from_config
@@ -32,9 +32,16 @@ class Annotator(MainWindow):
         verbose=False,
         dock=False,
         update=True,
+        bg_frames=0,
+        dark_fish=-1,
     ):
         super().__init__(
-            parent, videoPaths=videoPaths, verbose=verbose, dock=dock
+            parent,
+            videoPaths=videoPaths,
+            verbose=verbose,
+            dock=dock,
+            bg_frames=bg_frames,
+            dark_fish=dark_fish,
         )
 
         self._results: Dict[str, pd.DataFrame] = {}
@@ -130,9 +137,7 @@ class Annotator(MainWindow):
         self.updateVideo()
 
     def _openFolders(self):
-        directories, (recursive,) = selectVideoDirectories(
-            (("Include subdirectories", True),)
-        )
+        directories, (recursive,) = selectVideoDirectories((("Include subdirectories", True),))
         videoPaths = get_paths_for_view_results(
             directories,
             recursive,
@@ -154,9 +159,7 @@ class Annotator(MainWindow):
                 store = pd.HDFStore(results_path)
 
                 for key in store.keys():
-                    self._results[key.lstrip("/")] = pd.DataFrame(
-                        store.get(key)
-                    )
+                    self._results[key.lstrip("/")] = pd.DataFrame(store.get(key))
 
                 with open(config_path) as fp:
                     config_dict = json.load(fp)
@@ -172,12 +175,7 @@ class Annotator(MainWindow):
         if event.mimeData().hasUrls():
             paths = [u.toLocalFile() for u in event.mimeData().urls()]
 
-            if all(
-                [
-                    Path(path).suffix in video_extensions
-                    for path in paths
-                ]
-            ):
+            if all([Path(path).suffix in video_extensions for path in paths]):
                 event.accept()
         else:
             event.ignore()

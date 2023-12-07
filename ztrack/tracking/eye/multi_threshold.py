@@ -18,9 +18,7 @@ class MultiThresholdEyeTracker(EyeTracker):
             self.threshold_swim_bladder = UInt8("Swim bladder threshold", 127)
             self.invert = Bool("invert", True)
 
-    def __init__(
-        self, roi=None, params: dict = None, *, verbose=0, debug=False
-    ):
+    def __init__(self, roi=None, params: dict = None, *, verbose=0, debug=False):
         super().__init__(roi, params, verbose=verbose, debug=debug)
 
     @property
@@ -39,7 +37,7 @@ class MultiThresholdEyeTracker(EyeTracker):
         p = self.params
 
         # segment the image with binary threshold
-        contours = self._binary_segmentation(img, p.threshold_segmentation)
+        contours = zcv.binary_segmentation(img, p.threshold_segmentation)
 
         # get the 3 largest contours
         if len(contours) < 3:
@@ -51,7 +49,7 @@ class MultiThresholdEyeTracker(EyeTracker):
         centers = np.array([zcv.contour_center(c) for c in largest3])
 
         # sort contours (0: left eye, 1: right eye, 2: swim bladder)
-        centers = centers[list(self._sort_centers(centers))]
+        centers = centers[list(EyeTracker._sort_centers(centers))]
 
         # apply binary threshold for each body part and get the contour closest to its center
         thresholds = [
@@ -63,7 +61,7 @@ class MultiThresholdEyeTracker(EyeTracker):
         results = []
         for i, (threshold, center) in enumerate(zip(thresholds, centers)):
             # segment the image with binary threshold of the body part
-            contours = self._binary_segmentation(img, threshold)
+            contours = zcv.binary_segmentation(img, threshold)
             # get the contour closest to the body part's center
             results.append(zcv.nearest_contour(contours, tuple(center)))
 

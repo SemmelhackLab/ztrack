@@ -1,9 +1,9 @@
+import cv2
 import numpy as np
+from skimage.filters import sato
 
 import ztrack.utils.cv as zcv
 from ztrack.utils.variable import Angle, Bool, Float, Int, Point, String
-from skimage.filters import sato
-import cv2
 
 from .tail_tracker import TailParams, TailTracker
 

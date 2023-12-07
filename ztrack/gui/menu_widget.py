@@ -27,18 +27,10 @@ class MenuWidget(QtWidgets.QWidget):
         self.resize(400, 300)
         self.setWindowTitle("ztrack")
 
-        spacerItem = QSpacerItem(
-            40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum
-        )
-        spacerItem1 = QSpacerItem(
-            20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
-        )
-        spacerItem2 = QSpacerItem(
-            20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding
-        )
-        spacerItem3 = QSpacerItem(
-            40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum
-        )
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        spacerItem1 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        spacerItem2 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        spacerItem3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         label = QtWidgets.QLabel(self)
         sizePolicy = QSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
@@ -58,9 +50,7 @@ class MenuWidget(QtWidgets.QWidget):
         versionLabel = QtWidgets.QLabel(self)
         versionLabel.setText("")
         versionLabel.setAlignment(
-            QtCore.Qt.AlignRight  # type: ignore
-            | QtCore.Qt.AlignTrailing
-            | QtCore.Qt.AlignVCenter
+            QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter  # type: ignore
         )
 
         createConfigPushButton = QtWidgets.QPushButton(self)
@@ -90,15 +80,9 @@ class MenuWidget(QtWidgets.QWidget):
 
         versionLabel.setText(f"v{version}")
 
-        createConfigPushButton.clicked.connect(
-            self._onCreateConfigPushButtonClicked
-        )
-        runTrackingPushButton.clicked.connect(
-            self._onRunTrackingPushButtonClicked
-        )
-        viewResultsPushButton.clicked.connect(
-            self._onViewResultsPushButtonClicked
-        )
+        createConfigPushButton.clicked.connect(self._onCreateConfigPushButtonClicked)
+        runTrackingPushButton.clicked.connect(self._onRunTrackingPushButtonClicked)
+        viewResultsPushButton.clicked.connect(self._onViewResultsPushButtonClicked)
         helpPushButton.clicked.connect(lambda: webbrowser.open(homepage))
 
     @property
@@ -132,9 +116,7 @@ class MenuWidget(QtWidgets.QWidget):
                 )
             )
         )
-        run_tracking(
-            inputs, recursive, overwrite, self._verbose, ignore_errors
-        )
+        run_tracking(inputs, recursive, overwrite, self._verbose, ignore_errors)
 
     def _onViewResultsPushButtonClicked(self):
         self.currentWindow = TrackingViewer()

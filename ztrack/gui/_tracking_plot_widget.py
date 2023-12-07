@@ -46,9 +46,7 @@ class TrackingPlotWidget(pg.PlotWidget):
         self._pointSelectionModeEnabled = enabled
         roi = self._rois[self._currentTab]
         roi.resizable = roi.translatable = not enabled
-        self.setCursor(
-            QtCore.Qt.CrossCursor if enabled else QtCore.Qt.ArrowCursor
-        )
+        self.setCursor(QtCore.Qt.CrossCursor if enabled else QtCore.Qt.ArrowCursor)
 
     def _onMouseClicked(self, event):
         if self._pointSelectionModeEnabled:
@@ -73,9 +71,7 @@ class TrackingPlotWidget(pg.PlotWidget):
         for shape in self._currentShapeGroup[group_name].shapes:
             self.removeItem(shape)
 
-        self._currentShapeGroup[group_name] = self._shapeGroups[group_name][
-            index
-        ]
+        self._currentShapeGroup[group_name] = self._shapeGroups[group_name][index]
 
         for shape in self._currentShapeGroup[group_name].shapes:
             self.addItem(shape)
@@ -90,9 +86,7 @@ class TrackingPlotWidget(pg.PlotWidget):
 
     def addTrackerGroup(self, group_name: str, trackers: Iterable[Tracker]):
         roi = self.addRoi(group_name)
-        self._shapeGroups[group_name] = [
-            ShapeGroup.fromTracker(i) for i in trackers
-        ]
+        self._shapeGroups[group_name] = [ShapeGroup.fromTracker(i) for i in trackers]
 
         for tracker in trackers:
             tracker.roi = roi.bbox
@@ -305,8 +299,6 @@ class GuiLine(QtWidgets.QGraphicsLineItem, ShapeMixin):
     def refresh(self):
         if self._line.visible:
             self.setVisible(True)
-            self.setLine(
-                self._line.x1, self._line.y1, self._line.x2, self._line.y2
-            )
+            self.setLine(self._line.x1, self._line.y1, self._line.x2, self._line.y2)
         else:
             self.setVisible(False)

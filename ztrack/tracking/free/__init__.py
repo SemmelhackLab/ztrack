@@ -1,5 +1,4 @@
 from ..tracker import NoneTracker
-from .contour import ContourFreeSwimTracker
-from .sequential import SequentialFreeSwimTracker
+from .free_swim_1 import FreeSwim1
 
-trackers = [NoneTracker, SequentialFreeSwimTracker, ContourFreeSwimTracker]
+trackers = [NoneTracker, FreeSwim1]

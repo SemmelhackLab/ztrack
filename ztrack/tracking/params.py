@@ -18,9 +18,7 @@ class Params(ABC):
             object.__setattr__(self, name, value)
             if has_attr:
                 self.__setattr__(name, attr)
-        elif hasattr(self, name) and isinstance(
-            object.__getattribute__(self, name), Variable
-        ):
+        elif hasattr(self, name) and isinstance(object.__getattribute__(self, name), Variable):
             object.__getattribute__(self, name).value = value
         else:
             object.__setattr__(self, name, value)
@@ -50,6 +48,5 @@ class Params(ABC):
 
     def to_dict(self):
         return {
-            name: value.value
-            for name, value in zip(self._parameter_names, self._parameter_list)
+            name: value.value for name, value in zip(self._parameter_names, self._parameter_list)
         }

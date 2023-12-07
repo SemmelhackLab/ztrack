@@ -55,9 +55,7 @@ def _track_img(
             y_ = np.linspace(y0, y1, length).astype(int)
 
             z = img[y_, x_]
-            z = correlate1d(
-                z.astype(float), weights, 0, mode="nearest", origin=0
-            )
+            z = correlate1d(z.astype(float), weights, 0, mode="nearest", origin=0)
 
             argmax = z.argmax()
 
@@ -147,10 +145,7 @@ class Sequential2(Tracker):
         w1 = p.w1
         w2 = p.w2
         half_lengths = (
-            w1
-            + (w2 - w1)
-            * np.cumsum((0, *segment_lengths[1:]))
-            / segment_lengths[1:].sum()
+            w1 + (w2 - w1) * np.cumsum((0, *segment_lengths[1:])) / segment_lengths[1:].sum()
         )
         lengths = (half_lengths * 2).astype(int)
         sigma_tail = p.sigma_tail
@@ -175,9 +170,7 @@ class Sequential2(Tracker):
 
                 lw = int(4.0 * float(sigma_tail) + 0.5)
                 weights = _gaussian_kernel1d(sigma_tail, 0, lw)[::-1]
-                z = correlate1d(
-                    z.astype(float), weights, 0, mode="nearest", origin=0
-                )
+                z = correlate1d(z.astype(float), weights, 0, mode="nearest", origin=0)
 
                 argmax = z.argmax()
 
@@ -226,9 +219,7 @@ class Sequential2(Tracker):
     @classmethod
     def _results_to_dataframe(cls, results):
         n_points = results.shape[-2]
-        idx = pd.MultiIndex.from_product(
-            ((f"point{i:02d}" for i in range(n_points)), ("x", "y"))
-        )
+        idx = pd.MultiIndex.from_product(((f"point{i:02d}" for i in range(n_points)), ("x", "y")))
         return pd.DataFrame(results.reshape(len(results), -1), columns=idx)
 
     def track_video(self, video_path, ignore_errors=False):
@@ -249,20 +240,13 @@ class Sequential2(Tracker):
 
         segment_lengths = split_int(p.tail_length, n_segments)
         half_lengths = (
-            p.w1
-            + (p.w2 - p.w1)
-            * np.cumsum((0, *segment_lengths[1:]))
-            / segment_lengths[1:].sum()
+            p.w1 + (p.w2 - p.w1) * np.cumsum((0, *segment_lengths[1:])) / segment_lengths[1:].sum()
         )
         lengths = (half_lengths * 2).astype(int)
         sigma_tail = p.sigma_tail
         roi = self.roi.value
 
-        it = (
-            tqdm(range(len(video_reader)))
-            if self._verbose
-            else range(len(video_reader))
-        )
+        it = tqdm(range(len(video_reader))) if self._verbose else range(len(video_reader))
 
         s_ = self.roi.to_slice()
 
@@ -290,6 +274,4 @@ class Sequential2(Tracker):
             ]
         )
 
-        return self._results_to_dataframe(
-            self._transform_from_roi_to_frame(data)
-        )
+        return self._results_to_dataframe(self._transform_from_roi_to_frame(data))

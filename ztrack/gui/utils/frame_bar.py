@@ -5,9 +5,7 @@ from PyQt5.QtWidgets import QStyle
 class FrameBar(QtWidgets.QWidget):
     valueChanged = QtCore.pyqtSignal(int)
 
-    def __init__(
-        self, parent: QtWidgets.QWidget = None, *, fps=100, maximum=3000
-    ):
+    def __init__(self, parent: QtWidgets.QWidget = None, *, fps=100, maximum=3000):
         super().__init__(parent)
 
         self._fps = 0
@@ -68,6 +66,4 @@ class FrameBar(QtWidgets.QWidget):
 
     @QtCore.pyqtSlot()
     def _playTick(self):
-        self._slider.setValue(
-            (self._slider.value() + 1) % self._slider.maximum()
-        )
+        self._slider.setValue((self._slider.value() + 1) % self._slider.maximum())

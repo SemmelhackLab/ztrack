@@ -7,9 +7,7 @@ def annotate(
     from ztrack.gui.utils.launch import launch
     from ztrack.utils.file import get_paths_for_view_results
 
-    video_paths = [
-        str(i) for i in get_paths_for_view_results(inputs, recursive)
-    ]
+    video_paths = [str(i) for i in get_paths_for_view_results(inputs, recursive)]
 
     launch(
         Annotator,

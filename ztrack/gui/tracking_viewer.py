@@ -10,6 +10,7 @@ from PyQt5 import QtGui, QtWidgets
 from ztrack.gui.utils.file import selectVideoDirectories, selectVideoPaths
 from ztrack.tracking import get_trackers_from_config
 from ztrack.utils.file import (
+    get_config_dict,
     get_config_path,
     get_paths_for_view_results,
     get_results_path,
@@ -32,18 +33,23 @@ class TrackingViewer(MainWindow):
         verbose=False,
         dock=False,
         update=True,
+        bg_frames=0,
+        dark_fish=-1,
     ):
         super().__init__(
-            parent, videoPaths=videoPaths, verbose=verbose, dock=dock
+            parent,
+            videoPaths=videoPaths,
+            verbose=verbose,
+            dock=dock,
+            bg_frames=bg_frames,
+            dark_fish=dark_fish,
         )
 
         self._results: Dict[str, pd.DataFrame] = {}
         self._trackers: Dict[str, Tracker] = {}
 
         self._buttonBox = QtWidgets.QDialogButtonBox(self)
-        self._buttonBox.setStandardButtons(
-            QtWidgets.QDialogButtonBox.Ok  # type: ignore
-        )
+        self._buttonBox.setStandardButtons(QtWidgets.QDialogButtonBox.Ok)  # type: ignore
         self._layout.addWidget(self._buttonBox)
 
         self._buttonBox.button(QtWidgets.QDialogButtonBox.Ok).clicked.connect(
@@ -74,9 +80,7 @@ class TrackingViewer(MainWindow):
             self._trackingPlotWidget.setImage(img)
 
             for name, tracker in self._trackers.items():
-                tracker.annotate_from_series(
-                    self._results[name].iloc[self._frameBar.value()]
-                )
+                tracker.annotate_from_series(self._results[name].iloc[self._frameBar.value()])
                 self._trackingPlotWidget.updateRoiGroups()
 
     def enqueue(self, videoPath: str, first=False):
@@ -99,9 +103,7 @@ class TrackingViewer(MainWindow):
         self.updateVideo()
 
     def _openFolders(self):
-        directories, (recursive,) = selectVideoDirectories(
-            (("Include subdirectories", True),)
-        )
+        directories, (recursive,) = selectVideoDirectories((("Include subdirectories", True),))
         videoPaths = get_paths_for_view_results(
             directories,
             recursive,
@@ -123,12 +125,9 @@ class TrackingViewer(MainWindow):
                 store = pd.HDFStore(results_path)
 
                 for key in store.keys():
-                    self._results[key.lstrip("/")] = pd.DataFrame(
-                        store.get(key)
-                    )
+                    self._results[key.lstrip("/")] = pd.DataFrame(store.get(key))
 
-                with open(config_path) as fp:
-                    config_dict = json.load(fp)
+                config_dict = get_config_dict(self._currentVideoPath)["tracking"]
                 self._trackers = get_trackers_from_config(config_dict)
 
                 for name, tracker in self._trackers.items():
@@ -141,12 +140,7 @@ class TrackingViewer(MainWindow):
         if event.mimeData().hasUrls():
             paths = [u.toLocalFile() for u in event.mimeData().urls()]
 
-            if all(
-                [
-                    Path(path).suffix in video_extensions
-                    for path in paths
-                ]
-            ):
+            if all([Path(path).suffix in video_extensions for path in paths]):
                 event.accept()
         else:
             event.ignore()
