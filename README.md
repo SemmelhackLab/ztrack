@@ -16,23 +16,39 @@ pip install ztrack
 ```
 
 ## Instructions
+Clone repository
 ```bash
-#clone repository
 git clone git@github.com:kclamar/ztrack.git
-# change directory to the repository
+```
+Change directory to the repository
+```bash
 cd ztrack
-# update the repository
+```
+Update the repository (do this whenever there are updates to the software)
+```bash
 git pull
-# switch to the free swim branch
+```
+Switch to the free swim branch
+```bash
 git checkout free-swim
-# create conda environment with the name ztrack
+```
+Create conda environment with the name ztrack
+```bash
 conda env create --file environment.yml --name ztrack
-# activate the ztrack conda environment
+```
+Activate the ztrack conda environment
+```bash
 conda activate ztrack
-# install the ztrack package
+```
+Install the ztrack package
+```bash
 pip install -e .
-# create configuration with background subtraction (background is calculated as median of 300 frames)
+```
+Create configuration with background subtraction (background is calculated as median of 300 frames)
+```bash
 ztrack create-config --bg-frames 300
-# run tracking on a folder with progress bar
+```
+Run tracking on a folder with progress bar
+```bash
 ztrack run -r --ignore-errors -v your_folder
 ```
