@@ -24,7 +24,7 @@ Change directory to the repository
 ```bash
 cd ztrack
 ```
-Update the repository (do this whenever there are updates to the software)
+Update the repository (do this also whenever there are updates to the software)
 ```bash
 git pull
 ```
@@ -36,7 +36,7 @@ Create conda environment with the name ztrack
 ```bash
 conda env create --file environment.yml --name ztrack
 ```
-Activate the ztrack conda environment
+Activate the ztrack conda environment (do this also every time before running ztrack)
 ```bash
 conda activate ztrack
 ```
