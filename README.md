@@ -14,3 +14,25 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install ztrack.
 ```bash
 pip install ztrack
 ```
+
+## Instructions
+```bash
+#clone repository
+git clone git@github.com:kclamar/ztrack.git
+# change directory to the repository
+cd ztrack
+# update the repository
+git pull
+# switch to the free swim branch
+git checkout free-swim
+# create conda environment with the name ztrack
+conda env create --file environment.yml --name ztrack
+# activate the ztrack conda environment
+conda activate ztrack
+# install the ztrack package
+pip install -e .
+# create configuration with background subtraction (background is calculated as median of 300 frames)
+ztrack create-config --bg-frames 300
+# run tracking on a folder with progress bar
+ztrack run -r --ignore-errors -v your_folder
+```
