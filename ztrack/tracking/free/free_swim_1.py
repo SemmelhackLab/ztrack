@@ -26,9 +26,9 @@ class FreeSwim1(BaseFreeSwimTracker):
             self.swim_bladder_length = UInt8("Swim bladder length", 7)
             self.swim_bladder_width = UInt8("Swim bladder width", 4)
 
-            # self.r = Int("Arena radius", 365, 0, 1000)
-            # self.cx = Int("Arena center x", 365, 0, 1000)
-            # self.cy = Int("Arena center y", 365, 0, 1000)
+            self.r = Int("Arena radius", 365, 0, 1000)
+            self.cx = Int("Arena center x", 365, 0, 1000)
+            self.cy = Int("Arena center y", 365, 0, 1000)
 
     @property
     def _Params(self):
@@ -76,25 +76,6 @@ class FreeSwim1(BaseFreeSwimTracker):
 
         if len(eye_candidates) >= 2:
             eye_contours = sorted(eye_candidates, key=cv2.contourArea, reverse=True)[:2]
-        # elif len(eye_candidates) == 1:
-        #     x0, x1 = np.where(np.diff(np.pad(thresholded.max(0), 1)))[0]
-        #     y0, y1 = np.where(np.diff(np.pad(thresholded.max(1), 1)))[0]
-        #     b = thresholded[y0:y1, x0:x1]
-
-        #     erode = b.copy()
-        #     while True:
-        #         erode = cv2.erode(erode, np.ones((3, 3)))
-        #         ret, markers = cv2.connectedComponents(erode)
-        #         if erode.sum() == 0:
-        #             raise TrackingError("No eye detected")
-        #         if ret == 3:
-        #             markers[b == 0] = 0
-        #             break
-
-        #     watershed = cv2.watershed(cv2.cvtColor(img[y0:y1, x0:x1], cv2.COLOR_GRAY2RGB), markers)
-        #     watershed[b == 0] = 0
-        #     # cv2.imshow("watershed", (watershed * 127).astype(np.uint8))
-        #     eye_contours = [zcv.find_contours((watershed == i).astype(np.uint8))[0] + (x0, y0) for i in (1, 2)]
         else:
             raise TrackingError("No eye detected")
 
@@ -129,7 +110,10 @@ class FreeSwim1(BaseFreeSwimTracker):
     def _track_img(self, img: np.ndarray):
         p = self.params
 
-        # img[self.get_outside_mask(img)] = 0
+        img = img.copy()
+        img[self.get_mask(img) != 1] = 0
+
+        cv2.imshow("abc", img)
         ellipses = self._track_eyes(img)
 
         centers = ellipses[:, :2]

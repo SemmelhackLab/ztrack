@@ -24,7 +24,7 @@ class BaseFreeSwimTracker(Tracker):
             self._right_eye,
             self._swim_bladder,
             self._points,
-            # self._arena,
+            self._arena,
         ]
 
     def __init__(self, roi=None, params: dict = None, *, verbose=0, debug=False):
@@ -38,7 +38,7 @@ class BaseFreeSwimTracker(Tracker):
         self._swim_bladder = Ellipse(0, 0, 1, 1, 0, 4, "g")
 
         self._points = Points(np.array([[0, 0]]), 1, "m", symbol="+")
-        # self._arena = Circle(0, 0, 1, 2, "c")
+        self._arena = Circle(0, 0, 1, 2, "c")
 
     def set_video(self, video_path):
         self._bg = None
@@ -62,7 +62,6 @@ class BaseFreeSwimTracker(Tracker):
         return pd.concat([s, t])
 
     def annotate_from_series(self, series: pd.Series) -> None:
-        print(series)
         EyeTracker.annotate_from_series(self, series.iloc[:15])
         TailTracker.annotate_from_series(self, series.iloc[18:])
 
@@ -71,10 +70,10 @@ class BaseFreeSwimTracker(Tracker):
         tail = a[15:].reshape((-1, 2))
         EyeTracker.annotate_from_results(self, eye)
         TailTracker.annotate_from_results(self, tail)
-        # self._arena.visible = True
-        # self._arena.cx = self.params.cx
-        # self._arena.cy = self.params.cy
-        # self._arena.r = self.params.r
+        self._arena.visible = True
+        self._arena.cx = self.params.cx
+        self._arena.cy = self.params.cy
+        self._arena.r = self.params.r
 
     def _transform_from_roi_to_frame(self, results):
         n_frames = len(results)
@@ -84,9 +83,9 @@ class BaseFreeSwimTracker(Tracker):
         tail = TailTracker._transform_from_roi_to_frame(self, tail)
         return np.column_stack((eye.reshape((n_frames, -1)), tail.reshape((n_frames, -1))))
 
-    # def get_outside_mask(self, img):
-    #     p = self.params
-    #     return cv2.circle(np.ones_like(img, np.uint8), (p.cx, p.cy), p.r, 0, -1).astype(bool)
+    def get_mask(self, img):
+        p = self.params
+        return cv2.circle(np.zeros_like(img.copy(), np.uint8), (p.cx, p.cy), p.r, 1, -1)
 
     @abstractmethod
     def _track_tail(self, src, point, angle):

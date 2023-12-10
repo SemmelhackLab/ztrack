@@ -95,7 +95,6 @@ def sequential_track_tail(
         points, angles = points[idx], angles[idx]
 
         if len(points) == 0:
-            print("huh")
             break
 
         x, y = points.T
