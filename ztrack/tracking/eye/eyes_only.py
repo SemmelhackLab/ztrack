@@ -26,7 +26,6 @@ class EyesOnlyTracker(EyeTracker):
             self.eye_width = UInt8("Eye width", 20)
 
             self.swim_bladder_orientation = Angle("Swim bladder orientation", 270)
-            self.invert = Bool("invert", True)
 
     def __init__(self, roi=None, params: dict = None, *, verbose=0, debug=False):
         super().__init__(roi, params, verbose=verbose, debug=debug)

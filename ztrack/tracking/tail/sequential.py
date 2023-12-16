@@ -39,7 +39,7 @@ class SequentialTailTracker(TailTracker):
 
         angle = np.deg2rad(p.angle)
         theta = np.deg2rad(p.theta / 2)
-        img = zcv.rgb2gray_dark_bg_blur(img, p.sigma, p.invert)
+        img = zcv.gaussian_blur(img, p.sigma)
 
         return zcv.sequential_track_tail(
             img,
