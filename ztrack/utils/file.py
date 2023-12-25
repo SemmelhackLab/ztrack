@@ -21,7 +21,7 @@ def get_config_dict(video) -> Optional[dict]:
 
     if path.exists():
         with open(path) as fp:
-            return yaml.safe_load(fp)
+            return yaml.load(fp, yaml.FullLoader)
 
     return None
 
